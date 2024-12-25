@@ -1,0 +1,173 @@
+/**
+ * Global CSS Variables - Incepta Design System
+ * Version: 1.0.0
+ * Based on Material Design 3.0 principles
+ * 
+ * This file defines core design tokens and theme variables used throughout the application.
+ * It provides a comprehensive set of CSS custom properties for consistent styling,
+ * accessibility support, and theming capabilities including dark mode.
+ */
+
+:root {
+  /* Typography
+  ----------------------------------------*/
+  --font-family-primary: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  --font-family-monospace: 'Roboto Mono', monospace;
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Spacing
+  ----------------------------------------*/
+  --spacing-unit: 8px;
+  --spacing-xs: calc(var(--spacing-unit) * 0.5);  /* 4px */
+  --spacing-sm: var(--spacing-unit);               /* 8px */
+  --spacing-md: calc(var(--spacing-unit) * 2);     /* 16px */
+  --spacing-lg: calc(var(--spacing-unit) * 3);     /* 24px */
+  --spacing-xl: calc(var(--spacing-unit) * 4);     /* 32px */
+
+  /* Breakpoints
+  ----------------------------------------*/
+  --breakpoint-xs: 0px;
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 900px;
+  --breakpoint-lg: 1200px;
+  --breakpoint-xl: 1536px;
+
+  /* Colors - Light Theme
+  ----------------------------------------*/
+  /* Primary Colors */
+  --primary-main: #1976d2;
+  --primary-light: #42a5f5;
+  --primary-dark: #1565c0;
+  --primary-contrast: #ffffff;
+
+  /* Secondary Colors */
+  --secondary-main: #9c27b0;
+  --secondary-light: #ba68c8;
+  --secondary-dark: #7b1fa2;
+  --secondary-contrast: #ffffff;
+
+  /* Success Colors */
+  --success-main: #2e7d32;
+  --success-light: #4caf50;
+  --success-dark: #1b5e20;
+
+  /* Error Colors */
+  --error-main: #d32f2f;
+  --error-light: #ef5350;
+  --error-dark: #c62828;
+
+  /* Warning Colors */
+  --warning-main: #ed6c02;
+  --warning-light: #ff9800;
+  --warning-dark: #e65100;
+
+  /* Info Colors */
+  --info-main: #0288d1;
+  --info-light: #03a9f4;
+  --info-dark: #01579b;
+
+  /* Text Colors */
+  --text-primary: rgba(0, 0, 0, 0.87);
+  --text-secondary: rgba(0, 0, 0, 0.6);
+  --text-disabled: rgba(0, 0, 0, 0.38);
+  --text-hint: rgba(0, 0, 0, 0.38);
+
+  /* Background Colors */
+  --background-default: #ffffff;
+  --background-paper: #ffffff;
+  --background-disabled: rgba(0, 0, 0, 0.12);
+
+  /* Border Radius
+  ----------------------------------------*/
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+
+  /* Transitions
+  ----------------------------------------*/
+  /* Duration */
+  --transition-duration-shortest: 150ms;
+  --transition-duration-shorter: 200ms;
+  --transition-duration-short: 250ms;
+  --transition-duration-standard: 300ms;
+  --transition-duration-complex: 375ms;
+  --transition-duration-enteringScreen: 225ms;
+  --transition-duration-leavingScreen: 195ms;
+
+  /* Easing */
+  --transition-easing-easeInOut: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-easing-easeOut: cubic-bezier(0.0, 0, 0.2, 1);
+  --transition-easing-easeIn: cubic-bezier(0.4, 0, 1, 1);
+  --transition-easing-sharp: cubic-bezier(0.4, 0, 0.6, 1);
+
+  /* Elevation/Shadows
+  ----------------------------------------*/
+  --shadow-1: 0px 2px 1px -1px rgba(0,0,0,0.2),
+             0px 1px 1px 0px rgba(0,0,0,0.14),
+             0px 1px 3px 0px rgba(0,0,0,0.12);
+  --shadow-2: 0px 3px 1px -2px rgba(0,0,0,0.2),
+             0px 2px 2px 0px rgba(0,0,0,0.14),
+             0px 1px 5px 0px rgba(0,0,0,0.12);
+  --shadow-3: 0px 3px 3px -2px rgba(0,0,0,0.2),
+             0px 3px 4px 0px rgba(0,0,0,0.14),
+             0px 1px 8px 0px rgba(0,0,0,0.12);
+  --shadow-4: 0px 2px 4px -1px rgba(0,0,0,0.2),
+             0px 4px 5px 0px rgba(0,0,0,0.14),
+             0px 1px 10px 0px rgba(0,0,0,0.12);
+  --shadow-5: 0px 3px 5px -1px rgba(0,0,0,0.2),
+             0px 5px 8px 0px rgba(0,0,0,0.14),
+             0px 1px 14px 0px rgba(0,0,0,0.12);
+}
+
+/* Dark Theme Overrides
+----------------------------------------*/
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Text Colors - Dark Theme */
+    --text-primary: rgba(255, 255, 255, 0.87);
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-disabled: rgba(255, 255, 255, 0.38);
+    --text-hint: rgba(255, 255, 255, 0.38);
+
+    /* Background Colors - Dark Theme */
+    --background-default: #121212;
+    --background-paper: #1e1e1e;
+    --background-disabled: rgba(255, 255, 255, 0.12);
+
+    /* Primary Colors - Dark Theme */
+    --primary-main: #90caf9;
+    --primary-light: #e3f2fd;
+    --primary-dark: #42a5f5;
+
+    /* Secondary Colors - Dark Theme */
+    --secondary-main: #ce93d8;
+    --secondary-light: #f3e5f5;
+    --secondary-dark: #ab47bc;
+
+    /* Error Colors - Dark Theme */
+    --error-main: #f44336;
+    --error-light: #e57373;
+    --error-dark: #d32f2f;
+
+    /* Warning Colors - Dark Theme */
+    --warning-main: #ffa726;
+    --warning-light: #ffb74d;
+    --warning-dark: #f57c00;
+
+    /* Info Colors - Dark Theme */
+    --info-main: #29b6f6;
+    --info-light: #4fc3f7;
+    --info-dark: #0288d1;
+
+    /* Success Colors - Dark Theme */
+    --success-main: #66bb6a;
+    --success-light: #81c784;
+    --success-dark: #388e3c;
+  }
+}
