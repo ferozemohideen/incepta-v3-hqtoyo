@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: incepta-config
+  namespace: default
+  labels:
+    app: incepta
+    environment: ${ENV}
+    version: v1.0.0
+    managed-by: kubernetes
+  annotations:
+    kubernetes.io/change-cause: "Initial configuration setup"
+    incepta.com/config-version: "v1.0.0"
+    incepta.com/last-updated: "timestamp"
+    incepta.com/update-approved-by: "system"
+data:
+  # API Server Configuration
+  api-server.json: |
+    {
+      "port": "3000",
+      "rate_limit": "1000",
+      "timeout": "30000",
+      "cors_origins": [
+        "https://*.incepta.com",
+        "https://admin.incepta.com"
+      ],
+      "log_level": "info",
+      "structured_logging": {
+        "format": "json",
+        "include_trace_id": true,
+        "include_span_id": true
+      },
+      "health_check": {
+        "enabled": true,
+        "path": "/health",
+        "interval": "30s"
+      }
+    }
+
+  # Web Scraper Configuration
+  scraper.json: |
+    {
+      "concurrent_jobs": "5",
+      "retry_attempts": "3",
+      "retry_delay": "5000",
+      "user_agent": "Incepta Technology Transfer Platform Bot",
+      "rate_limit_delay": "1000",
+      "monitoring": {
+        "metrics_enabled": true,
+        "alert_threshold": "80"
+      }
+    }
+
+  # Elasticsearch Configuration
+  elasticsearch.json: |
+    {
+      "index_prefix": "incepta",
+      "number_of_shards": "3",
+      "number_of_replicas": "1",
+      "refresh_interval": "1s",
+      "lifecycle_policy": {
+        "enabled": true,
+        "hot_phase_max_age": "30d",
+        "warm_phase_max_age": "90d"
+      }
+    }
+
+  # Redis Configuration
+  redis.json: |
+    {
+      "max_connections": "50",
+      "key_prefix": "incepta",
+      "ttl": "3600",
+      "cluster_mode": {
+        "enabled": true,
+        "number_of_replicas": "2"
+      }
+    }
+
+  # Matching Engine Configuration
+  matching-engine.json: |
+    {
+      "batch_size": "100",
+      "score_threshold": "0.8",
+      "cache_ttl": "3600",
+      "model_version": "v1",
+      "performance_monitoring": {
+        "enabled": true,
+        "metrics_interval": "60s"
+      }
+    }
+
+  # Security Configuration
+  security.json: |
+    {
+      "immutable_config": true,
+      "validation_webhook": "/validate-config",
+      "audit": {
+        "enabled": true,
+        "log_path": "/var/log/config-audit.log"
+      }
+    }
+
+  # Monitoring Configuration
+  monitoring.json: |
+    {
+      "config_events": {
+        "enabled": true,
+        "alert_channels": ["slack", "email"],
+        "metrics_path": "/metrics/config"
+      },
+      "audit_logging": {
+        "enabled": true,
+        "log_retention_days": 30,
+        "log_format": "json"
+      }
+    }
