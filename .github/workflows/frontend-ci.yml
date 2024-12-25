@@ -1,0 +1,124 @@
+name: Frontend CI
+
+# Trigger on push/PR to main branches and only for frontend changes
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/web/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/web/**'
+
+# Environment variables
+env:
+  NODE_VERSION: '18.x'
+  WORKING_DIRECTORY: 'src/web'
+  CACHE_KEY_PREFIX: 'frontend-deps'
+  HUSKY: '0' # Disable Husky hooks in CI
+
+jobs:
+  validate:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1 # Shallow clone for faster checkout
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      # Cache dependencies based on package-lock.json hash
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}/node_modules
+          key: ${{ env.CACHE_KEY_PREFIX }}-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/package-lock.json') }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-
+
+      # Install dependencies if cache miss
+      - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci --prefer-offline --no-audit
+
+      # Run validations in parallel
+      - name: Type check
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run typecheck
+
+      - name: Lint check
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run lint
+        
+      - name: Format check
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx prettier --check "src/**/*.{ts,tsx,css,scss}"
+
+      # Run tests with coverage
+      - name: Run tests
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run test:coverage
+        env:
+          CI: true
+          NODE_ENV: test
+
+      # Production build
+      - name: Build application
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run build
+        env:
+          CI: true
+          VITE_APP_VERSION: ${{ github.sha }}
+
+      # Upload build artifacts
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/dist
+            ${{ env.WORKING_DIRECTORY }}/coverage
+          retention-days: 14
+
+      # Upload test results
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/coverage
+            ${{ env.WORKING_DIRECTORY }}/junit.xml
+          retention-days: 14
+
+      # Notify on failure
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { repo, owner } = context.repo;
+            const run_id = context.runId;
+            
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: context.issue.number,
+              body: `❌ Frontend CI failed! [View run details](https://github.com/${owner}/${repo}/actions/runs/${run_id})`
+            });
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
