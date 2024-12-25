@@ -1,0 +1,87 @@
+{
+  "name": "Incepta - Technology Transfer Platform",
+  "short_name": "Incepta",
+  "description": "Comprehensive technology transfer and grant matching platform bridging academic innovations with commercial opportunities",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "16x16 24x24 32x32 64x64",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1976d2",
+  "background_color": "#ffffff",
+  "categories": [
+    "business",
+    "productivity", 
+    "education"
+  ],
+  "lang": "en-US",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Search Technologies",
+      "url": "/technologies",
+      "description": "Search licensable technologies"
+    },
+    {
+      "name": "Grant Center",
+      "url": "/grants",
+      "description": "Discover and apply for grants"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/tech-search.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Technology Search Interface"
+    },
+    {
+      "src": "screenshots/grant-center.png", 
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Grant Discovery and Management"
+    }
+  ],
+  "related_applications": [],
+  "protocol_handlers": [
+    {
+      "protocol": "web+incepta",
+      "url": "/%s"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "browser"
+  ],
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "id": "incepta-platform-pwa"
+}
