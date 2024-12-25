@@ -1,0 +1,170 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'src/**'
+      - 'infrastructure/**'
+      - '!**.md'
+  workflow_dispatch:
+    inputs:
+      deploy_version:
+        description: 'Version to deploy'
+        required: true
+        type: string
+      force_deploy:
+        description: 'Force deployment'
+        required: false
+        type: boolean
+        default: false
+
+# Ensure only one deployment runs at a time
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ENVIRONMENT: staging
+  TF_WORKSPACE: staging
+  DEPLOY_TIMEOUT: 1800
+  HEALTH_CHECK_RETRIES: 5
+
+permissions:
+  id-token: write
+  contents: read
+  deployments: write
+  issues: write
+  checks: write
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: staging
+      url: https://staging.incepta.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-staging
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 3600
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.5.0'
+          terraform_wrapper: false
+
+      - name: Validate Terraform Files
+        working-directory: infrastructure/terraform
+        run: |
+          terraform fmt -check -recursive
+          terraform validate
+
+      - name: Initialize Terraform
+        working-directory: infrastructure/terraform
+        run: |
+          terraform init -backend=true \
+            -backend-config=environments/staging/backend.hcl
+
+      - name: Plan Terraform Changes
+        working-directory: infrastructure/terraform
+        run: |
+          terraform plan \
+            -var-file=environments/staging/terraform.tfvars \
+            -out=tfplan
+        continue-on-error: false
+
+      - name: Apply Terraform Changes
+        working-directory: infrastructure/terraform
+        run: |
+          terraform apply -auto-approve tfplan
+
+      - name: Verify Infrastructure
+        run: |
+          # Verify VPC and networking
+          aws ec2 describe-vpcs --filters "Name=tag:Environment,Values=staging"
+          
+          # Verify ECS cluster status
+          aws ecs describe-clusters \
+            --clusters incepta-staging \
+            --query 'clusters[].status' \
+            --output text | grep -q "ACTIVE"
+
+      - name: Deploy Services
+        run: |
+          chmod +x ./infrastructure/scripts/deploy.sh
+          ./infrastructure/scripts/deploy.sh \
+            -e staging \
+            -v ${{ github.sha }} \
+            --rolling \
+            --timeout 600
+
+      - name: Health Check
+        run: |
+          ./infrastructure/scripts/deploy.sh \
+            --health-check https://staging.incepta.com/health \
+            --retries 5 \
+            --interval 30
+
+      - name: Verify Deployment
+        run: |
+          # Check application metrics
+          aws cloudwatch get-metric-statistics \
+            --namespace "AWS/ECS" \
+            --metric-name CPUUtilization \
+            --dimensions Name=ClusterName,Value=incepta-staging \
+            --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%S) \
+            --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+            --period 300 \
+            --statistics Average
+
+      - name: Update Deployment Status
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "Deployment completed successfully"
+            # Tag successful deployment
+            git tag "staging-$(date +%Y%m%d-%H%M%S)"
+            git push origin --tags
+          else
+            echo "Deployment failed"
+            # Trigger rollback
+            ./infrastructure/scripts/rollback.sh -e staging -v ${{ github.sha }}
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Remove temporary files
+          rm -f infrastructure/terraform/tfplan
+          
+          # Clean up any temporary resources
+          terraform destroy -target=null_resource.temporary_resources \
+            -var-file=environments/staging/terraform.tfvars \
+            -auto-approve
+
+      - name: Notify Team
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          MESSAGE="Staging Deployment $STATUS for commit ${{ github.sha }}"
+          
+          if [[ "$STATUS" == "success" ]]; then
+            echo "::notice::$MESSAGE - Deployment successful"
+          else
+            echo "::error::$MESSAGE - Deployment failed"
+          fi
