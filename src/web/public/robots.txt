@@ -1,0 +1,55 @@
+# Incepta Platform Crawler Configuration
+# Version: 1.0
+# Last Updated: 2024
+
+# Global rules for all crawlers
+User-agent: *
+
+# Allow public content
+Allow: /
+Allow: /technologies
+Allow: /grants
+Allow: /about
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+
+# Block sensitive and authenticated routes
+Disallow: /api/
+Disallow: /auth/
+Disallow: /profile/
+Disallow: /messages/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /settings/
+Disallow: /documents/
+Disallow: /analytics/
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Crawl-delay: 1
+
+User-agent: Bingbot
+Crawl-delay: 1
+
+User-agent: DuckDuckBot
+Crawl-delay: 1
+
+# Block potentially aggressive crawlers
+User-agent: PetalBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+# Sitemap declaration
+Sitemap: https://incepta.com/sitemap.xml
+
+# Additional SEO directives
+# Technologies and grants are updated daily
+# General content updated weekly
+# Crawl priorities:
+# - Technologies: 1.0
+# - Grants: 0.9
+# - About: 0.8
+# - General: 0.7
