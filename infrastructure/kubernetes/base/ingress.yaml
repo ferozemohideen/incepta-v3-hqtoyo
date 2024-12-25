@@ -1,0 +1,77 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: incepta-ingress
+  namespace: default
+  labels:
+    app: incepta
+    environment: ${ENV}
+    component: ingress
+  annotations:
+    # Ingress class and SSL configuration
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    
+    # Request handling configuration
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    
+    # SSL/TLS configuration with Let's Encrypt
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    
+    # Security configurations
+    nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+    nginx.ingress.kubernetes.io/enable-owasp-core-rules: "true"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-rpm: "6000"
+    
+    # CORS configuration
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.incepta.com"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    
+    # Access logging
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+
+spec:
+  # TLS Configuration
+  tls:
+  - hosts:
+    - api.incepta.com
+    - www.incepta.com
+    secretName: incepta-tls
+  
+  # Routing Rules
+  rules:
+  # API Service Rules
+  - host: api.incepta.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 3000
+  
+  # Web Service Rules
+  - host: www.incepta.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-service
+            port:
+              number: 80
