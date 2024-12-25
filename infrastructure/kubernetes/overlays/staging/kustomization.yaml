@@ -1,0 +1,60 @@
+# Kustomization configuration for Incepta staging environment
+# Using kustomize v5.0.0
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Set staging namespace and add prefix to all resources
+namespace: incepta-staging
+namePrefix: staging-
+
+# Common labels for all resources
+commonLabels:
+  environment: staging
+  managed-by: kustomize
+  app.kubernetes.io/environment: staging
+
+# Base resources to be customized
+resources:
+  - ../../base/namespace.yaml
+  - ../../base/configmap.yaml
+  - ../../base/secrets.yaml
+  - ../../base/service.yaml
+  - ../../base/deployment.yaml
+  - ../../base/hpa.yaml
+  - ../../base/ingress.yaml
+  - ../../base/networkpolicy.yaml
+
+# Patches for staging-specific customizations
+patches:
+  # Deployment patch for API service with staging resource allocations
+  - target:
+      kind: Deployment
+      name: incepta-api
+    patch:
+      spec:
+        replicas: 2  # Reduced replica count for staging
+        template:
+          spec:
+            containers:
+              - name: api-server
+                resources:
+                  requests:
+                    cpu: "1.5"     # 75% of production CPU request
+                    memory: "3Gi"  # 75% of production memory request
+                  limits:
+                    cpu: "3"       # 75% of production CPU limit
+                    memory: "6Gi"  # 75% of production memory limit
+
+# ConfigMap generator for staging environment settings
+configMapGenerator:
+  - name: incepta-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=debug
+      - API_RATE_LIMIT=2000
+      - SCRAPER_CONCURRENT_JOBS=3
+      - ELASTICSEARCH_REPLICAS=1
+      - REDIS_MAX_CONNECTIONS=30
+      - ENABLE_DEBUG_ENDPOINTS=true
+      - METRICS_SCRAPE_INTERVAL=15s
