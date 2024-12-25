@@ -1,0 +1,27 @@
+{
+  "watch": [
+    "src/**/*.ts",
+    "src/**/*.json"
+  ],
+  "ignore": [
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "tests/**/*",
+    "coverage/**/*",
+    "dist/**/*",
+    "node_modules/**/*"
+  ],
+  "ext": "ts,json",
+  "exec": "ts-node -r tsconfig-paths/register src/server.ts",
+  "events": {
+    "start": "echo 'App started'",
+    "crash": "echo 'App crashed - waiting for file changes before starting...'"
+  },
+  "delay": "1500",
+  "env": {
+    "NODE_ENV": "development",
+    "TS_NODE_PROJECT": "./tsconfig.json"
+  },
+  "verbose": true,
+  "restartable": "rs"
+}
