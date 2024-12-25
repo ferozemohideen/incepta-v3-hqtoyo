@@ -1,0 +1,31 @@
+* @tech-leads
+
+# Backend code ownership requiring both backend and security team review
+src/backend/** @backend-team @security-team
+
+# Frontend code ownership requiring frontend team review
+src/web/** @frontend-team
+
+# Infrastructure code requiring both DevOps and security team review
+infrastructure/** @devops-team @security-team
+
+# CI/CD workflow configurations requiring DevOps team review
+.github/workflows/** @devops-team
+
+# Authentication code requiring security team review
+src/backend/src/lib/auth/** @security-team
+
+# Data scraping code requiring both data and security team review
+src/backend/src/lib/scraper/** @data-team @security-team
+
+# Search infrastructure requiring both data and backend team review
+src/backend/src/lib/elasticsearch/** @data-team @backend-team
+
+# Grant processing services requiring both backend and data team review
+src/backend/src/services/grant/** @backend-team @data-team
+
+# AI matching services requiring both backend and data team review
+src/backend/src/services/matching/** @backend-team @data-team
+
+# Grant-related frontend components requiring both frontend and data team review
+src/web/src/components/grant/** @frontend-team @data-team
