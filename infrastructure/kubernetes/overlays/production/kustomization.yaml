@@ -1,0 +1,142 @@
+# kustomize v5.0.0
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: incepta-production
+  labels:
+    environment: production
+    managed-by: kustomize
+
+# Reference base configuration
+resources:
+- ../../base
+
+# Common labels for all resources
+commonLabels:
+  environment: production
+  managed-by: kustomize
+  app.kubernetes.io/part-of: incepta
+  app.kubernetes.io/managed-by: kustomize
+
+# Common annotations for all resources
+commonAnnotations:
+  kubernetes.io/change-cause: "Production deployment"
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "metrics"
+  prometheus.io/path: "/metrics"
+
+# Production image configurations
+images:
+- name: incepta/api-server
+  newTag: latest
+  pullPolicy: Always
+- name: incepta/scraper
+  newTag: latest
+  pullPolicy: Always
+
+# Generate production ConfigMap
+configMapGenerator:
+- name: incepta-config
+  behavior: merge
+  literals:
+  - API_SERVER_PORT=3000
+  - API_RATE_LIMIT=1000
+  - API_TIMEOUT=30000
+  - LOG_LEVEL=info
+  - SCRAPER_CONCURRENT_JOBS=5
+  - SCRAPER_RETRY_ATTEMPTS=3
+  - ELASTICSEARCH_REPLICAS=2
+  - REDIS_MAX_CONNECTIONS=50
+  - MATCHING_ENGINE_BATCH_SIZE=100
+
+# Production-specific patches
+patches:
+# API Server deployment patches
+- target:
+    kind: Deployment
+    name: api-server
+  patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 3
+    - op: replace
+      path: /spec/template/spec/containers/0/resources
+      value:
+        requests:
+          cpu: "2"
+          memory: "4Gi"
+        limits:
+          cpu: "4"
+          memory: "8Gi"
+
+# Scraper service deployment patches
+- target:
+    kind: Deployment
+    name: scraper-service
+  patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 2
+    - op: replace
+      path: /spec/template/spec/containers/0/resources
+      value:
+        requests:
+          cpu: "2"
+          memory: "4Gi"
+        limits:
+          cpu: "4"
+          memory: "8Gi"
+
+# Network policies for production environment
+- target:
+    kind: NetworkPolicy
+    name: default
+  patch: |-
+    - op: add
+      path: /spec/policyTypes
+      value:
+        - Ingress
+        - Egress
+    - op: add
+      path: /spec/ingress
+      value:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  environment: production
+
+# Pod security context for production
+- target:
+    kind: Deployment
+    name: .*
+  patch: |-
+    - op: add
+      path: /spec/template/spec/securityContext
+      value:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+        seccompProfile:
+          type: RuntimeDefault
+
+# Health probe configurations
+- target:
+    kind: Deployment
+    name: .*
+  patch: |-
+    - op: add
+      path: /spec/template/spec/containers/0/livenessProbe
+      value:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 30
+        periodSeconds: 10
+    - op: add
+      path: /spec/template/spec/containers/0/readinessProbe
+      value:
+        httpGet:
+          path: /ready
+          port: http
+        initialDelaySeconds: 15
+        periodSeconds: 5
