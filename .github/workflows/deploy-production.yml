@@ -1,0 +1,180 @@
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'infrastructure/**'
+  workflow_dispatch:
+    inputs:
+      deploy_version:
+        description: 'Version to deploy'
+        required: true
+        type: string
+      skip_approval:
+        description: 'Skip approval for emergency deployments'
+        required: false
+        type: boolean
+        default: false
+
+# Ensure only one deployment runs at a time
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ENVIRONMENT: production
+  TF_WORKSPACE: production
+  DEPLOY_TIMEOUT: 45m
+  HEALTH_CHECK_RETRIES: 5
+
+permissions:
+  id-token: write
+  contents: read
+  deployments: write
+  environments: write
+  issues: write
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: production
+      url: https://incepta.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-production
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.5.0'
+
+      - name: Verify CI Workflows
+        run: |
+          gh workflow view backend-ci.yml --ref ${{ github.sha }} | grep "✓" || exit 1
+          gh workflow view frontend-ci.yml --ref ${{ github.sha }} | grep "✓" || exit 1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: |
+          terraform init -backend=true \
+            -backend-config=environments/production/backend.hcl
+
+      - name: Terraform Plan
+        working-directory: infrastructure/terraform
+        run: |
+          terraform plan \
+            -var-file=environments/production/terraform.tfvars \
+            -out=tfplan
+        env:
+          TF_VAR_environment: ${{ env.ENVIRONMENT }}
+
+      - name: Manual Approval
+        if: ${{ !inputs.skip_approval }}
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ secrets.GITHUB_TOKEN }}
+          approvers: senior-devops,platform-leads
+          minimum-approvals: 2
+          issue-title: "Production Deployment Approval Required"
+          issue-body: |
+            Deployment to production requires approval:
+            - Commit: ${{ github.sha }}
+            - Workflow: ${{ github.workflow }}
+            - Terraform Plan: Available in workflow logs
+            
+            Please review and approve if changes are safe for production.
+
+      - name: Terraform Apply
+        working-directory: infrastructure/terraform
+        run: terraform apply -auto-approve tfplan
+
+      - name: Deploy Services
+        run: |
+          ./infrastructure/scripts/deploy.sh \
+            -e production \
+            -v ${{ github.sha }} \
+            --rolling \
+            --canary
+        env:
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+
+      - name: Health Check
+        run: |
+          ./infrastructure/scripts/deploy.sh \
+            --health-check https://incepta.com/health \
+            --retries ${{ env.HEALTH_CHECK_RETRIES }}
+
+      - name: Verify Multi-AZ
+        run: |
+          ./infrastructure/scripts/deploy.sh --verify-multi-az
+
+      - name: Verify Deployment
+        run: |
+          ./infrastructure/scripts/deploy.sh \
+            --verify-deployment production \
+            --timeout 300
+
+      - name: Update Deployment Status
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "Deployment successful - Updating monitoring systems"
+            # Update monitoring status
+            curl -X POST ${{ secrets.MONITORING_WEBHOOK }} \
+              -H "Content-Type: application/json" \
+              -d '{"status": "success", "environment": "production", "version": "${{ github.sha }}"}'
+            
+            # Create git tag
+            git tag "prod-$(date +%Y%m%d-%H%M%S)" ${{ github.sha }}
+            git push origin --tags
+          else
+            echo "Deployment failed - Initiating rollback"
+            ./infrastructure/scripts/rollback.sh -e production -v ${{ github.sha }}
+            
+            # Create incident
+            curl -X POST ${{ secrets.PAGERDUTY_API }} \
+              -H "Content-Type: application/json" \
+              -d '{"incident": {"title": "Production deployment failed", "urgency": "high"}}'
+          fi
+
+      - name: Archive Deployment Artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: |
+            infrastructure/terraform/tfplan
+            /var/log/deployment_*.log
+          retention-days: 30
+
+      - name: Notify Team
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: 'prod-deployments'
+          slack-message: |
+            Deployment Status: ${{ job.status }}
+            Environment: Production
+            Commit: ${{ github.sha }}
+            Workflow: ${{ github.workflow }}
+            Details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
