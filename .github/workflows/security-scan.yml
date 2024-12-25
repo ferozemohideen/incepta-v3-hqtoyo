@@ -1,0 +1,206 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sundays
+  workflow_dispatch:  # Manual trigger
+
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+  packages: read
+
+env:
+  NODE_VERSION: '18'  # Matches engine requirements from package.json files
+  SNYK_SEVERITY_THRESHOLD: high
+  TRIVY_SEVERITY: 'CRITICAL,HIGH'
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd src/backend && npm ci
+          cd ../web && npm ci
+
+      - name: Run Snyk scan - Backend
+        uses: snyk/actions/node@v3
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --severity-threshold=${{ env.SNYK_SEVERITY_THRESHOLD }} --sarif-file-output=snyk-backend.sarif
+          file: src/backend/package.json
+
+      - name: Run Snyk scan - Frontend
+        uses: snyk/actions/node@v3
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --severity-threshold=${{ env.SNYK_SEVERITY_THRESHOLD }} --sarif-file-output=snyk-frontend.sarif
+          file: src/web/package.json
+
+      - name: Upload Snyk results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: snyk-*.sarif
+          category: dependency-vulnerabilities
+
+  code-analysis:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: ['javascript', 'typescript']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: code-scanning
+
+  container-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build backend image
+        run: docker build -t incepta-backend:${{ github.sha }} src/backend
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.11.2
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs.sarif'
+          severity: ${{ env.TRIVY_SEVERITY }}
+
+      - name: Run Trivy container scan
+        uses: aquasecurity/trivy-action@0.11.2
+        with:
+          image-ref: 'incepta-backend:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-container.sarif'
+          severity: ${{ env.TRIVY_SEVERITY }}
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: trivy-*.sarif
+          category: container-vulnerabilities
+
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: GitGuardian scan
+        uses: GitGuardian/ggshield-action@v1
+        env:
+          GITHUB_PUSH_BEFORE_SHA: ${{ github.event.before }}
+          GITHUB_PUSH_BASE_SHA: ${{ github.event.base }}
+          GITHUB_PULL_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+
+  security-report:
+    name: Generate Security Report
+    needs: [dependency-scan, code-analysis, container-scan, secret-scan]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Analyze workflow results
+        id: analysis
+        run: |
+          echo "Analyzing security scan results..."
+          if [[ "${{ needs.dependency-scan.result }}" == "failure" || \
+                "${{ needs.code-analysis.result }}" == "failure" || \
+                "${{ needs.container-scan.result }}" == "failure" || \
+                "${{ needs.secret-scan.result }}" == "failure" ]]; then
+            echo "::set-output name=status::failure"
+          else
+            echo "::set-output name=status::success"
+          fi
+
+      - name: Notify Slack on failure
+        if: steps.analysis.outputs.status == 'failure'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "attachments": [{
+                "color": "danger",
+                "title": "Security Scan Failed",
+                "text": "Critical security issues detected in ${{ github.repository }}",
+                "fields": [
+                  {
+                    "title": "Workflow",
+                    "value": "${{ github.workflow }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Commit",
+                    "value": "${{ github.sha }}",
+                    "short": true
+                  }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Send email notification for critical issues
+        if: steps.analysis.outputs.status == 'failure'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Critical Security Issues Detected - ${{ github.repository }}"
+          to: security-team@incepta.com
+          from: GitHub Actions
+          body: |
+            Critical security issues were detected in the latest scan.
+            Repository: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            Workflow: ${{ github.workflow }}
+            
+            Please review the security scan results immediately.
+
+      - name: Fail workflow on critical issues
+        if: steps.analysis.outputs.status == 'failure'
+        run: exit 1
