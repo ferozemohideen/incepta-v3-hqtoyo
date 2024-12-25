@@ -1,0 +1,222 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: incepta
+  namespace: default
+  labels:
+    app: incepta
+    environment: ${ENV}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "metrics"
+    prometheus.io/path: "/metrics"
+spec:
+  # API Server Deployment
+  selector:
+    matchLabels:
+      app: incepta
+      service: api-server
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: incepta
+        service: api-server
+    spec:
+      # Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      
+      # Pod Anti-Affinity
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - incepta
+              topologyKey: "kubernetes.io/hostname"
+      
+      # Container Specifications
+      containers:
+      - name: api-server
+        image: incepta/api-server:${TAG}
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        
+        # Resource Limits
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+        
+        # Health Checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        
+        # Volume Mounts
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: secrets-volume
+          mountPath: /app/secrets
+          readOnly: true
+        
+        # Environment Variables
+        envFrom:
+        - configMapRef:
+            name: incepta-config
+        - secretRef:
+            name: incepta-secrets
+      
+      # Scraper Service Container
+      - name: scraper-service
+        image: incepta/scraper:${TAG}
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        
+        # Resource Limits
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+        
+        # Health Checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        
+        # Volume Mounts
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: secrets-volume
+          mountPath: /app/secrets
+          readOnly: true
+        
+        # Environment Variables
+        envFrom:
+        - configMapRef:
+            name: incepta-config
+        - secretRef:
+            name: incepta-secrets
+      
+      # Volumes
+      volumes:
+      - name: config-volume
+        configMap:
+          name: incepta-config
+      - name: secrets-volume
+        secret:
+          secretName: incepta-secrets
+      
+      # Pod Configurations
+      terminationGracePeriodSeconds: 30
+      restartPolicy: Always
+      
+      # Service Account
+      serviceAccountName: incepta-sa
+      
+      # Security Policy
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+---
+# Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: incepta-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: incepta
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: incepta
+    ports:
+    - protocol: TCP
+      port: 3000
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 9090
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: incepta
+    ports:
+    - protocol: TCP
+      port: 3000
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 9090
