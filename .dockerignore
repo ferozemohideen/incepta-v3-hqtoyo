@@ -1,0 +1,84 @@
+node_modules
+.npm/
+.npmrc
+.yarnrc
+
+# Security-sensitive files
+**/*.key
+**/*.pem
+**/*.cert
+credentials.json
+.env*
+
+# Version control
+.git
+.gitignore
+
+# Documentation
+*.md
+CHANGELOG
+LICENSE
+
+# Development artifacts
+dist
+coverage
+.vscode
+.idea
+*.log
+.DS_Store
+**/*.map
+tmp/
+logs/
+.cache/
+
+# Test files
+tests
+**/*.test.ts
+**/*.spec.ts
+jest.config.js
+coverage/
+
+# Docker files
+Dockerfile*
+docker-compose*
+.docker
+
+# Build artifacts
+build/
+*.tsbuildinfo
+.eslintcache
+
+# Debug files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local development files
+.env.local
+.env.development
+.env.test
+.env.production
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE configurations
+.editorconfig
+.prettierrc
+.eslintrc
+tsconfig.json
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Dependency lock files (should be installed fresh)
+package-lock.json
+yarn.lock
+
+# Miscellaneous
+.dockerignore
+README.md
+CONTRIBUTING.md
