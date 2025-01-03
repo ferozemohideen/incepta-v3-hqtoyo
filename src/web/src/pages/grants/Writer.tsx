@@ -6,6 +6,7 @@ import { debounce } from 'lodash';
 import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant';
 import { useNotification } from '../../hooks/useNotification';
 import { grantService } from '../../services/grant.service';
+import { IGrant, IGrantApplication } from '../../components/grants/GrantWritingAssistant';
 
 // Interface for component state management
 interface WriterState {
@@ -72,7 +73,7 @@ const Writer: React.FC = () => {
    * Handle draft saving with debounce
    */
   const handleSaveDraft = useCallback(
-    debounce(async (applicationData: Partial<IGrantApplication>) => {
+    async (applicationData: IGrantApplication) => {
       try {
         if (!grantId) return;
 
@@ -81,7 +82,7 @@ const Writer: React.FC = () => {
         setState(prev => ({ ...prev, progress }));
 
         // Save draft
-        await grantService.saveDraft(grantId, applicationData);
+        await grantService.saveGrantDraft(grantId, applicationData);
         
         setState(prev => ({
           ...prev,
@@ -94,14 +95,14 @@ const Writer: React.FC = () => {
         showError('Failed to save draft');
         setState(prev => ({ ...prev, isDirty: true }));
       }
-    }, 1000),
+    },
     [grantId, showSuccess, showError]
   );
 
   /**
    * Handle application submission
    */
-  const handleSubmitApplication = useCallback(async (applicationData: Partial<IGrantApplication>) => {
+  const handleSubmitApplication = useCallback(async (applicationData: IGrantApplication) => {
     try {
       if (!grantId) return;
 
@@ -143,11 +144,11 @@ const Writer: React.FC = () => {
   /**
    * Calculate application progress
    */
-  const calculateProgress = (applicationData: Partial<IGrantApplication>): number => {
+  const calculateProgress = (applicationData: IGrantApplication): number => {
     if (!state.grant) return 0;
 
     const sections = state.grant.requirements.sections;
-    const completedSections = sections.filter(section => {
+    const completedSections = sections.filter((section: { id: string }) => {
       const content = applicationData.sections?.[section.id]?.content;
       return content && content.length > 0;
     });
