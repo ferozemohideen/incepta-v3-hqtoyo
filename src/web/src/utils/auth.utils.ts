@@ -8,7 +8,7 @@
  */
 
 import jwtDecode from 'jwt-decode'; // v3.1.2
-import { LoginCredentials, AuthTokens } from '../interfaces/auth.interface';
+import { AuthTokens } from '../interfaces/auth.interface';
 import { UserRole, AUTH_STORAGE_KEYS, TokenPayload, isValidUserRole } from '../constants/auth.constants';
 import { getLocalStorageItem, setLocalStorageItem } from './storage.utils';
 
@@ -44,7 +44,7 @@ export const isAuthenticated = (): boolean => {
     }
 
     // Validate token format and structure
-    if (!accessToken.split('.').length === 3) {
+    if (accessToken.split('.').length !== 3) {
       return false;
     }
 
@@ -55,7 +55,7 @@ export const isAuthenticated = (): boolean => {
 
     // Verify device binding
     const decodedToken = parseJwt<TokenPayload>(accessToken);
-    if (AUTH_CONFIG.DEVICE_BINDING && decodedToken.deviceId !== deviceId) {
+    if (AUTH_CONFIG.DEVICE_BINDING && decodedToken.sub !== deviceId) {
       return false;
     }
 
@@ -180,22 +180,6 @@ export const isTokenExpired = (token: string): boolean => {
     console.error('Token expiration check failed:', error);
     return true;
   }
-};
-
-/**
- * Validates token claims and security requirements
- * @param {TokenPayload} payload - Decoded token payload
- * @returns {boolean} Validation status
- */
-const validateTokenClaims = (payload: TokenPayload): boolean => {
-  return !!(
-    payload.sub &&
-    payload.role &&
-    payload.version &&
-    typeof payload.mfa === 'boolean' &&
-    payload.exp &&
-    payload.iat
-  );
 };
 
 /**
