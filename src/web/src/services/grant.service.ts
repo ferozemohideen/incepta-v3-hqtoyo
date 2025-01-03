@@ -11,9 +11,9 @@
  * - Retry logic for failed requests
  */
 
-import { apiService } from './api.service'; // ^1.0.0
+import { apiService } from './api.service';
 import { API_ENDPOINTS } from '../constants/api.constants';
-import retry from 'axios-retry'; // ^3.5.0
+import retry from 'axios-retry';
 import {
   IGrant,
   IGrantApplication,
@@ -68,7 +68,7 @@ class GrantServiceImpl implements GrantService {
   }
 
   /**
-   * Enhanced search for grants with caching and pagination
+   * Enhanced search for grants with caching
    */
   async searchGrants(params: IGrantSearchParams): Promise<IGrantResponse> {
     const cacheKey = `grants_search_${JSON.stringify(params)}`;
