@@ -92,8 +92,96 @@ export class MessageServiceImpl {
   }
 
   /**
-   * Encrypts sensitive message content
+   * Retrieves all message threads with pagination
    */
+  public async getThreads(page: number = 1, limit: number = 20): Promise<{ threads: MessageThread[]; total: number }> {
+    try {
+      return await apiService.get<{ threads: MessageThread[]; total: number }>(
+        `${this.baseUrl}/threads`,
+        { page, limit }
+      );
+    } catch (error) {
+      console.error('Failed to retrieve message threads:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves messages for a specific thread with pagination
+   */
+  public async getMessages(threadId: string, page: number = 1, limit: number = 50): Promise<Message[]> {
+    try {
+      const response = await apiService.get<Message[]>(
+        `${this.baseUrl}/thread/${threadId}/messages`,
+        { page, limit }
+      );
+
+      return response.map(message => ({
+        ...message,
+        content: message.type !== MessageType.SYSTEM 
+          ? this.decryptContent(message.content)
+          : message.content
+      }));
+    } catch (error) {
+      console.error('Failed to retrieve messages:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Marks messages as read and updates status
+   */
+  public async markAsRead(messageIds: string[]): Promise<void> {
+    try {
+      await apiService.put(`${this.baseUrl}/status/read`, { messageIds });
+      
+      if (this.socket.isConnected) {
+        messageIds.forEach(id => {
+          this.socket.sendMessage({
+            id,
+            type: MessageType.SYSTEM,
+            content: 'Message read',
+            status: MessageStatus.READ,
+            threadId: '',
+            senderId: '',
+            recipientId: '',
+            metadata: { documentUrl: '', fileName: '', fileSize: 0, contentType: '', uploadedAt: new Date() },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        });
+      }
+    } catch (error) {
+      console.error('Failed to mark messages as read:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Subscribes to real-time status updates for messages
+   */
+  public async subscribeToStatus(threadId: string, callback: (event: MessageEvent) => void): Promise<void> {
+    if (this.socket.isConnected) {
+      this.socket.on && this.socket.on(MessageEventType.MESSAGE_DELIVERED, callback);
+      this.socket.on && this.socket.on(MessageEventType.MESSAGE_READ, callback);
+    }
+  }
+
+  /**
+   * Gets unread message count for all threads
+   */
+  public async getUnreadCount(): Promise<number> {
+    try {
+      const response = await apiService.get<{ count: number }>(
+        `${this.baseUrl}/unread/count`
+      );
+      return response.count;
+    } catch (error) {
+      console.error('Failed to get unread message count:', error);
+      throw error;
+    }
+  }
+
   private encryptContent(content: string): string {
     const iv = CryptoJS.lib.WordArray.random(this.encryptionConfig.ivSize);
     const encrypted = CryptoJS.AES.encrypt(
@@ -107,9 +195,6 @@ export class MessageServiceImpl {
     return iv.concat(encrypted.ciphertext).toString(CryptoJS.enc.Base64);
   }
 
-  /**
-   * Decrypts message content
-   */
   private decryptContent(encryptedContent: string): string {
     const ciphertext = CryptoJS.enc.Base64.parse(encryptedContent);
     const iv = ciphertext.clone();
@@ -129,25 +214,18 @@ export class MessageServiceImpl {
     return decrypted.toString(CryptoJS.enc.Utf8);
   }
 
-  /**
-   * Sends a new message with encryption and delivery tracking
-   */
   public async sendMessage(message: Message): Promise<Message> {
     try {
-      // Encrypt message content if it's not a system message
       if (message.type !== MessageType.SYSTEM) {
         message.content = this.encryptContent(message.content);
       }
 
-      // Attempt real-time delivery via WebSocket
       if (this.socket.isConnected) {
         await this.socket.sendMessage(message);
       } else {
-        // Queue message for later delivery if offline
         this.messageQueue.push(message);
       }
 
-      // Persist message via REST API
       const response = await apiService.post<Message>(
         `${this.baseUrl}/send`,
         message
@@ -160,16 +238,12 @@ export class MessageServiceImpl {
     }
   }
 
-  /**
-   * Uploads and shares documents with optimized handling
-   */
   public async uploadDocument(
     file: File,
     threadId: string,
     options?: Partial<UploadOptions>
   ): Promise<Message> {
     try {
-      // Validate file
       if (file.size > this.uploadConfig.maxSize) {
         throw new Error('File size exceeds maximum allowed size');
       }
@@ -179,14 +253,12 @@ export class MessageServiceImpl {
         throw new Error('File type not allowed');
       }
 
-      // Create form data for upload
       const formData = new FormData();
       formData.append('file', file);
       formData.append('threadId', threadId);
       formData.append('generatePreview', 
         String(options?.generatePreview ?? this.uploadConfig.generatePreview));
 
-      // Upload document
       const response = await apiService.post<Message>(
         `${this.baseUrl}/documents`,
         formData,
@@ -197,7 +269,6 @@ export class MessageServiceImpl {
         }
       );
 
-      // Create and send document message
       const documentMessage: Message = {
         ...response,
         type: MessageType.DOCUMENT,
@@ -211,9 +282,6 @@ export class MessageServiceImpl {
     }
   }
 
-  /**
-   * Retrieves message thread with pagination
-   */
   public async getMessageThread(
     threadId: string,
     page: number = 1,
@@ -225,7 +293,6 @@ export class MessageServiceImpl {
         { page, limit }
       );
 
-      // Decrypt message contents
       response.messages = response.messages.map(message => ({
         ...message,
         content: message.type !== MessageType.SYSTEM 
@@ -240,9 +307,6 @@ export class MessageServiceImpl {
     }
   }
 
-  /**
-   * Updates message status and notifies participants
-   */
   private async updateMessageStatus(
     messageId: string,
     status: MessageStatus
@@ -271,22 +335,16 @@ export class MessageServiceImpl {
     }
   }
 
-  /**
-   * Handles incoming new messages
-   */
   private async handleNewMessage(event: MessageEvent): Promise<void> {
     try {
       const message = event.payload;
       
-      // Decrypt message content if needed
       if (message.type !== MessageType.SYSTEM) {
         message.content = this.decryptContent(message.content);
       }
 
-      // Update message status to delivered
       await this.updateMessageStatus(message.id, MessageStatus.DELIVERED);
 
-      // Trigger any UI updates or notifications here
     } catch (error) {
       console.error('Failed to handle new message:', error);
     }
