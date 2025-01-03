@@ -71,7 +71,7 @@ const initialState: TechnologyState = {
     page: 1,
     limit: 20,
     sortBy: 'title',
-    sortDirection: 'asc'
+    sortOrder: 'asc'
   },
   selectedTechnologyId: null,
   loading: {
