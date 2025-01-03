@@ -157,25 +157,3 @@ export const useTheme = () => {
     error
   };
 };
-```
-
-This implementation provides:
-
-1. Type-safe theme mode management with TypeScript enums
-2. Robust error handling with structured error reporting
-3. Performance optimizations:
-   - Debounced theme switching
-   - RAF for system preference sync
-   - Memoized callbacks
-4. System preference detection and synchronization
-5. Persistent storage with retry mechanism
-6. Clean integration with MUI v5 theme system
-7. Proper cleanup of timers and listeners
-8. Loading state for initial theme detection
-9. CSS variable updates for performance
-10. Comprehensive JSDoc documentation
-
-The hook can be used in components like:
-
-```typescript
-const { mode, toggleTheme, isDarkMode, isLoading, error } = useTheme();

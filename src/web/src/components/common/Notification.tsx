@@ -132,36 +132,3 @@ export const Notification: React.FC<NotificationProps> = ({
 
 // Default export for convenient importing
 export default Notification;
-```
-
-This implementation provides a robust, accessible, and production-ready notification component with the following features:
-
-1. Comprehensive TypeScript type safety with detailed interfaces
-2. Integration with Material UI's Snackbar and Alert components
-3. Support for different severity levels (success, error, warning, info)
-4. Configurable auto-dismiss functionality with cleanup
-5. Proper accessibility implementation with ARIA attributes
-6. Responsive design with mobile-specific styling
-7. Smooth animation transitions using Material UI's Slide component
-8. Integration with the application's notification management system
-9. Proper z-index management for stacked notifications
-10. Comprehensive error handling and cleanup
-
-The component follows all the requirements from the technical specification and integrates properly with the existing notification system through the useNotification hook. It implements proper accessibility features and follows Material Design guidelines for notifications.
-
-Usage example:
-```typescript
-// Success notification
-<Notification 
-  message="Changes saved successfully"
-  type="success"
-  duration={5000}
-/>
-
-// Error notification with custom position
-<Notification 
-  message="Failed to save changes"
-  type="error"
-  anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-  ariaLive="assertive"
-/>

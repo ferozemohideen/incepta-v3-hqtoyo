@@ -178,32 +178,3 @@ export const useNotification = (): UseNotificationReturn => {
     showInfo,
   };
 };
-```
-
-This implementation provides a comprehensive notification management hook with the following features:
-
-1. Full integration with Redux store for global state management
-2. Material UI theme integration with responsive styling
-3. Accessibility support with ARIA labels and proper contrast
-4. Automatic notification queuing and cleanup
-5. Window blur detection for improved UX
-6. Convenience methods for different notification types
-7. Customizable positioning and duration
-8. Type safety with TypeScript
-9. Proper animation handling with cleanup
-10. Memory leak prevention with timer cleanup
-
-The hook can be used throughout the application to show notifications with different severity levels and custom configurations while maintaining a consistent look and feel.
-
-Example usage:
-```typescript
-const { showSuccess, showError } = useNotification();
-
-// Show a success notification
-showSuccess('Operation completed successfully');
-
-// Show an error notification with custom options
-showError('Failed to save changes', {
-  autoHideDuration: 10000,
-  anchorOrigin: { vertical: 'top', horizontal: 'right' }
-});

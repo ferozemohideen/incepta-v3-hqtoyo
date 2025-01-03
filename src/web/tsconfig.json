@@ -56,12 +56,5 @@
     "dist",
     "build",
     "coverage"
-  ],
-  
-  // Project References
-  "references": [
-    {
-      "path": "./tsconfig.node.json"          // Reference to Node-specific config
-    }
   ]
 }
