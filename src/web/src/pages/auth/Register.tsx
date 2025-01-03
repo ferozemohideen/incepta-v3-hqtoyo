@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // v6.14.0
-import { ErrorBoundary } from 'react-error-boundary'; // v4.0.11
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary'; // v4.0.11
 import RegisterForm from '../../components/auth/RegisterForm';
 import AuthLayout from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
@@ -101,13 +101,7 @@ const Register: React.FC = () => {
   /**
    * Error boundary fallback component
    */
-  const ErrorFallback = useCallback(({ 
-    error,
-    resetErrorBoundary 
-  }: { 
-    error: Error; 
-    resetErrorBoundary: () => void;
-  }) => (
+  const ErrorFallback = useCallback(({ error, resetErrorBoundary }: FallbackProps) => (
     <AuthLayout title="Registration Error">
       <div role="alert">
         <h2>Something went wrong</h2>
@@ -133,6 +127,7 @@ const Register: React.FC = () => {
           onSuccess={handleRegistrationSuccess}
           onValidationError={handleValidationError}
           onDeviceFingerprint={handleDeviceFingerprint}
+          isLoading={isLoading}
           allowedRoles={[
             UserRole.ENTREPRENEUR,
             UserRole.RESEARCHER,
