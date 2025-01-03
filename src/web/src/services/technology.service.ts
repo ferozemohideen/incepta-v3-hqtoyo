@@ -16,7 +16,8 @@ import LRUCache from 'lru-cache'; // ^9.1.1
 import { 
   Technology, 
   TechnologySearchParams, 
-  isTechnology 
+  isTechnology,
+  TechnologyPermissions 
 } from '../interfaces/technology.interface';
 import { apiService } from './api.service';
 import { API_ENDPOINTS } from '../constants/api.constants';
@@ -57,6 +58,24 @@ class TechnologyService {
       updateAgeOnGet: true,
       allowStale: false
     });
+  }
+
+  /**
+   * Check permissions for a technology
+   * @param technology - Technology object to check permissions for
+   * @returns Technology permissions
+   */
+  checkPermissions(technology: Technology): TechnologyPermissions {
+    if (!technology || !technology.permissions) {
+      return {
+        canView: false,
+        canEdit: false,
+        canDelete: false,
+        canContact: false,
+        canDownload: false
+      };
+    }
+    return technology.permissions;
   }
 
   /**
