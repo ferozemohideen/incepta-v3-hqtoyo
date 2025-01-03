@@ -15,7 +15,7 @@
 
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'; // ^1.4.0
 import CircuitBreaker from 'opossum'; // ^7.1.0
-import cacheManager from 'cache-manager'; // ^5.2.0
+import { Cache, caching } from 'cache-manager'; // ^5.2.0
 
 import { apiConfig } from '../config/api.config';
 import { formatRequestUrl, handleApiError, retryRequest } from '../utils/api.utils';
@@ -27,15 +27,6 @@ interface ApiRequestConfig extends AxiosRequestConfig {
   cache?: boolean;
   priority?: number;
   retry?: boolean;
-}
-
-/**
- * Extended Axios request config with metadata
- */
-interface RequestConfigWithMetadata extends AxiosRequestConfig {
-  metadata?: {
-    startTime: Date;
-  };
 }
 
 /**
@@ -89,6 +80,7 @@ class RequestQueue {
       reject(error);
     }
 
+    // Add delay between requests for rate limiting
     await new Promise(resolve => setTimeout(resolve, 1000 / apiConfig.rateLimit.maxRequests));
     this.process();
   }
@@ -100,67 +92,82 @@ class RequestQueue {
 class ApiServiceImpl implements ApiService {
   private axiosInstance: AxiosInstance;
   private circuitBreaker: CircuitBreaker;
-  private cache: any;
+  private cache: Cache;
   private requestQueue: RequestQueue;
 
   constructor() {
+    // Initialize Axios instance with enhanced configuration
     this.axiosInstance = axios.create({
       baseURL: apiConfig.baseURL,
       timeout: apiConfig.timeout,
       headers: apiConfig.headers
     });
 
+    // Initialize request queue for rate limiting
     this.requestQueue = new RequestQueue();
 
+    // Initialize circuit breaker
     this.circuitBreaker = new CircuitBreaker(this.executeRequest.bind(this), {
       timeout: 30000,
       errorThresholdPercentage: 50,
       resetTimeout: 30000
     });
 
+    // Initialize cache
     this.initializeCache();
+
     this.setupInterceptors();
   }
 
+  /**
+   * Initialize cache asynchronously
+   */
   private async initializeCache(): Promise<void> {
-    this.cache = await cacheManager.memoryStore();
+    this.cache = await caching('memory', {
+      ttl: 300, // 5 minutes
+      max: 100
+    });
   }
 
   /**
    * Configure request and response interceptors
    */
   private setupInterceptors(): void {
+    // Request interceptor for authentication and request tracking
     this.axiosInstance.interceptors.request.use(
-      (config: RequestConfigWithMetadata) => {
+      (config) => {
+        // Add authentication token if available
         const token = localStorage.getItem('auth_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
 
-        config.metadata = { startTime: new Date() };
         return config;
       },
       (error) => Promise.reject(handleApiError(error))
     );
 
+    // Response interceptor for error handling and response transformation
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        const config = response.config as RequestConfigWithMetadata;
-        const duration = new Date().getTime() - (config.metadata?.startTime.getTime() || 0);
-        console.debug(`Request completed in ${duration}ms:`, config.url);
-
         return response.data;
       },
       (error) => Promise.reject(handleApiError(error))
     );
   }
 
+  /**
+   * Execute request through circuit breaker
+   */
   private async executeRequest<T>(
     config: AxiosRequestConfig
   ): Promise<T> {
     return this.axiosInstance.request(config);
   }
 
+  /**
+   * Handle GET requests with caching
+   */
   async get<T>(
     url: string,
     params?: Record<string, any>,
@@ -169,13 +176,15 @@ class ApiServiceImpl implements ApiService {
     const formattedUrl = formatRequestUrl(url, params);
     const cacheKey = `get:${formattedUrl}`;
 
+    // Check cache if enabled
     if (config.cache !== false) {
-      const cachedResponse = await this.cache.get(cacheKey);
+      const cachedResponse = await this.cache.get<T>(cacheKey);
       if (cachedResponse) {
-        return cachedResponse as T;
+        return cachedResponse;
       }
     }
 
+    // Queue request with priority
     const response = await this.requestQueue.add(
       () => retryRequest(() => 
         this.circuitBreaker.fire({
@@ -187,6 +196,7 @@ class ApiServiceImpl implements ApiService {
       config.priority || 1
     );
 
+    // Cache successful response
     if (config.cache !== false) {
       await this.cache.set(cacheKey, response);
     }
@@ -194,6 +204,9 @@ class ApiServiceImpl implements ApiService {
     return response;
   }
 
+  /**
+   * Handle POST requests
+   */
   async post<T>(
     url: string,
     data?: Record<string, any>,
@@ -212,6 +225,9 @@ class ApiServiceImpl implements ApiService {
     );
   }
 
+  /**
+   * Handle PUT requests
+   */
   async put<T>(
     url: string,
     data?: Record<string, any>,
@@ -230,6 +246,9 @@ class ApiServiceImpl implements ApiService {
     );
   }
 
+  /**
+   * Handle DELETE requests
+   */
   async delete<T>(
     url: string,
     config: ApiRequestConfig = {}
@@ -247,4 +266,5 @@ class ApiServiceImpl implements ApiService {
   }
 }
 
+// Export singleton instance
 export const apiService = new ApiServiceImpl();
