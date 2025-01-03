@@ -7,8 +7,18 @@
  */
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'; // ^1.9.5
-import { User, UserProfile, UserPreferences, UserSecurity, SecurityContext } from '../interfaces/user.interface';
+import { User, UserProfile, UserPreferences, UserSecurity } from '../interfaces/user.interface';
 import { userService } from '../services/user.service';
+
+/**
+ * Interface for security context validation
+ */
+interface SecurityContext {
+  valid: boolean;
+  timestamp: string;
+  deviceId: string;
+  userAgent: string;
+}
 
 /**
  * Enhanced interface for user slice state with security tracking
@@ -50,11 +60,6 @@ const SECURITY_AUDIT_LEVELS = {
   WARNING: 'warning',
   ERROR: 'error'
 } as const;
-
-/**
- * Maximum retry attempts for operations
- */
-const MAX_RETRY_ATTEMPTS = 3;
 
 /**
  * Async thunk for fetching user profile with enhanced security validation
