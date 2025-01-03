@@ -9,7 +9,8 @@ import {
   Tooltip,
   Alert,
   Chip,
-  Grid
+  Grid,
+  useTheme
 } from '@mui/material';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
@@ -82,8 +83,7 @@ export const GrantDetails: React.FC<GrantDetailsProps> = ({
       setError(null);
 
       const grantData = await grantService.getGrantById(activeGrantId);
-      // Temporarily set eligibility to true until the service method is implemented
-      const eligibilityCheck = true;
+      const eligibilityCheck = await grantService.checkEligibility(activeGrantId);
 
       if (mounted.current) {
         setGrant(grantData);
