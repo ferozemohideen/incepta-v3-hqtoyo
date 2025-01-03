@@ -16,24 +16,10 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs'; // ^3.4.0
 
 import { useAuth } from '../../hooks/useAuth';
 import { useForm } from '../../hooks/useForm';
-import { LoginCredentials } from '../../interfaces/auth.interface';
+import { LoginCredentials, AuthTokens, AuthError } from '../../interfaces/auth.interface';
 
 // Initialize fingerprint generator
 const fpPromise = FingerprintJS.load();
-
-interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  tokenType: string;
-  scope: string[];
-}
-
-interface AuthError {
-  message: string;
-  code?: string;
-  details?: Record<string, any>;
-}
 
 interface LoginFormProps {
   onSuccess: (tokens: AuthTokens) => void;
