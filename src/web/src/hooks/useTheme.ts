@@ -1,8 +1,8 @@
 // @mui/material v5.14.0
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useMediaQuery, useTheme as useMuiTheme } from '@mui/material';
-import { COLORS } from 'config/theme.config';
-import { getLocalStorageItem, setLocalStorageItem, StorageError } from 'utils/storage.utils';
+import { COLORS } from '../config/theme.config';
+import { getLocalStorageItem, setLocalStorageItem, StorageError } from '../utils/storage.utils';
 
 // Theme mode enumeration for type safety
 export enum ThemeMode {
@@ -36,9 +36,6 @@ export const useTheme = () => {
   // Refs for performance optimization
   const retryCount = useRef(0);
   const debounceTimer = useRef<number>();
-  
-  // MUI theme context
-  const muiTheme = useMuiTheme();
   
   // System preference detection
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)', {
@@ -138,6 +135,7 @@ export const useTheme = () => {
 
       return () => cancelAnimationFrame(frameId);
     }
+    return undefined;
   }, [mode, prefersDarkMode]);
 
   // Cleanup on unmount
