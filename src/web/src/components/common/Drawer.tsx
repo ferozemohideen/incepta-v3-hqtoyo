@@ -22,7 +22,7 @@ interface DrawerProps {
 /**
  * Styled drawer component with responsive width and enhanced transitions
  */
-const StyledDrawer = styled(Drawer)<{ drawerWidth?: number }>(({ theme, drawerWidth = 400 }) => ({
+const StyledDrawer = styled(Drawer)<{ drawerWidth: number }>(({ theme, drawerWidth }) => ({
   width: {
     xs: '100%',
     sm: drawerWidth,
