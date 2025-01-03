@@ -4,7 +4,7 @@ import { styled } from '@mui/material/styles';
 import { COLORS } from '../../config/theme.config';
 
 // Extended button props interface with enhanced accessibility and customization options
-export interface CustomButtonProps extends ButtonProps {
+export interface CustomButtonProps extends Omit<ButtonProps, 'variant' | 'color'> {
   loading?: boolean;
   size?: 'small' | 'medium' | 'large';
   variant?: 'text' | 'outlined' | 'contained' | 'tto';
@@ -25,7 +25,7 @@ const StyledButton = styled(Button, {
   isLoading?: boolean;
   hasStartIcon?: boolean;
   hasEndIcon?: boolean;
-}>(({ theme, variant, color, size, isLoading, hasStartIcon, hasEndIcon }) => ({
+}>(({ theme, variant: variantProp, size, isLoading, hasStartIcon, hasEndIcon }) => ({
   // Base styles following Material Design 3.0
   position: 'relative',
   minWidth: '64px',
@@ -54,7 +54,7 @@ const StyledButton = styled(Button, {
   }),
 
   // Variant-specific styles
-  ...(variant === 'tto' && {
+  ...(variantProp === 'tto' && {
     backgroundColor: COLORS.light.tto.license.available,
     color: '#fff',
     '&:hover': {
@@ -135,14 +135,17 @@ export const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProp
       }
     };
 
+    const buttonVariant = variant === 'tto' ? 'contained' : variant;
+    const buttonColor = color === 'tto' ? 'primary' : color;
+
     // Render button with proper accessibility attributes
     const button = (
       <StyledButton
         ref={ref}
         disabled={disabled || loading}
         size={size}
-        variant={variant}
-        color={color}
+        variant={buttonVariant}
+        color={buttonColor}
         fullWidth={fullWidth}
         startIcon={!loading && startIcon}
         endIcon={!loading && endIcon}
