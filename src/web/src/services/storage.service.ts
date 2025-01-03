@@ -221,7 +221,7 @@ export class StorageService {
   /**
    * Validates file type against security whitelist
    */
-  private async validateFileType(file: File): Promise<boolean> {
+  public async validateFileType(file: File): Promise<boolean> {
     return this.allowedFileTypes.has(file.type);
   }
 
