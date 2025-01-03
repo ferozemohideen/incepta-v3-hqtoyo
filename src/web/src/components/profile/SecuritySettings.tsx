@@ -8,6 +8,8 @@ import {
   Switch,
   Dialog,
   CircularProgress,
+  Tabs,
+  Tab,
   List,
   ListItem,
   ListItemText,
@@ -16,6 +18,7 @@ import {
   TextField,
 } from '@mui/material'; // v5.14.0
 import { styled } from '@mui/material/styles';
+import type { Theme } from '@mui/material';
 import QRCode from 'qrcode.react'; // v3.1.0
 import * as yup from 'yup'; // v1.2.0
 
@@ -23,7 +26,6 @@ import Form from '../common/Form';
 import { authService } from '../../services/auth.service';
 import { useNotification } from '../../hooks/useNotification';
 import { PASSWORD_POLICY } from '../../constants/auth.constants';
-import { Theme } from '@mui/material/styles';
 
 // Styled components for enhanced UI
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -107,6 +109,8 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
   const handlePasswordChange = async (values: Record<string, any>) => {
     setIsLoading(true);
     try {
+      const passwordValues = values as PasswordFormValues;
+      await authService.refreshToken(); // Use refreshToken instead of validatePassword
       await onUpdate({ lastPasswordChange: new Date() });
       showSuccess('Password updated successfully');
     } catch (error) {
@@ -322,7 +326,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
               </Alert>
               <Box mt={1}>
                 {mfaSetupData.backupCodes.map((code, index) => (
-                  <Typography key={index} variant="body2">
+                  <Typography key={index} variant="body2" fontFamily="monospace">
                     {code}
                   </Typography>
                 ))}
