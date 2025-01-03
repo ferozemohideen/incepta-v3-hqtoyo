@@ -100,9 +100,6 @@ const TechnologyGrid = memo(({
       previousPage: 'Previous page of technologies',
       firstPage: 'First page of technologies',
       lastPage: 'Last page of technologies',
-      pageSize: 'Select page size',
-      pageNumber: 'Go to page',
-      currentPage: 'Current page',
     },
   };
 
@@ -197,7 +194,7 @@ const TechnologyGrid = memo(({
         </Box>
 
         {/* Pagination controls */}
-        {totalCount > paginationConfig.initialPageSize! && (
+        {totalCount > (paginationConfig.initialPageSize || 0) && (
           <Box
             sx={{
               display: 'flex',
@@ -214,7 +211,7 @@ const TechnologyGrid = memo(({
               showLastButton={paginationConfig.showFirstLast}
               disabled={loading}
               aria-label="Technology pagination"
-              getItemAriaLabel={(type, page) => paginationConfig.ariaLabels![type] || `Go to page ${page}`}
+              getItemAriaLabel={(type, page) => (paginationConfig.ariaLabels?.[type] || `Go to page ${page}`)}
             />
           </Box>
         )}
