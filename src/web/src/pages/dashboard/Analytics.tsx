@@ -53,25 +53,21 @@ const Analytics: React.FC = () => {
       title: 'User Engagement',
       description: 'Active users, retention rates, and growth metrics',
       visible: ['admin', 'tto'].includes(user?.role || ''),
-      refreshInterval: REFRESH_INTERVALS.STANDARD,
     },
     technologyMetrics: {
       title: 'Technology Performance',
       description: 'Listing views, matches, and licensing metrics',
       visible: true,
-      refreshInterval: REFRESH_INTERVALS.REAL_TIME,
     },
     grantMetrics: {
       title: 'Grant Analytics',
       description: 'Application success rates and funding metrics',
       visible: true,
-      refreshInterval: REFRESH_INTERVALS.STANDARD,
     },
     matchingMetrics: {
       title: 'Matching Analytics',
       description: 'Technology-entrepreneur matching success rates',
       visible: true,
-      refreshInterval: REFRESH_INTERVALS.SLOW,
     },
   }), [user?.role]);
 
@@ -101,14 +97,14 @@ const Analytics: React.FC = () => {
     fetchAnalyticsData();
 
     // Set up different refresh intervals for different metrics
-    const intervals = Object.values(metricsConfig)
-      .filter(config => config.visible)
-      .map(config => {
-        return setInterval(fetchAnalyticsData, config.refreshInterval);
-      });
+    const intervals = [
+      setInterval(fetchAnalyticsData, REFRESH_INTERVALS.REAL_TIME),
+      setInterval(fetchAnalyticsData, REFRESH_INTERVALS.STANDARD),
+      setInterval(fetchAnalyticsData, REFRESH_INTERVALS.SLOW)
+    ];
 
     return () => intervals.forEach(interval => clearInterval(interval));
-  }, [fetchAnalyticsData, metricsConfig]);
+  }, [fetchAnalyticsData]);
 
   // Handle error display
   const handleError = useCallback((error: Error) => {
@@ -145,7 +141,6 @@ const Analytics: React.FC = () => {
                   description={metricsConfig.userMetrics.description}
                   data={analyticsData?.userMetrics || []}
                   loading={loading}
-                  refreshInterval={metricsConfig.userMetrics.refreshInterval}
                   onError={handleError}
                 />
               </Grid>
@@ -158,7 +153,6 @@ const Analytics: React.FC = () => {
                 description={metricsConfig.technologyMetrics.description}
                 data={analyticsData?.technologyMetrics || []}
                 loading={loading}
-                refreshInterval={metricsConfig.technologyMetrics.refreshInterval}
                 onError={handleError}
               />
             </Grid>
@@ -170,7 +164,6 @@ const Analytics: React.FC = () => {
                 description={metricsConfig.grantMetrics.description}
                 data={analyticsData?.grantMetrics || []}
                 loading={loading}
-                refreshInterval={metricsConfig.grantMetrics.refreshInterval}
                 onError={handleError}
               />
             </Grid>
@@ -182,7 +175,6 @@ const Analytics: React.FC = () => {
                 description={metricsConfig.matchingMetrics.description}
                 data={analyticsData?.matchingMetrics || []}
                 loading={loading}
-                refreshInterval={metricsConfig.matchingMetrics.refreshInterval}
                 onError={handleError}
               />
             </Grid>
