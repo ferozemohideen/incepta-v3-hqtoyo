@@ -137,12 +137,11 @@ const MainLayout: React.FC<MainLayoutProps> = React.memo(({
 
       {/* Main Content */}
       <ContentContainer
-        component="main"
-        id="main-content"
         sidebarOpen={sidebarOpen && !disableSidebar}
         isMobile={isMobile}
         role="main"
         tabIndex={-1}
+        id="main-content"
       >
         {children}
       </ContentContainer>
