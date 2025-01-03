@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = memo(({
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -117,13 +117,13 @@ const Sidebar: React.FC<SidebarProps> = memo(({
 
   // Handle navigation with drawer state management
   const handleNavigate = useCallback((path: string, isNested: boolean = false) => {
-    if (!isAuthenticated) return;
+    if (!user) return;
     
     navigate(path);
     if (isMobile && !isNested) {
       onClose();
     }
-  }, [navigate, isMobile, isAuthenticated, onClose]);
+  }, [navigate, isMobile, user, onClose]);
 
   // Toggle nested items
   const handleExpandClick = useCallback((path: string) => {
@@ -136,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = memo(({
 
   // Filter navigation items based on user role
   const filteredItems = navigationItems.filter(item => 
-    (!item.requiresAuth || isAuthenticated) &&
+    (!item.requiresAuth || user) &&
     (user?.role ? item.roles.includes(user.role) : !item.requiresAuth)
   );
 
