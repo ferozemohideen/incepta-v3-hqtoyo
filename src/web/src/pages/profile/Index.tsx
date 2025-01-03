@@ -24,7 +24,7 @@ const ProfilePage: React.FC = () => {
   // Fetch user profile on mount
   useEffect(() => {
     const deviceId = window.navigator.userAgent;
-    dispatch(fetchUserProfile(deviceId))
+    dispatch(fetchUserProfile(deviceId) as any)
       .unwrap()
       .catch((error: Error) => {
         showError('Failed to load profile: ' + error.message);
@@ -67,7 +67,7 @@ const ProfilePage: React.FC = () => {
       await dispatch(updateUserProfile({
         profileData: sanitizedData,
         version: currentUser.profile.version,
-      })).unwrap();
+      }) as any).unwrap();
 
       showSuccess('Profile updated successfully');
     } catch (error) {
