@@ -6,10 +6,10 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Box, Paper, CircularProgress, Alert } from '@mui/material';
-import { Message, MessageType, MessageStatus, MessageThread } from '../../interfaces/message.interface';
+import { Message, MessageStatus } from '../../interfaces/message.interface';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import useWebSocket from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 /**
  * Props interface for ChatBox component
@@ -29,9 +29,9 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
   recipientId 
 }) => {
   // State management
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [messageDeliveryStatus, setMessageDeliveryStatus] = useState<Record<string, MessageStatus>>({});
+  const [, setMessageDeliveryStatus] = useState<Record<string, MessageStatus>>({});
 
   // Refs for managing component lifecycle
   const messageEndRef = useRef<HTMLDivElement>(null);
@@ -40,10 +40,9 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
   // WebSocket connection for real-time updates
   const { 
     isConnected, 
-    connectionState, 
     sendMessage: sendWebSocketMessage 
   } = useWebSocket(
-    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
+    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
 
   /**
@@ -159,7 +158,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
             threadId={threadId}
             currentUserId={currentUserId}
             onMessageReceived={handleMessageReceived}
-            onMessagesViewed={handleMessagesViewed}
           />
           <div ref={messageEndRef} />
         </Box>
