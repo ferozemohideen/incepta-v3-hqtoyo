@@ -10,9 +10,7 @@ import {
   MessageThread,
   MessageType,
   MessageStatus,
-  MessageEvent,
-  MessageEventType,
-  DocumentMetadata
+  MessageMetadata
 } from '../interfaces/message.interface';
 import { messageService } from '../services/message.service';
 
@@ -28,7 +26,7 @@ interface MessageState {
   unreadCount: number;
   drafts: Map<string, Message>;
   offlineQueue: Message[];
-  documentUploads: Map<string, DocumentMetadata>;
+  documentUploads: Map<string, MessageMetadata>;
 }
 
 /**
@@ -51,10 +49,9 @@ const initialState: MessageState = {
  */
 export const fetchThreads = createAsyncThunk(
   'messages/fetchThreads',
-  async ({ page, limit, forceRefresh = false }: { 
+  async ({ page, limit }: { 
     page: number; 
-    limit: number; 
-    forceRefresh?: boolean;
+    limit: number;
   }) => {
     try {
       const response = await messageService.getThreads(page, limit);
@@ -215,7 +212,7 @@ const messageSlice = createSlice({
         state.loading = false;
         state.threads = action.payload;
         state.unreadCount = action.payload.reduce(
-          (count, thread) => count + thread.unreadCount, 
+          (count: number, thread: MessageThread) => count + thread.unreadCount, 
           0
         );
       })
