@@ -59,9 +59,12 @@ const ResetPassword: React.FC = React.memo(() => {
       }
 
       try {
-        // Token validation is handled by the form component
-        setIsTokenValid(true);
-        setIsValidating(false);
+        // Since validateResetToken is not available in useAuth, we'll set token as valid
+        // This should be replaced with actual token validation when the API is available
+        if (isActive) {
+          setIsTokenValid(true);
+          setIsValidating(false);
+        }
       } catch (err) {
         if (isActive) {
           setValidationError(
@@ -81,7 +84,7 @@ const ResetPassword: React.FC = React.memo(() => {
   }, [token, email]);
 
   // Show loading state while validating token
-  if (loading.validateToken || isValidating) {
+  if (loading['validateToken'] || isValidating) {
     return (
       <AuthLayout 
         title="Reset Password" 
