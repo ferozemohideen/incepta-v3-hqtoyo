@@ -65,13 +65,27 @@ export const formatDate = (
       throw new Error(DATE_ERRORS.INVALID_DATE);
     }
 
-    // Format the date
-    const formattedDate = format(dateObj, formatString, {
-      locale: require(`date-fns/locale/${locale}`),
-    });
+    // Validate timezone if provided
+    if (timezone && !Intl.supportedValuesOf('timeZone').includes(timezone)) {
+      throw new Error(DATE_ERRORS.INVALID_TIMEZONE);
+    }
+
+    // Format the date with timezone consideration
+    const formattedDate = timezone 
+      ? new Intl.DateTimeFormat(locale, {
+          timeZone: timezone,
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric'
+        }).format(dateObj)
+      : format(dateObj, formatString, {
+          locale: require(`date-fns/locale/${locale}`),
+        });
 
     // Add ARIA attributes for accessibility
-    return `<time datetime="${dateObj.toISOString()}"${timezone ? ` data-timezone="${timezone}"` : ''} aria-label="${formattedDate}">${formattedDate}</time>`;
+    return `<time datetime="${dateObj.toISOString()}" aria-label="${formattedDate}">${formattedDate}</time>`;
   } catch (error) {
     console.error('Date formatting error:', error);
     throw error;
@@ -156,6 +170,11 @@ export const formatMessageTime = (
       throw new Error(DATE_ERRORS.INVALID_DATE);
     }
 
+    // Validate timezone if provided
+    if (timezone && !Intl.supportedValuesOf('timeZone').includes(timezone)) {
+      throw new Error(DATE_ERRORS.INVALID_TIMEZONE);
+    }
+
     const now = new Date();
     const timeFormat = use24Hour ? DEFAULT_FORMATS.TIME_24H : DEFAULT_FORMATS.TIME_12H;
     let formattedTime: string;
@@ -163,20 +182,53 @@ export const formatMessageTime = (
     // Determine display format based on date
     if (isSameDay(timestampDate, now)) {
       // Today: show only time
-      formattedTime = format(timestampDate, timeFormat);
+      formattedTime = timezone
+        ? new Intl.DateTimeFormat('en-US', {
+            timeZone: timezone,
+            hour: use24Hour ? '2-digit' : 'numeric',
+            minute: '2-digit',
+            hour12: !use24Hour
+          }).format(timestampDate)
+        : format(timestampDate, timeFormat);
     } else if (isYesterday(timestampDate, now)) {
       // Yesterday: show "Yesterday" + time
-      formattedTime = `Yesterday at ${format(timestampDate, timeFormat)}`;
+      const timeStr = timezone
+        ? new Intl.DateTimeFormat('en-US', {
+            timeZone: timezone,
+            hour: use24Hour ? '2-digit' : 'numeric',
+            minute: '2-digit',
+            hour12: !use24Hour
+          }).format(timestampDate)
+        : format(timestampDate, timeFormat);
+      formattedTime = `Yesterday at ${timeStr}`;
     } else if (isWithinWeek(timestampDate, now)) {
       // Within last week: show day name + time
-      formattedTime = format(timestampDate, `EEEE 'at' ${timeFormat}`);
+      formattedTime = timezone
+        ? new Intl.DateTimeFormat('en-US', {
+            timeZone: timezone,
+            weekday: 'long',
+            hour: use24Hour ? '2-digit' : 'numeric',
+            minute: '2-digit',
+            hour12: !use24Hour
+          }).format(timestampDate)
+        : format(timestampDate, `EEEE 'at' ${timeFormat}`);
     } else {
       // Older: show full date and time
-      formattedTime = format(timestampDate, DEFAULT_FORMATS.DATETIME);
+      formattedTime = timezone
+        ? new Intl.DateTimeFormat('en-US', {
+            timeZone: timezone,
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: use24Hour ? '2-digit' : 'numeric',
+            minute: '2-digit',
+            hour12: !use24Hour
+          }).format(timestampDate)
+        : format(timestampDate, DEFAULT_FORMATS.DATETIME);
     }
 
-    // Add ARIA attributes for accessibility with timezone data attribute
-    return `<time datetime="${timestampDate.toISOString()}"${timezone ? ` data-timezone="${timezone}"` : ''} aria-label="${formattedTime}">${formattedTime}</time>`;
+    // Add ARIA attributes for accessibility
+    return `<time datetime="${timestampDate.toISOString()}" aria-label="${formattedTime}">${formattedTime}</time>`;
   } catch (error) {
     console.error('Message time formatting error:', error);
     throw error;
