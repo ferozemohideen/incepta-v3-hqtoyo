@@ -10,7 +10,7 @@ import {
   Box,
   Typography,
   Checkbox,
-  FormControlLabel
+  FormControlLabel,
 } from '@mui/material'; // v5.14.0
 import { styled } from '@mui/material/styles'; // v5.14.0
 import zxcvbn from 'zxcvbn'; // v4.4.2
@@ -136,7 +136,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   }, []);
 
   // Handle form submission
-  const handleSubmit = async (values: Record<string, any>, formActions: any) => {
+  const handleSubmit = async (values: Record<string, any>) => {
     try {
       setIsSubmitting(true);
 
@@ -213,7 +213,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               className="strength-indicator"
               style={{
                 width: `${(passwordStrength + 1) * 20}%`,
-                backgroundColor: strengthColors[passwordStrength],
+                backgroundColor: strengthColors[passwordStrength] || strengthColors[0],
               }}
             />
           </div>
