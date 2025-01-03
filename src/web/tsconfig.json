@@ -4,7 +4,12 @@
     "target": "ESNext",                          // Latest ECMAScript features
     "lib": ["DOM", "DOM.Iterable", "ESNext"],    // Required libraries for web development
     "jsx": "react-jsx",                          // React 17+ JSX transform
-    "useDefineForClassFields": true,             // Use define semantics for class fields
+    "useDefineForClassFields": true,  
+    "types": [
+    "node",
+    "jest"
+], 
+              // Use define semantics for class fields
     
     // Modules
     "module": "ESNext",                          // Modern module system
