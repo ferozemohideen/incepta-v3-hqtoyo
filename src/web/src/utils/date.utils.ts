@@ -71,7 +71,7 @@ export const formatDate = (
     });
 
     // Add ARIA attributes for accessibility
-    return `<time datetime="${dateObj.toISOString()}" aria-label="${formattedDate}">${formattedDate}</time>`;
+    return `<time datetime="${dateObj.toISOString()}"${timezone ? ` data-timezone="${timezone}"` : ''} aria-label="${formattedDate}">${formattedDate}</time>`;
   } catch (error) {
     console.error('Date formatting error:', error);
     throw error;
@@ -175,8 +175,8 @@ export const formatMessageTime = (
       formattedTime = format(timestampDate, DEFAULT_FORMATS.DATETIME);
     }
 
-    // Add ARIA attributes for accessibility
-    return `<time datetime="${timestampDate.toISOString()}" aria-label="${formattedTime}">${formattedTime}</time>`;
+    // Add ARIA attributes for accessibility with timezone data attribute
+    return `<time datetime="${timestampDate.toISOString()}"${timezone ? ` data-timezone="${timezone}"` : ''} aria-label="${formattedTime}">${formattedTime}</time>`;
   } catch (error) {
     console.error('Message time formatting error:', error);
     throw error;
