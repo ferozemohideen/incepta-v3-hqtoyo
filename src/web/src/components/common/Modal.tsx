@@ -127,7 +127,6 @@ export const Modal: React.FC<ModalProps> = ({
     if (!open) {
       return () => {};
     }
-    
     document.addEventListener('keydown', handleEscapeKey);
     return () => {
       document.removeEventListener('keydown', handleEscapeKey);
