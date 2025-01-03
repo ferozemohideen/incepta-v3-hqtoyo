@@ -8,7 +8,7 @@ import { useTheme } from '../../hooks/useTheme';
 interface TabItem {
   label: string;
   value: string | number;
-  icon?: React.ReactNode;
+  icon?: React.ReactElement;
   disabled?: boolean;
 }
 
@@ -22,7 +22,7 @@ interface TabsProps {
   className?: string;
   ariaLabel?: string;
   centered?: boolean;
-  scrollButtons?: 'auto' | 'desktop' | 'on' | 'off';
+  scrollButtons?: boolean | 'auto';
 }
 
 /**
@@ -58,7 +58,6 @@ export const CustomTabs: React.FC<TabsProps> = React.memo(({
   // Theme and responsive hooks
   const { isDarkMode } = useTheme();
   const isMobile = useMediaQuery(lightTheme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(lightTheme.breakpoints.between('sm', 'md'));
   
   // Refs for touch interaction handling
   const touchStartX = useRef<number>(0);
