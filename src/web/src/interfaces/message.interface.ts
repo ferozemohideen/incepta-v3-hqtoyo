@@ -35,7 +35,7 @@ export enum MessageEventType {
 /**
  * Interface for document message metadata including file details and tracking
  */
-export interface MessageMetadata {
+export interface DocumentMetadata {
   /**
    * Secure URL for accessing the shared document
    */
@@ -105,7 +105,7 @@ export interface Message {
   /**
    * Additional metadata, required for DOCUMENT type messages
    */
-  metadata: MessageMetadata;
+  metadata: DocumentMetadata;
 
   /**
    * Timestamp when the message was created
