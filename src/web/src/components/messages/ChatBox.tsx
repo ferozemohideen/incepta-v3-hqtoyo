@@ -29,9 +29,8 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
   recipientId 
 }) => {
   // State management
-  const [isLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [, setMessageDeliveryStatus] = useState<Record<string, MessageStatus>>({});
+  const [messageDeliveryStatus] = useState<Record<string, MessageStatus>>({});
 
   // Refs for managing component lifecycle
   const messageEndRef = useRef<HTMLDivElement>(null);
@@ -50,12 +49,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
    */
   const handleMessageReceived = useCallback(async (message: Message) => {
     try {
-      // Update delivery status
-      setMessageDeliveryStatus(prev => ({
-        ...prev,
-        [message.id]: MessageStatus.DELIVERED
-      }));
-
       // Track unread messages
       if (message.senderId !== currentUserId) {
         unreadMessagesRef.current.add(message.id);
@@ -77,11 +70,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
    */
   const handleMessageSent = useCallback(async (message: Message) => {
     try {
-      setMessageDeliveryStatus(prev => ({
-        ...prev,
-        [message.id]: MessageStatus.SENT
-      }));
-
       if (isConnected) {
         await sendWebSocketMessage(message);
       }
@@ -110,21 +98,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
       document.removeEventListener('keydown', handleKeyboardNavigation);
     };
   }, [handleKeyboardNavigation]);
-
-  /**
-   * Marks messages as read when they become visible
-   */
-  const handleMessagesViewed = useCallback((messageIds: string[]) => {
-    messageIds.forEach(id => {
-      if (unreadMessagesRef.current.has(id)) {
-        setMessageDeliveryStatus(prev => ({
-          ...prev,
-          [id]: MessageStatus.READ
-        }));
-        unreadMessagesRef.current.delete(id);
-      }
-    });
-  }, []);
 
   /**
    * Handles errors during message operations
@@ -171,14 +144,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
           />
         </Box>
 
-        {isLoading && (
-          <Box sx={styles.loadingOverlay}>
-            <CircularProgress 
-              aria-label="Loading messages"
-            />
-          </Box>
-        )}
-
         {error && (
           <Alert 
             severity="error" 
@@ -219,18 +184,6 @@ const styles = {
     borderTop: '1px solid',
     borderColor: 'divider',
     backgroundColor: 'background.paper'
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    zIndex: 1
   },
   connectionAlert: {
     position: 'absolute',
