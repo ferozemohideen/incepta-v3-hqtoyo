@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Typography, Stack, Chip, Skeleton, Tooltip } from '@mui/material';
-import { useAnalytics } from '@mixpanel/browser';
+// TODO: Uncomment after @mixpanel/browser is installed
+// import { useAnalytics } from '@mixpanel/browser';
 import CustomCard from '../common/Card';
 import CustomButton from '../common/Button';
 import { Technology } from '../../interfaces/technology.interface';
@@ -53,48 +54,51 @@ export const TechnologyMatchCard: React.FC<TechnologyMatchCardProps> = ({
   const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [isContactLoading, setIsContactLoading] = useState(false);
 
-  // Analytics tracking
-  const analytics = useAnalytics();
+  // Analytics tracking - temporarily disabled until @mixpanel/browser is installed
+  // const analytics = useAnalytics();
 
   // Action handlers with loading states
   const handleView = useCallback(async () => {
     try {
       setIsViewLoading(true);
-      analytics.track('Technology Viewed', {
-        technologyId: technology.id,
-        matchScore,
-      });
+      // Temporarily disabled analytics tracking
+      // analytics.track('Technology Viewed', {
+      //   technologyId: technology.id,
+      //   matchScore,
+      // });
       await onView(technology.id);
     } finally {
       setIsViewLoading(false);
     }
-  }, [technology.id, matchScore, onView, analytics]);
+  }, [technology.id, matchScore, onView]);
 
   const handleSave = useCallback(async () => {
     try {
       setIsSaveLoading(true);
-      analytics.track('Technology Saved', {
-        technologyId: technology.id,
-        matchScore,
-      });
+      // Temporarily disabled analytics tracking
+      // analytics.track('Technology Saved', {
+      //   technologyId: technology.id,
+      //   matchScore,
+      // });
       await onSave(technology.id);
     } finally {
       setIsSaveLoading(false);
     }
-  }, [technology.id, matchScore, onSave, analytics]);
+  }, [technology.id, matchScore, onSave]);
 
   const handleContact = useCallback(async () => {
     try {
       setIsContactLoading(true);
-      analytics.track('TTO Contacted', {
-        technologyId: technology.id,
-        university: technology.university,
-      });
+      // Temporarily disabled analytics tracking
+      // analytics.track('TTO Contacted', {
+      //   technologyId: technology.id,
+      //   university: technology.university,
+      // });
       await onContact(technology.id);
     } finally {
       setIsContactLoading(false);
     }
-  }, [technology.id, technology.university, onContact, analytics]);
+  }, [technology.id, technology.university, onContact]);
 
   // Render loading skeleton
   if (isLoading) {
