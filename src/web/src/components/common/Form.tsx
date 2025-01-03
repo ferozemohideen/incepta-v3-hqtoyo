@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Box, Paper, CircularProgress } from '@mui/material'; // v5.14.0
-import { styled, useTheme } from '@mui/material/styles'; // v5.14.0
+import { Box, CircularProgress } from '@mui/material'; // Removed unused Paper import
+import { styled } from '@mui/material/styles'; // Removed unused useTheme import
 import { useForm } from '../../hooks/useForm';
 import Input from './Input';
 
@@ -64,7 +64,7 @@ interface FormAccessibilityLabels {
 // Enhanced form props interface
 interface FormProps {
   initialValues: Record<string, any>;
-  validationSchema: object;
+  validationSchema: Record<string, any>; // Updated type to match useForm expectations
   onSubmit: (values: Record<string, any>, formActions: FormActions) => void | Promise<void>;
   children: React.ReactNode;
   className?: string;
@@ -93,7 +93,6 @@ export const Form: React.FC<FormProps> = ({
   securityOptions = {},
   accessibilityLabels = {},
 }) => {
-  const theme = useTheme();
   const formRef = useRef<HTMLFormElement>(null);
   const announcerRef = useRef<HTMLDivElement>(null);
 
@@ -108,11 +107,10 @@ export const Form: React.FC<FormProps> = ({
     setFieldValue,
     setFieldTouched,
     resetForm,
-    securityStatus,
   } = useForm({
     initialValues,
     validationSchema,
-    onSubmit: async (formValues, context) => {
+    onSubmit: async (formValues) => {
       try {
         await onSubmit(formValues, {
           setSubmitting: (isSubmitting) => setFieldValue('isSubmitting', isSubmitting),
@@ -169,12 +167,12 @@ export const Form: React.FC<FormProps> = ({
       if (child.type === Input) {
         const name = child.props.name;
         return React.cloneElement(child, {
-          value: values[name] || '',
           onChange: handleChange,
           error: touched[name] ? errors[name] : undefined,
           onBlur: () => setFieldTouched(name, true),
           'aria-invalid': touched[name] && !!errors[name],
           'aria-describedby': `${name}-error`,
+          value: values[name] || '',
         });
       }
 
