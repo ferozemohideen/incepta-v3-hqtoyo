@@ -54,7 +54,7 @@ export const Notification: React.FC<NotificationProps> = ({
   const { showNotification, hideNotification } = useNotification();
 
   // Handle notification close event
-  const handleClose = useCallback((event?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleClose = useCallback((_event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return;
     }
@@ -70,9 +70,9 @@ export const Notification: React.FC<NotificationProps> = ({
         handleClose();
       }, duration);
 
-      // Cleanup timer on unmount
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [duration, handleClose]);
 
   // Show notification when component mounts
