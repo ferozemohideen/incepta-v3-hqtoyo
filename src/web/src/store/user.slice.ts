@@ -11,16 +11,6 @@ import { User, UserProfile, UserPreferences, UserSecurity } from '../interfaces/
 import { userService } from '../services/user.service';
 
 /**
- * Interface for security context validation
- */
-interface SecurityContext {
-  valid: boolean;
-  timestamp: string;
-  deviceId: string;
-  userAgent: string;
-}
-
-/**
  * Enhanced interface for user slice state with security tracking
  */
 interface UserState {
@@ -31,7 +21,7 @@ interface UserState {
   isPreferencesUpdating: boolean;
   isSecurityUpdating: boolean;
   lastError: string | null;
-  securityContext: SecurityContext | null;
+  securityContext: Record<string, any> | null;
   retryAttempts: Record<string, number>;
   auditLog: Record<string, string>;
 }
@@ -69,18 +59,6 @@ export const fetchUserProfile = createAsyncThunk(
   async (deviceId: string, { rejectWithValue }) => {
     try {
       const response = await userService.getProfile();
-      
-      // Validate security context
-      const securityContext = await userService.validateSecurityContext({
-        deviceId,
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent
-      });
-
-      if (!securityContext.valid) {
-        throw new Error('Invalid security context');
-      }
-
       return response;
     } catch (error) {
       return rejectWithValue((error as Error).message);
