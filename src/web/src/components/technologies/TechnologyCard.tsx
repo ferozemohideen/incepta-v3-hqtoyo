@@ -51,7 +51,7 @@ const MetadataContainer = styled('div')(({ theme }) => ({
   alignItems: 'center',
 }));
 
-const TruncatedTypography = styled(Typography)(({ theme }) => ({
+const TruncatedTypography = styled(Typography)(() => ({
   display: '-webkit-box',
   WebkitLineClamp: 3,
   WebkitBoxOrient: 'vertical',
@@ -62,8 +62,8 @@ const TruncatedTypography = styled(Typography)(({ theme }) => ({
 /**
  * Helper function to get patent status color
  */
-const getPatentStatusColor = (status: PatentStatus): string => {
-  const statusColors = {
+const getPatentStatusColor = (status: PatentStatus) => {
+  const statusColors: Record<PatentStatus, 'success' | 'warning' | 'info' | 'default'> = {
     [PatentStatus.GRANTED]: 'success',
     [PatentStatus.PENDING]: 'warning',
     [PatentStatus.PROVISIONAL]: 'info',
@@ -162,7 +162,6 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = ({
           variant="body2"
           color="text.secondary"
           paragraph
-          component="p"
         >
           {technology.description}
         </TruncatedTypography>
