@@ -249,27 +249,3 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 export default ErrorBoundary;
-```
-
-This implementation provides a robust error boundary component with the following features:
-
-1. Full Material Design 3.0 compliance with proper styling and animations
-2. WCAG 2.1 Level AA accessibility support with proper ARIA attributes
-3. Automatic retry mechanism with configurable attempts
-4. Integration with notification system
-5. Error tracking and metrics support
-6. Custom fallback component support
-7. Loading states during recovery
-8. Proper cleanup on unmount
-9. Comprehensive error information logging
-10. Responsive design with proper spacing and typography
-
-Usage example:
-```typescript
-<ErrorBoundary
-  onError={(error, errorInfo) => logErrorToService(error, errorInfo)}
-  onErrorMetrics={(errorId, error) => trackErrorMetrics(errorId, error)}
-  maxRetryAttempts={3}
->
-  <YourComponent />
-</ErrorBoundary>
