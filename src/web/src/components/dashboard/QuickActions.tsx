@@ -5,7 +5,6 @@ import {
   Search as SearchIcon,
   Edit as EditIcon,
   Description as DescriptionIcon,
-  Person as PersonIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
   Science as ScienceIcon,
   BusinessCenter as BusinessCenterIcon,
@@ -13,7 +12,7 @@ import {
 } from '@mui/icons-material';
 
 import CustomButton from '../common/Button';
-import { PROTECTED_ROUTES } from '../../constants/routes.constants';
+import { PROTECTED_ROUTES, ADMIN_ROUTES } from '../../constants/routes.constants';
 import { UserRole } from '../../constants/auth.constants';
 import type { User } from '../../interfaces/user.interface';
 
@@ -26,7 +25,7 @@ export interface QuickActionsProps {
 interface QuickAction {
   icon: React.ComponentType;
   label: string;
-  route: keyof typeof PROTECTED_ROUTES;
+  route: string;
   tooltip: string;
   color: 'primary' | 'secondary' | 'success' | 'info' | 'warning';
   roles: UserRole[];
@@ -37,7 +36,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: SearchIcon,
     label: 'Search Technologies',
-    route: 'TECHNOLOGIES',
+    route: PROTECTED_ROUTES.TECHNOLOGIES,
     tooltip: 'Discover and explore available technologies',
     color: 'primary',
     roles: [UserRole.ENTREPRENEUR, UserRole.RESEARCHER, UserRole.TTO, UserRole.ADMIN],
@@ -45,7 +44,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: DescriptionIcon,
     label: 'View Grants',
-    route: 'GRANTS',
+    route: PROTECTED_ROUTES.GRANTS,
     tooltip: 'Browse and apply for available grants',
     color: 'success',
     roles: [UserRole.ENTREPRENEUR, UserRole.RESEARCHER],
@@ -53,7 +52,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: EditIcon,
     label: 'Update Profile',
-    route: 'PROFILE',
+    route: PROTECTED_ROUTES.PROFILE,
     tooltip: 'Update your profile information',
     color: 'info',
     roles: [UserRole.ENTREPRENEUR, UserRole.RESEARCHER, UserRole.TTO, UserRole.ADMIN],
@@ -61,7 +60,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: AdminPanelSettingsIcon,
     label: 'Admin Dashboard',
-    route: 'ADMIN_DASHBOARD',
+    route: ADMIN_ROUTES.ADMIN_DASHBOARD,
     tooltip: 'Access administrative controls',
     color: 'warning',
     roles: [UserRole.ADMIN],
@@ -69,7 +68,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: ScienceIcon,
     label: 'Research Data',
-    route: 'RESEARCH_DATA',
+    route: PROTECTED_ROUTES.ANALYTICS,
     tooltip: 'Access research data and analytics',
     color: 'secondary',
     roles: [UserRole.RESEARCHER],
@@ -77,7 +76,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: BusinessCenterIcon,
     label: 'License Management',
-    route: 'TECHNOLOGIES',
+    route: PROTECTED_ROUTES.TECHNOLOGIES,
     tooltip: 'Manage technology licenses',
     color: 'primary',
     roles: [UserRole.TTO],
@@ -85,7 +84,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: SchoolIcon,
     label: 'University Portal',
-    route: 'TECHNOLOGIES',
+    route: PROTECTED_ROUTES.TECHNOLOGIES,
     tooltip: 'Access university technology portal',
     color: 'info',
     roles: [UserRole.TTO],
@@ -97,11 +96,11 @@ export const QuickActions: React.FC<QuickActionsProps> = React.memo(({ user }) =
   const navigate = useNavigate();
 
   // Type-safe handler for quick action navigation with analytics
-  const handleActionClick = (route: keyof typeof PROTECTED_ROUTES) => {
+  const handleActionClick = (route: string) => {
     // Track analytics event
     try {
       // Navigate to the selected route
-      navigate(PROTECTED_ROUTES[route]);
+      navigate(route);
     } catch (error) {
       console.error('Navigation error:', error);
     }
