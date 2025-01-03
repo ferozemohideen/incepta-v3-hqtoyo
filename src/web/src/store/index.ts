@@ -12,8 +12,8 @@
  * - Type-safe operations
  */
 
-import { configureStore, combineReducers, Middleware } from '@reduxjs/toolkit'; // ^1.9.5
-import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux'; // ^8.1.0
+import { configureStore, combineReducers, Middleware } from '@reduxjs/toolkit';
+import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
 import { 
   persistStore, 
   persistReducer,
@@ -23,9 +23,9 @@ import {
   PERSIST,
   PURGE,
   REGISTER
-} from 'redux-persist'; // ^6.0.0
-import { createStateSyncMiddleware, initMessageListener } from 'redux-state-sync'; // ^3.1.4
-import * as Sentry from '@sentry/react'; // ^7.0.0
+} from 'redux-persist';
+import { createStateSyncMiddleware, initMessageListener } from 'redux-state-sync';
+import * as Sentry from '@sentry/react';
 import storage from 'redux-persist/lib/storage';
 import createFilter from 'redux-persist-transform-filter';
 
@@ -41,14 +41,14 @@ const persistConfig = {
   key: 'root',
   version: 1,
   storage,
-  whitelist: ['auth', 'technology'], // Only persist specific slices
+  whitelist: ['auth', 'technology'],
   transforms: [
     createFilter('auth', ['isAuthenticated', 'user', 'tokens']),
     createFilter('technology', ['savedTechnologies'])
   ],
-  timeout: 2000, // 2 seconds timeout for storage operations
+  timeout: 2000,
   serialize: true,
-  debug: process.env.NODE_ENV !== 'production'
+  debug: process.env['NODE_ENV'] !== 'production'
 };
 
 /**
@@ -58,22 +58,22 @@ const stateSyncConfig = {
   blacklist: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
   channel: 'incepta_state_sync',
   broadcastChannelOption: {
-    type: 'localstorage'
+    type: 'localStorage'
   }
 };
 
 /**
  * Performance monitoring middleware
  */
-const monitoringMiddleware: Middleware = store => next => action => {
+const monitoringMiddleware: Middleware = (_store) => next => action => {
   const start = performance.now();
   const result = next(action);
   const end = performance.now();
   const duration = end - start;
 
   // Log slow actions in production
-  if (duration > 16 && process.env.NODE_ENV === 'production') {
-    Sentry.captureMessage(`Slow action: ${action.type} took ${duration}ms`, {
+  if (duration > 16 && process.env['NODE_ENV'] === 'production') {
+    Sentry.captureMessage(`Slow action: ${typeof action === 'object' ? action.type : 'unknown'} took ${duration}ms`, {
       level: 'warning',
       extra: {
         action,
@@ -118,7 +118,7 @@ export const store = configureStore({
       createStateSyncMiddleware(stateSyncConfig),
       monitoringMiddleware
     ),
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: process.env['NODE_ENV'] !== 'production',
   enhancers: []
 });
 
@@ -144,7 +144,7 @@ export const useAppDispatch = () => {
 
     // Track dispatch performance
     if (duration > 16) {
-      console.warn(`Slow dispatch: ${action.type} took ${duration}ms`);
+      console.warn(`Slow dispatch: ${typeof action === 'object' ? action.type : 'unknown'} took ${duration}ms`);
     }
 
     return result;
@@ -179,12 +179,12 @@ export const resetStore = () => {
 /**
  * Initialize store monitoring
  */
-if (process.env.NODE_ENV === 'production') {
+if (process.env['NODE_ENV'] === 'production') {
   Sentry.init({
-    dsn: process.env.REACT_APP_SENTRY_DSN,
+    dsn: process.env['REACT_APP_SENTRY_DSN'],
     integrations: [
       new Sentry.BrowserTracing({
-        tracingOrigins: ['localhost', process.env.REACT_APP_API_URL],
+        tracingOrigins: ['localhost', process.env['REACT_APP_API_URL'] || ''],
       }),
     ],
     tracesSampleRate: 0.2,
