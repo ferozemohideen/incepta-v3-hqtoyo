@@ -53,6 +53,17 @@ export interface UserService {
    * @throws ApiError if request fails
    */
   updateSecuritySettings(settings: Partial<User['security']>): Promise<User>;
+
+  /**
+   * Validates security context for user operations
+   * @param context - Security context object containing deviceId, timestamp, and userAgent
+   * @returns Promise resolving to validation result
+   */
+  validateSecurityContext(context: {
+    deviceId: string;
+    timestamp: string;
+    userAgent: string;
+  }): Promise<boolean>;
 }
 
 /**
@@ -218,6 +229,31 @@ class UserServiceImpl implements UserService {
       return response;
     } catch (error) {
       console.error('Error updating security settings:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Validates security context for user operations
+   */
+  async validateSecurityContext(context: {
+    deviceId: string;
+    timestamp: string;
+    userAgent: string;
+  }): Promise<boolean> {
+    try {
+      const response = await apiService.post<{ valid: boolean }>(
+        API_ENDPOINTS.USERS.VALIDATE_SECURITY,
+        context,
+        {
+          retry: true,
+          ...this.retryConfig
+        }
+      );
+
+      return response.valid;
+    } catch (error) {
+      console.error('Error validating security context:', error);
       throw error;
     }
   }
