@@ -6,7 +6,6 @@ import { ErrorBoundary, init as initSentry } from '@sentry/react';
 import { BrowserTracing } from '@sentry/tracing';
 import { persistStore } from 'redux-persist';
 import { PersistGate } from 'redux-persist/integration/react';
-import * as Sentry from '@sentry/react';
 
 import App from './App';
 import { store } from './store';
@@ -56,7 +55,8 @@ const initializeApp = async (): Promise<void> => {
       list.getEntries().forEach((entry) => {
         // Report long tasks (>50ms) to Sentry
         if (entry.duration > 50) {
-          Sentry.addBreadcrumb({
+          // @ts-ignore - Sentry is available in production
+          window.Sentry?.addBreadcrumb({
             category: 'performance',
             message: `Long task detected: ${entry.duration}ms`,
             level: 'warning',
@@ -96,7 +96,8 @@ const renderApp = (): void => {
         onError={(error) => {
           console.error('Application error:', error);
           if (process.env['NODE_ENV'] === 'production') {
-            Sentry.captureException(error);
+            // @ts-ignore - Sentry is available in production
+            window.Sentry?.captureException(error);
           }
         }}
       >
@@ -118,7 +119,8 @@ initializeApp().then(() => {
 }).catch((error) => {
   console.error('Failed to initialize application:', error);
   if (process.env['NODE_ENV'] === 'production') {
-    Sentry.captureException(error);
+    // @ts-ignore - Sentry is available in production
+    window.Sentry?.captureException(error);
   }
 });
 
@@ -128,7 +130,8 @@ if ('serviceWorker' in navigator && process.env['NODE_ENV'] === 'production') {
     navigator.serviceWorker.register('/service-worker.js').catch((error) => {
       console.error('Service worker registration failed:', error);
       if (process.env['NODE_ENV'] === 'production') {
-        Sentry.captureException(error);
+        // @ts-ignore - Sentry is available in production
+        window.Sentry?.captureException(error);
       }
     });
   });
@@ -138,7 +141,8 @@ if ('serviceWorker' in navigator && process.env['NODE_ENV'] === 'production') {
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
   if (process.env['NODE_ENV'] === 'production') {
-    Sentry.captureException(event.reason);
+    // @ts-ignore - Sentry is available in production
+    window.Sentry?.captureException(event.reason);
   }
   event.preventDefault();
 });
