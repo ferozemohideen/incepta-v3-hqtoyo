@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { TextField, Grid, Button, CircularProgress, Alert } from '@mui/material'; // v5.14.0
-import { object, string, array, mixed } from 'yup'; // v1.2.0
+import { object, string, array } from 'yup'; // v1.2.0
 import { Form } from '../common/Form';
 import { useTheme } from '../../hooks/useTheme';
 import ErrorBoundary from '../common/ErrorBoundary';
@@ -36,13 +36,6 @@ const profileValidationSchema = object().shape({
     .matches(/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/, 'Invalid ORCID ID format'),
 });
 
-// Profile form props interface
-interface ProfileFormProps {
-  user: User;
-  onSubmit: (profile: UserProfile) => Promise<void>;
-  onError: (error: Error) => void;
-}
-
 // User profile interface
 interface UserProfile {
   name: string;
@@ -57,6 +50,16 @@ interface UserProfile {
   orcidId?: string;
 }
 
+// User interface extending UserProfile
+type User = Partial<UserProfile>;
+
+// Profile form props interface
+interface ProfileFormProps {
+  user: User;
+  onSubmit: (profile: UserProfile) => Promise<void>;
+  onError: (error: Error) => void;
+}
+
 /**
  * Enhanced profile form component implementing Material Design 3.0 principles
  * with comprehensive validation, security, and accessibility features.
@@ -68,7 +71,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { mode: themeMode } = useTheme();
 
   // Initialize form with user data
   const initialValues: UserProfile = {
@@ -85,7 +87,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   };
 
   // Handle form submission with security measures
-  const handleSubmit = async (values: UserProfile) => {
+  const handleSubmit = async (values: Record<string, any>) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -94,7 +96,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       await profileValidationSchema.validate(values, { abortEarly: false });
 
       // Submit form data
-      await onSubmit(values);
+      await onSubmit(values as UserProfile);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setSubmitError(errorMessage);
