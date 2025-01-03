@@ -64,7 +64,7 @@ interface FormAccessibilityLabels {
 // Enhanced form props interface
 interface FormProps {
   initialValues: Record<string, any>;
-  validationSchema: Record<string, any>; // Updated type to match useForm expectations
+  validationSchema: Record<string, any>;
   onSubmit: (values: Record<string, any>, formActions: FormActions) => void | Promise<void>;
   children: React.ReactNode;
   className?: string;
@@ -167,12 +167,12 @@ export const Form: React.FC<FormProps> = ({
       if (child.type === Input) {
         const name = child.props.name;
         return React.cloneElement(child, {
+          value: values[name] || '',
           onChange: handleChange,
           error: touched[name] ? errors[name] : undefined,
           onBlur: () => setFieldTouched(name, true),
           'aria-invalid': touched[name] && !!errors[name],
           'aria-describedby': `${name}-error`,
-          value: values[name] || '',
         });
       }
 
