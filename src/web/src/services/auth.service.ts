@@ -15,7 +15,8 @@ import {
   LoginCredentials, 
   RegisterCredentials, 
   AuthTokens, 
-  MFACredentials 
+  MFACredentials,
+  ResetPasswordCredentials 
 } from '../interfaces/auth.interface';
 import { AUTH_ENDPOINTS, TOKEN_CONFIG, AUTH_STORAGE_KEYS } from '../constants/auth.constants';
 import { 
@@ -34,6 +35,8 @@ export interface AuthService {
   logout(): Promise<void>;
   refreshToken(): Promise<AuthTokens>;
   verifyMFA(credentials: MFACredentials): Promise<AuthTokens>;
+  verifyResetToken(token: string): Promise<boolean>;
+  resetPassword(credentials: ResetPasswordCredentials): Promise<void>;
 }
 
 /**
@@ -173,6 +176,41 @@ class AuthServiceImpl implements AuthService {
       setLocalStorageItem(AUTH_STORAGE_KEYS.MFA_ENABLED, true);
 
       return response;
+    } catch (error) {
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Verifies password reset token validity
+   * @param token - Password reset token to verify
+   * @returns Promise resolving to token validity status
+   */
+  async verifyResetToken(token: string): Promise<boolean> {
+    try {
+      await apiService.post(
+        AUTH_ENDPOINTS.RESET_PASSWORD,
+        { token, verify: true },
+        { priority: 1 }
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Resets user password with verification token
+   * @param credentials - Password reset credentials
+   * @returns Promise resolving when password is reset
+   */
+  async resetPassword(credentials: ResetPasswordCredentials): Promise<void> {
+    try {
+      await apiService.post(
+        AUTH_ENDPOINTS.RESET_PASSWORD,
+        credentials,
+        { priority: 1 }
+      );
     } catch (error) {
       throw this.handleAuthError(error);
     }
