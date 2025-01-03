@@ -9,7 +9,6 @@
 import { useState, useCallback, useRef, ChangeEvent, FormEvent } from 'react'; // v18.2.0
 import { sanitize } from 'dompurify'; // v3.0.5
 import FingerprintJS from '@fingerprintjs/fingerprintjs'; // v3.4.0
-import { validateLoginCredentials, validateRegistrationData } from '../utils/validation.utils';
 import { useNotification } from './useNotification';
 
 // Initialize fingerprint generator
@@ -82,6 +81,14 @@ export function useForm<T extends Record<string, any>>({
   onSubmit,
   securityOptions = {}
 }: UseFormProps<T>): UseFormReturn<T> {
+  // Sanitize values utility function
+  const sanitizeValues = useCallback((values: Record<string, any>): T => {
+    return Object.entries(values).reduce((acc, [key, value]) => ({
+      ...acc,
+      [key]: typeof value === 'string' ? sanitize(value) : value,
+    }), {} as T);
+  }, []);
+
   // Initialize state
   const [values, setValues] = useState<T>(sanitizeValues(initialValues));
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -106,16 +113,6 @@ export function useForm<T extends Record<string, any>>({
     attempts: 0,
     lastAttempt: 0,
   });
-
-  /**
-   * Sanitizes form values for security
-   */
-  const sanitizeValues = useCallback((values: Record<string, any>): T => {
-    return Object.entries(values).reduce((acc, [key, value]) => ({
-      ...acc,
-      [key]: typeof value === 'string' ? sanitize(value) : value,
-    }), {} as T);
-  }, []);
 
   /**
    * Validates a single field
