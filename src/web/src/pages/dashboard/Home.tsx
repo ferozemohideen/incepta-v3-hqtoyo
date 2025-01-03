@@ -3,8 +3,8 @@ import { Grid, Container, Typography, Box, useTheme } from '@mui/material';
 
 // Internal components
 import { QuickActions } from '../../components/dashboard/QuickActions';
-import { RecentActivity, Activity } from '../../components/dashboard/RecentActivity';
 import SavedItems from '../../components/dashboard/SavedItems';
+import { RecentActivity, Activity } from '../../components/dashboard/RecentActivity';
 import { AnalyticsCard, ChartDataPoint } from '../../components/dashboard/AnalyticsCard';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 
