@@ -18,7 +18,7 @@ import { useTheme } from './hooks/useTheme';
 import { PUBLIC_ROUTES, PROTECTED_ROUTES, ADMIN_ROUTES } from './constants/routes.constants';
 import { UserRole } from './constants/auth.constants';
 
-// Import themes
+// Theme
 import { lightTheme, darkTheme } from './styles/theme';
 
 /**
