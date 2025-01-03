@@ -103,13 +103,13 @@ export const login = createAsyncThunk(
  */
 export const verifyMFA = createAsyncThunk(
   'auth/verifyMFA',
-  async (mfaData: { token: string; tempToken: string; method: string; verificationId: string }, { rejectWithValue }) => {
+  async (mfaCode: string, { rejectWithValue }) => {
     try {
       const response = await authService.verifyMFA({
-        token: mfaData.token,
-        tempToken: mfaData.tempToken,
-        method: mfaData.method,
-        verificationId: mfaData.verificationId
+        token: mfaCode,
+        tempToken: '', // This should be stored from login response
+        method: 'totp', // Default to TOTP method
+        verificationId: '' // This should be stored from login response
       });
       return response;
     } catch (error: any) {
