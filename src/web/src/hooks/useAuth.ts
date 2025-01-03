@@ -14,10 +14,10 @@ import { useCallback, useEffect, useRef } from 'react'; // ^18.0.0
 import { useDispatch, useSelector } from 'react-redux'; // ^8.0.0
 import {
   login,
-  refreshToken,
-  logout,
   verifyMFA,
   selectAuth,
+  refreshToken,
+  logout,
   TOKEN_CONFIG
 } from '../store/auth.slice';
 import {
@@ -40,6 +40,7 @@ interface UseAuthReturn {
     timestamp: Date;
   } | null;
   mfaRequired: boolean;
+  isAuthenticated: boolean;
   securityContext: {
     lastActivity: number;
     sessionExpiry: Date | null;
@@ -163,7 +164,8 @@ export const useAuth = (): UseAuthReturn => {
         throw new Error('Terms and conditions must be accepted');
       }
 
-      throw new Error('Registration not implemented in auth slice');
+      // Registration is handled by the parent component since register action is not available
+      throw new Error('Registration functionality not implemented');
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -175,7 +177,12 @@ export const useAuth = (): UseAuthReturn => {
    */
   const handleMFAVerification = useCallback(async (mfaData: MFACredentials): Promise<void> => {
     try {
-      const result = await dispatch(verifyMFA(mfaData.token));
+      const result = await dispatch(verifyMFA({
+        token: mfaData.token,
+        tempToken: mfaData.tempToken,
+        method: mfaData.method,
+        verificationId: mfaData.verificationId
+      }));
       await result.unwrap();
     } catch (error) {
       console.error('MFA verification failed:', error);
@@ -216,13 +223,14 @@ export const useAuth = (): UseAuthReturn => {
       await handleLogout();
       throw error;
     }
-  }, [dispatch, handleLogout]);
+  }, [dispatch]);
 
   return {
     user: authState.user,
     loading: authState.loading,
     error: authState.error,
     mfaRequired: authState.requiresMFA,
+    isAuthenticated: authState.isAuthenticated,
     securityContext,
     handleLogin,
     handleRegister,
