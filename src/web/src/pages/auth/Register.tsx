@@ -13,7 +13,7 @@ import { UserRole } from '../../constants/auth.constants';
  */
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { handleRegister, mfaRequired } = useAuth();
+  const { mfaRequired } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   // Track registration performance metrics
@@ -101,7 +101,13 @@ const Register: React.FC = () => {
   /**
    * Error boundary fallback component
    */
-  const ErrorFallback = useCallback(({ error, resetErrorBoundary }) => (
+  const ErrorFallback = useCallback(({ 
+    error,
+    resetErrorBoundary 
+  }: { 
+    error: Error; 
+    resetErrorBoundary: () => void;
+  }) => (
     <AuthLayout title="Registration Error">
       <div role="alert">
         <h2>Something went wrong</h2>
