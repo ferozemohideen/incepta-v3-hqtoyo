@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { TextField } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { lightTheme, darkTheme } from '../../styles/theme';
 
 // Input validation types
 type ValidationRule = {
