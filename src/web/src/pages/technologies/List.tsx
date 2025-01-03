@@ -8,19 +8,17 @@ import {
   Alert,
   Grid,
   useTheme,
-  useMediaQuery
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Internal imports
-import TechnologyGrid, { TechnologyGridProps } from '../../components/technologies/TechnologyGrid';
+import TechnologyGrid from '../../components/technologies/TechnologyGrid';
 import TechnologyFilters from '../../components/technologies/TechnologyFilters';
 import { technologyService } from '../../services/technology.service';
 import { 
   Technology,
   TechnologySearchParams,
   PatentStatus,
-  DevelopmentStage
 } from '../../interfaces/technology.interface';
 
 // Default search parameters
@@ -46,22 +44,21 @@ const TechnologyList: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   // Component state
   const [technologies, setTechnologies] = useState<Technology[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [filters, setFilters] = useState<TechnologySearchParams>(() => {
     // Initialize filters from URL parameters
     const urlParams = Object.fromEntries(searchParams.entries());
     return {
       ...DEFAULT_SEARCH_PARAMS,
-      query: urlParams.query || '',
-      patentStatus: urlParams.patentStatus ? 
-        (urlParams.patentStatus as string).split(',') as PatentStatus[] : [],
-      page: parseInt(urlParams.page || '1', 10)
+      query: urlParams['query'] || '',
+      patentStatus: urlParams['patentStatus'] ? 
+        (urlParams['patentStatus'] as string).split(',') as PatentStatus[] : [],
+      page: parseInt(urlParams['page'] || '1', 10)
     };
   });
 
@@ -103,7 +100,7 @@ const TechnologyList: React.FC = () => {
         liveRegion.textContent = announcement;
       }
     } catch (err) {
-      setError('Failed to load technologies. Please try again.');
+      setError(new Error('Failed to load technologies. Please try again.'));
       console.error('Error fetching technologies:', err);
     } finally {
       setLoading(false);
@@ -181,7 +178,7 @@ const TechnologyList: React.FC = () => {
               sx={{ mb: 3 }}
               onClose={() => setError(null)}
             >
-              {error}
+              {error.message}
             </Alert>
           )}
 
