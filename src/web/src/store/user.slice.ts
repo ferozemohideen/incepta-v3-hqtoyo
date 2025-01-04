@@ -7,7 +7,7 @@
  */
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'; // ^1.9.5
-import { User, UserProfile, UserPreferences, UserSecurity, SecurityContext } from '../interfaces/user.interface';
+import { User, UserProfile, UserPreferences, UserSecurity } from '../interfaces/user.interface';
 import { userService } from '../services/user.service';
 
 /**
@@ -21,7 +21,7 @@ interface UserState {
   isPreferencesUpdating: boolean;
   isSecurityUpdating: boolean;
   lastError: string | null;
-  securityContext: SecurityContext | null;
+  securityContext: { valid: boolean } | null;
   retryAttempts: Record<string, number>;
   auditLog: Record<string, string>;
 }
@@ -52,21 +52,17 @@ const SECURITY_AUDIT_LEVELS = {
 } as const;
 
 /**
- * Maximum retry attempts for operations
- */
-const MAX_RETRY_ATTEMPTS = 3;
-
-/**
  * Async thunk for fetching user profile with enhanced security validation
  */
 export const fetchUserProfile = createAsyncThunk(
   'user/fetchProfile',
-  async (_, { rejectWithValue }) => {
+  async (deviceId: string, { rejectWithValue }) => {
     try {
       const response = await userService.getProfile();
       
       // Validate security context
       const securityContext = await userService.validateSecurityContext({
+        deviceId,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent
       });
