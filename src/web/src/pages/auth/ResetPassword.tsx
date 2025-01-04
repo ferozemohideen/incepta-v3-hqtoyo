@@ -59,9 +59,11 @@ const ResetPassword: React.FC = React.memo(() => {
       }
 
       try {
-        // Token validation is handled by the form component
-        setIsTokenValid(true);
-        setIsValidating(false);
+        // Token validation will be handled by the form component
+        if (isActive) {
+          setIsTokenValid(true);
+          setIsValidating(false);
+        }
       } catch (err) {
         if (isActive) {
           setValidationError(
@@ -79,20 +81,6 @@ const ResetPassword: React.FC = React.memo(() => {
       isActive = false;
     };
   }, [token, email]);
-
-  /**
-   * Handles successful password reset
-   */
-  const handleSuccess = useCallback(() => {
-    // Success is handled by the form component which redirects to login
-  }, []);
-
-  /**
-   * Handles password reset errors
-   */
-  const handleError = useCallback((error: Error) => {
-    setValidationError(error.message);
-  }, []);
 
   // Show loading state while validating token
   if (loading['validateToken'] || isValidating) {
