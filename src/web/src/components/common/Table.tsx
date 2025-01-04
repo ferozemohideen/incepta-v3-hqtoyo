@@ -8,7 +8,6 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
-  Paper,
   Checkbox,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -227,7 +226,6 @@ export const CustomTable = React.memo<TableProps>(({
 
   return (
     <StyledTableContainer
-      component={Paper}
       role="region"
       aria-label={ariaLabel}
       tabIndex={0}
