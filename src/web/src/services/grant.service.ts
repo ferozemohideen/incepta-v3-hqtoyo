@@ -45,8 +45,8 @@ export interface GrantService {
   getGrantStats(): Promise<GrantStats>;
   saveGrantDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
   uploadApplicationDocument(applicationId: string, document: File): Promise<void>;
-  saveDraft(applicationId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
-  validateApplication(applicationId: string): Promise<{ isValid: boolean; errors?: string[] }>;
+  subscribeToGrantUpdates(grantId: string, callback: (update: IGrant) => void): () => void;
+  validateSection(applicationId: string, sectionName: string): Promise<boolean>;
 }
 
 /**
@@ -56,6 +56,7 @@ class GrantServiceImpl implements GrantService {
   private readonly cacheTimeout: number = 5 * 60 * 1000; // 5 minutes
   private readonly maxRetries: number = 3;
   private readonly cache: Map<string, { data: any; timestamp: number }> = new Map();
+  private readonly updateSubscriptions: Map<string, Set<(update: IGrant) => void>> = new Map();
 
   constructor() {
     // Configure retry strategy
@@ -239,41 +240,38 @@ class GrantServiceImpl implements GrantService {
   }
 
   /**
-   * Save draft application with auto-save functionality
+   * Subscribe to real-time grant updates
    */
-  async saveDraft(
-    applicationId: string,
-    draftData: Partial<IGrantApplication>
-  ): Promise<IGrantApplication> {
-    try {
-      return await apiService.put<IGrantApplication>(
-        `${API_ENDPOINTS.GRANTS.DRAFTS}/${applicationId}`,
-        {
-          ...draftData,
-          status: GrantStatus.DRAFT,
-          lastModifiedAt: new Date()
-        }
-      );
-    } catch (error) {
-      console.error('Draft save failed:', error);
-      throw error;
+  subscribeToGrantUpdates(grantId: string, callback: (update: IGrant) => void): () => void {
+    if (!this.updateSubscriptions.has(grantId)) {
+      this.updateSubscriptions.set(grantId, new Set());
     }
+    
+    this.updateSubscriptions.get(grantId)!.add(callback);
+    
+    return () => {
+      const subscribers = this.updateSubscriptions.get(grantId);
+      if (subscribers) {
+        subscribers.delete(callback);
+        if (subscribers.size === 0) {
+          this.updateSubscriptions.delete(grantId);
+        }
+      }
+    };
   }
 
   /**
-   * Validate application before submission
+   * Validate grant application section
    */
-  async validateApplication(
-    applicationId: string
-  ): Promise<{ isValid: boolean; errors?: string[] }> {
+  async validateSection(applicationId: string, sectionName: string): Promise<boolean> {
     try {
-      return await apiService.get(
+      const response = await apiService.post<{ valid: boolean }>(
         `${API_ENDPOINTS.GRANTS.BASE}/${applicationId}/validate`,
-        undefined,
-        { cache: false }
+        { section: sectionName }
       );
+      return response.valid;
     } catch (error) {
-      console.error('Application validation failed:', error);
+      console.error('Section validation failed:', error);
       throw error;
     }
   }
