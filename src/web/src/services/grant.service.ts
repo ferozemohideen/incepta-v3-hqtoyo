@@ -11,9 +11,8 @@
  * - Retry logic for failed requests
  */
 
-import { apiService } from './api.service';
+import { get, post, put } from './api.service'; // ^1.0.0
 import { API_ENDPOINTS } from '../constants/api.constants';
-import retry from 'axios-retry';
 import {
   IGrant,
   IGrantApplication,
@@ -36,6 +35,14 @@ interface IGrantResponse {
 }
 
 /**
+ * Interface for section validation result
+ */
+interface ISectionValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+/**
  * Interface defining core grant service operations
  */
 export interface GrantService {
@@ -46,7 +53,7 @@ export interface GrantService {
   getGrantStats(): Promise<GrantStats>;
   saveGrantDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
   uploadApplicationDocument(applicationId: string, document: File): Promise<void>;
-  validateSection(applicationId: string, sectionName: string, data: any): Promise<boolean>;
+  validateSection(sectionName: string, sectionData: any, requirements: IDocumentRequirement): Promise<ISectionValidationResult>;
 }
 
 /**
@@ -54,18 +61,11 @@ export interface GrantService {
  */
 class GrantServiceImpl implements GrantService {
   private readonly cacheTimeout: number = 5 * 60 * 1000; // 5 minutes
+  private readonly maxRetries: number = 3;
   private readonly cache: Map<string, { data: any; timestamp: number }> = new Map();
 
   constructor() {
-    // Configure retry strategy
-    retry(apiService, {
-      retries: 3,
-      retryDelay: retry.exponentialDelay,
-      retryCondition: (error) => {
-        return retry.isNetworkOrIdempotentRequestError(error) ||
-          error.response?.status === 429;
-      }
-    });
+    // Retry configuration is handled by ApiServiceImpl
   }
 
   /**
@@ -73,15 +73,15 @@ class GrantServiceImpl implements GrantService {
    */
   async searchGrants(params: IGrantSearchParams): Promise<IGrantResponse> {
     const cacheKey = `grants_search_${JSON.stringify(params)}`;
-    const cached = this.getFromCache<IGrantResponse>(cacheKey);
+    const cached = this.getFromCache(cacheKey);
     
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await apiService.get<IGrantResponse>(
-        `${API_ENDPOINTS.GRANTS.BASE}/search`,
+      const response = await get<IGrantResponse>(
+        API_ENDPOINTS.GRANTS.SEARCH,
         params,
         { cache: true }
       );
@@ -99,14 +99,14 @@ class GrantServiceImpl implements GrantService {
    */
   async getGrantById(id: string): Promise<IGrant> {
     const cacheKey = `grant_${id}`;
-    const cached = this.getFromCache<IGrant>(cacheKey);
+    const cached = this.getFromCache(cacheKey);
 
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await apiService.get<IGrant>(
+      const response = await get<IGrant>(
         `${API_ENDPOINTS.GRANTS.BASE}/${id}`,
         undefined,
         { cache: true }
@@ -128,7 +128,7 @@ class GrantServiceImpl implements GrantService {
     applicationData: Partial<IGrantApplication>
   ): Promise<IGrantApplication> {
     try {
-      const response = await apiService.post<IGrantApplication>(
+      const response = await post<IGrantApplication>(
         `${API_ENDPOINTS.GRANTS.APPLY}/${grantId}`,
         {
           ...applicationData,
@@ -152,7 +152,7 @@ class GrantServiceImpl implements GrantService {
    */
   async getApplicationStatus(applicationId: string): Promise<IGrantApplication> {
     try {
-      return await apiService.get<IGrantApplication>(
+      return await get<IGrantApplication>(
         `${API_ENDPOINTS.GRANTS.STATUS}/${applicationId}`,
         undefined,
         { cache: false } // Real-time status should not be cached
@@ -168,14 +168,14 @@ class GrantServiceImpl implements GrantService {
    */
   async getGrantStats(): Promise<GrantStats> {
     const cacheKey = 'grant_stats';
-    const cached = this.getFromCache<GrantStats>(cacheKey);
+    const cached = this.getFromCache(cacheKey);
 
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await apiService.get<GrantStats>(
+      const response = await get<GrantStats>(
         `${API_ENDPOINTS.GRANTS.BASE}/stats`,
         undefined,
         { cache: true }
@@ -197,7 +197,7 @@ class GrantServiceImpl implements GrantService {
     draftData: Partial<IGrantApplication>
   ): Promise<IGrantApplication> {
     try {
-      return await apiService.put<IGrantApplication>(
+      return await put<IGrantApplication>(
         `${API_ENDPOINTS.GRANTS.DRAFTS}/${grantId}`,
         {
           ...draftData,
@@ -222,7 +222,7 @@ class GrantServiceImpl implements GrantService {
     formData.append('document', document);
 
     try {
-      await apiService.post(
+      await post(
         `${API_ENDPOINTS.GRANTS.BASE}/${applicationId}/documents`,
         formData,
         {
@@ -238,19 +238,35 @@ class GrantServiceImpl implements GrantService {
   }
 
   /**
-   * Validate individual sections of a grant application
+   * Validate grant application section against requirements
    */
   async validateSection(
-    applicationId: string,
     sectionName: string,
-    data: any
-  ): Promise<boolean> {
+    sectionData: any,
+    requirements: IDocumentRequirement
+  ): Promise<ISectionValidationResult> {
+    const errors: string[] = [];
+
     try {
-      const response = await apiService.post<{ valid: boolean }>(
-        `${API_ENDPOINTS.GRANTS.BASE}/${applicationId}/validate/${sectionName}`,
-        { data }
-      );
-      return response.valid;
+      // Validate required fields
+      if (requirements.required && !sectionData) {
+        errors.push(`${sectionName} is required`);
+      }
+
+      // Validate file format if provided
+      if (sectionData?.format && !requirements.format.includes(sectionData.format)) {
+        errors.push(`Invalid format. Allowed formats: ${requirements.format.join(', ')}`);
+      }
+
+      // Validate page count if applicable
+      if (sectionData?.pages && sectionData.pages > requirements.maxPages) {
+        errors.push(`Page count exceeds maximum limit of ${requirements.maxPages}`);
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors
+      };
     } catch (error) {
       console.error('Section validation failed:', error);
       throw error;
