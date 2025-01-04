@@ -198,6 +198,26 @@ export class StorageService {
   }
 
   /**
+   * Deletes a document from S3 storage
+   */
+  public async deleteDocument(documentId: string): Promise<void> {
+    try {
+      await this.s3Client
+        .deleteObject({
+          Bucket: this.bucketName,
+          Key: documentId,
+        })
+        .promise();
+
+      // Remove from cache if exists
+      const cacheKey = `${this.cachePrefix}${documentId}`;
+      removeStorageItem(cacheKey, StorageType.LOCAL);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
    * Generates a secure, time-limited URL for document access
    */
   public async generateSecureUrl(
