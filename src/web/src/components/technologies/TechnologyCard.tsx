@@ -20,6 +20,7 @@ export interface TechnologyCardProps {
   onView?: (id: string) => void;
   matchScore?: number;
   showActions?: boolean;
+  onKeyDown?: (event: React.KeyboardEvent) => void;
 }
 
 /**
@@ -51,7 +52,7 @@ const MetadataContainer = styled('div')(({ theme }) => ({
   alignItems: 'center',
 }));
 
-const TruncatedTypography = styled(Typography)(() => ({
+const TruncatedTypography = styled(Typography)(({ theme }) => ({
   display: '-webkit-box',
   WebkitLineClamp: 3,
   WebkitBoxOrient: 'vertical',
@@ -62,13 +63,13 @@ const TruncatedTypography = styled(Typography)(() => ({
 /**
  * Helper function to get patent status color
  */
-const getPatentStatusColor = (status: PatentStatus): "success" | "warning" | "info" | "default" => {
+const getPatentStatusColor = (status: PatentStatus): string => {
   const statusColors = {
-    [PatentStatus.GRANTED]: "success",
-    [PatentStatus.PENDING]: "warning",
-    [PatentStatus.PROVISIONAL]: "info",
-    [PatentStatus.NOT_PATENTED]: "default",
-  } as const;
+    [PatentStatus.GRANTED]: 'success',
+    [PatentStatus.PENDING]: 'warning',
+    [PatentStatus.PROVISIONAL]: 'info',
+    [PatentStatus.NOT_PATENTED]: 'default',
+  };
   return statusColors[status];
 };
 
@@ -83,6 +84,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = ({
   onView,
   matchScore,
   showActions = true,
+  onKeyDown,
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -118,6 +120,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = ({
       onClick={onView ? () => onView(technology.id.toString()) : undefined}
       aria-label={`Technology: ${technology.title}`}
       fullHeight
+      onKeyDown={onKeyDown}
     >
       <StyledContent>
         {/* Title */}
@@ -161,6 +164,8 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = ({
         <TruncatedTypography
           variant="body2"
           color="text.secondary"
+          paragraph
+          component="p"
         >
           {technology.description}
         </TruncatedTypography>
