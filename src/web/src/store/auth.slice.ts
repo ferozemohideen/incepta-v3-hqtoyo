@@ -10,8 +10,8 @@
  * - Session management
  */
 
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'; // ^1.9.5
-import { LoginCredentials, AuthTokens } from '../interfaces/auth.interface';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit'; // ^1.9.5
+import { LoginCredentials, AuthTokens, RegisterCredentials } from '../interfaces/auth.interface';
 import { UserRole } from '../constants/auth.constants';
 import { authService } from '../services/auth.service';
 import { setLocalStorageItem, removeStorageItem, StorageType } from '../utils/storage.utils';
@@ -35,6 +35,7 @@ interface AuthState {
     login: boolean;
     refresh: boolean;
     mfa: boolean;
+    register: boolean;
   };
   error: {
     message: string;
@@ -61,7 +62,8 @@ const initialState: AuthState = {
   loading: {
     login: false,
     refresh: false,
-    mfa: false
+    mfa: false,
+    register: false
   },
   error: null,
   requiresMFA: false,
@@ -73,6 +75,30 @@ const initialState: AuthState = {
     accountLocked: false
   }
 };
+
+/**
+ * Async thunk for user registration
+ */
+export const register = createAsyncThunk(
+  'auth/register',
+  async (credentials: RegisterCredentials, { rejectWithValue }) => {
+    try {
+      const response = await authService.register(credentials);
+      
+      // Store tokens securely
+      setLocalStorageItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN, response.accessToken);
+      setLocalStorageItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken);
+      
+      return response;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.message,
+        code: error.code,
+        timestamp: new Date()
+      });
+    }
+  }
+);
 
 /**
  * Async thunk for user login with MFA support
@@ -105,12 +131,7 @@ export const verifyMFA = createAsyncThunk(
   'auth/verifyMFA',
   async (mfaCode: string, { rejectWithValue }) => {
     try {
-      const response = await authService.verifyMFA({
-        token: mfaCode,
-        tempToken: '', // This should be stored from login response
-        method: 'totp', // Default to TOTP method
-        verificationId: '' // This should be stored from login response
-      });
+      const response = await authService.verifyMFA({ token: mfaCode });
       return response;
     } catch (error: any) {
       return rejectWithValue({
@@ -178,6 +199,23 @@ const authSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
+    // Register reducers
+    builder.addCase(register.pending, (state) => {
+      state.loading.register = true;
+      state.error = null;
+    });
+    builder.addCase(register.fulfilled, (state, action) => {
+      state.loading.register = false;
+      state.tokens = action.payload;
+      state.isAuthenticated = true;
+      state.lastTokenRefresh = new Date();
+      state.sessionExpiry = new Date(Date.now() + TOKEN_CONFIG.ACCESS_TOKEN_EXPIRY * 1000);
+    });
+    builder.addCase(register.rejected, (state, action) => {
+      state.loading.register = false;
+      state.error = action.payload as AuthState['error'];
+    });
+
     // Login reducers
     builder.addCase(login.pending, (state) => {
       state.loading.login = true;
