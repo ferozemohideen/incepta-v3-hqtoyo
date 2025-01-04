@@ -9,8 +9,7 @@ import { persistReducer } from 'redux-persist'; // ^6.0.0
 import { 
   IGrant, 
   IGrantApplication, 
-  IGrantSearchParams,
-  GrantStatus 
+  IGrantSearchParams
 } from '../interfaces/grant.interface';
 import { grantService } from '../services/grant.service';
 
