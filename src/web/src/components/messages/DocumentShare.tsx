@@ -14,6 +14,7 @@ import FileUpload, { FileUploadProps } from '../common/FileUpload';
 import { Message, MessageType, MessageMetadata } from '../../interfaces/message.interface';
 import { StorageService } from '../../services/storage.service';
 
+// Document sharing component props with enhanced security options
 export interface DocumentShareProps {
   onDocumentShare: (message: Message) => Promise<void>;
   threadId: string;
@@ -23,6 +24,7 @@ export interface DocumentShareProps {
   enableEncryption?: boolean;
 }
 
+// Document preview component props
 interface DocumentPreviewProps {
   metadata: MessageMetadata;
   onDelete: () => Promise<void>;
@@ -31,6 +33,7 @@ interface DocumentPreviewProps {
   error: string | null;
 }
 
+// Upload progress tracking interface
 export interface UploadProgressState {
   fileId: string;
   progress: number;
@@ -40,6 +43,10 @@ export interface UploadProgressState {
   estimatedTimeRemaining: number;
 }
 
+/**
+ * DocumentShare component for secure file sharing within the messaging system
+ * Implements Material Design 3.0 principles and WCAG 2.1 Level AA compliance
+ */
 export const DocumentShare: React.FC<DocumentShareProps> = ({
   onDocumentShare,
   threadId,
@@ -48,14 +55,17 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
   allowedFileTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
   enableEncryption = true,
 }) => {
+  // State management
   const [uploadProgress, setUploadProgress] = useState<UploadProgressState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sharedDocuments, setSharedDocuments] = useState<MessageMetadata[]>([]);
   const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
 
+  // Service and refs
   const storageService = useRef(new StorageService());
   const uploadQueue = useRef<File[]>([]);
 
+  // Handle file upload with security checks and progress tracking
   const handleFileUpload = useCallback(async (files: File[]) => {
     try {
       for (const file of files) {
@@ -70,6 +80,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
           estimatedTimeRemaining: 0,
         });
 
+        // Upload document with security options
         const response = await storageService.current.uploadDocument(file, 'documents', {
           encryption: enableEncryption,
           metadata: {
@@ -81,11 +92,12 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
           cacheControl: 'private, max-age=3600',
         });
 
+        // Create message with document metadata
         const message: Message = {
           id: response.documentId,
           threadId,
-          senderId: 'current-user',
-          recipientId: 'recipient',
+          senderId: 'current-user', // Should be replaced with actual user ID
+          recipientId: 'recipient', // Should be replaced with actual recipient ID
           type: MessageType.DOCUMENT,
           content: '',
           status: 'SENT',
@@ -117,6 +129,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
     }
   }, [threadId, enableEncryption, onDocumentShare]);
 
+  // Handle document deletion
   const handleDocumentDelete = useCallback(async (metadata: MessageMetadata) => {
     try {
       await storageService.current.deleteDocument(metadata.documentUrl);
@@ -129,6 +142,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
     }
   }, []);
 
+  // Handle document download
   const handleDocumentDownload = useCallback(async (metadata: MessageMetadata) => {
     try {
       const blob = await storageService.current.downloadDocument(metadata.documentUrl, {
@@ -150,6 +164,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
     }
   }, [enableEncryption]);
 
+  // Document preview component
   const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     metadata,
     onDelete,
