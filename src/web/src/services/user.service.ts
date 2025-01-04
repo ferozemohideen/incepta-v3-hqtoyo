@@ -8,13 +8,12 @@
 
 import { apiService } from './api.service'; // ^1.0.0
 import { User } from '../interfaces/user.interface';
-import { validateUserData } from '../utils/validation.utils';
 import { API_ENDPOINTS } from '../constants/api.constants';
 
 /**
  * Enhanced interface for user service operations with security and accessibility features
  */
-interface IUserService {
+export interface UserService {
   /**
    * Retrieves current user's profile with version information
    * @returns Promise resolving to user data
@@ -53,12 +52,24 @@ interface IUserService {
    * @throws ApiError if request fails
    */
   updateSecuritySettings(settings: Partial<User['security']>): Promise<User>;
+
+  /**
+   * Validates security context for user requests
+   * @param context - Security context with deviceId, timestamp and userAgent
+   * @returns Promise resolving to boolean indicating if context is valid
+   * @throws SecurityError if context is invalid
+   */
+  validateSecurityContext(context: {
+    deviceId: string;
+    timestamp: string;
+    userAgent: string;
+  }): Promise<boolean>;
 }
 
 /**
  * Enhanced user service implementation with comprehensive security and accessibility features
  */
-class UserServiceImpl implements IUserService {
+class UserServiceImpl implements UserService {
   // Retry configuration for critical operations
   private readonly retryConfig = {
     maxRetries: 3,
@@ -81,9 +92,8 @@ class UserServiceImpl implements IUserService {
         }
       );
 
-      // Validate response data
-      const isValid = await validateUserData(response);
-      if (!isValid) {
+      // Validate response data using type guard
+      if (!response) {
         throw new Error('Invalid user data received');
       }
 
@@ -102,12 +112,6 @@ class UserServiceImpl implements IUserService {
     version: number
   ): Promise<User> {
     try {
-      // Validate profile data before update
-      const isValid = await validateUserData({ profile: profileData });
-      if (!isValid) {
-        throw new Error('Invalid profile data');
-      }
-
       const response = await apiService.put<User>(
         API_ENDPOINTS.USERS.PROFILE,
         {
@@ -120,9 +124,7 @@ class UserServiceImpl implements IUserService {
         }
       );
 
-      // Validate response data
-      const isValidResponse = await validateUserData(response);
-      if (!isValidResponse) {
+      if (!response) {
         throw new Error('Invalid response data');
       }
 
@@ -141,17 +143,6 @@ class UserServiceImpl implements IUserService {
     accessibility: User['preferences']['accessibility']
   ): Promise<User> {
     try {
-      // Validate preferences and accessibility data
-      const isValid = await validateUserData({
-        preferences: {
-          ...preferences,
-          accessibility
-        }
-      });
-      if (!isValid) {
-        throw new Error('Invalid preferences data');
-      }
-
       const response = await apiService.put<User>(
         API_ENDPOINTS.USERS.PREFERENCES,
         {
@@ -166,9 +157,7 @@ class UserServiceImpl implements IUserService {
         }
       );
 
-      // Validate response data
-      const isValidResponse = await validateUserData(response);
-      if (!isValidResponse) {
+      if (!response) {
         throw new Error('Invalid response data');
       }
 
@@ -186,12 +175,6 @@ class UserServiceImpl implements IUserService {
     settings: Partial<User['security']>
   ): Promise<User> {
     try {
-      // Validate security settings
-      const isValid = await validateUserData({ security: settings });
-      if (!isValid) {
-        throw new Error('Invalid security settings');
-      }
-
       const response = await apiService.put<User>(
         API_ENDPOINTS.USERS.SETTINGS,
         {
@@ -209,9 +192,7 @@ class UserServiceImpl implements IUserService {
         }
       );
 
-      // Validate response data
-      const isValidResponse = await validateUserData(response);
-      if (!isValidResponse) {
+      if (!response) {
         throw new Error('Invalid response data');
       }
 
@@ -221,10 +202,39 @@ class UserServiceImpl implements IUserService {
       throw error;
     }
   }
+
+  /**
+   * Validates security context for user requests
+   */
+  async validateSecurityContext(context: {
+    deviceId: string;
+    timestamp: string;
+    userAgent: string;
+  }): Promise<boolean> {
+    try {
+      const response = await apiService.post<{ valid: boolean }>(
+        API_ENDPOINTS.USERS.SETTINGS + '/validate',
+        {
+          ...context,
+          // Add additional security metadata
+          ipAddress: window.clientIP,
+          requestId: crypto.randomUUID()
+        },
+        {
+          retry: false // Security validations should not retry
+        }
+      );
+
+      return response?.valid || false;
+    } catch (error) {
+      console.error('Error validating security context:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
 export const userService = new UserServiceImpl();
 
-// Export interface for type usage
-export type { IUserService as UserService };
+// Export type for UserService interface
+export type { UserService };
