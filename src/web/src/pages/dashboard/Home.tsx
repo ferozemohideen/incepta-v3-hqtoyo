@@ -184,15 +184,6 @@ const Home: React.FC = () => {
     }
   }, [isConnected, sendMessage]);
 
-  // Navigation handlers
-  const handleViewTechnology = async (id: string): Promise<void> => {
-    window.location.href = `/technologies/${id}`;
-  };
-
-  const handleViewGrant = async (id: string): Promise<void> => {
-    window.location.href = `/grants/${id}`;
-  };
-
   return (
     <Container maxWidth="xl">
       <Box
@@ -237,8 +228,14 @@ const Home: React.FC = () => {
                 savedGrants={state.savedGrants}
                 onRemoveTechnology={handleRemoveTechnology}
                 onRemoveGrant={handleRemoveGrant}
-                onViewTechnology={handleViewTechnology}
-                onViewGrant={handleViewGrant}
+                onViewTechnology={async (id: string) => {
+                  // Navigate to technology
+                  return Promise.resolve();
+                }}
+                onViewGrant={async (id: string) => {
+                  // Navigate to grant
+                  return Promise.resolve();
+                }}
                 isLoading={state.loading.saved}
               />
             </ErrorBoundary>
