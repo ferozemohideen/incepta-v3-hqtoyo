@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Box, Paper, CircularProgress as MuiCircularProgress, Alert } from '@mui/material';
+import { Box, Paper, Alert } from '@mui/material';
 import { Message, MessageStatus } from '../../interfaces/message.interface';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
