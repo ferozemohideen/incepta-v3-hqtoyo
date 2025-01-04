@@ -69,8 +69,8 @@ interface GrantApplicationFormProps {
   initialData?: Partial<IGrantApplication>;
 }
 
-// Form validation schemas with index signature
-const validationSchemas: { [key: string]: Yup.ObjectSchema<any> } = {
+// Form validation schemas
+const validationSchemas: Record<string, Yup.ObjectSchema<any>> = {
   projectDetails: Yup.object({
     projectTitle: Yup.string()
       .required('Project title is required')
