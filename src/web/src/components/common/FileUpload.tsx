@@ -2,7 +2,7 @@ import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { CloudUpload, Error } from '@mui/icons-material';
-import CustomButton, { CustomButtonProps } from './Button';
+import CustomButton from './Button';
 import { StorageService } from '../../services/storage.service';
 
 // Styled component for the upload box with visual feedback
@@ -59,8 +59,6 @@ export interface FileUploadProps {
   maxSize?: number;
   disabled?: boolean;
   maxConcurrent?: number;
-  chunkSize?: number;
-  compressionThreshold?: number;
   retryAttempts?: number;
   onError?: (error: UploadError) => void;
   onProgress?: (progress: number) => void;
@@ -74,8 +72,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   maxSize = 100 * 1024 * 1024, // 100MB default
   disabled = false,
   maxConcurrent = 3,
-  chunkSize = 5 * 1024 * 1024, // 5MB chunks
-  compressionThreshold = 10 * 1024 * 1024, // 10MB
   retryAttempts = 3,
   onError,
   onProgress,
@@ -86,7 +82,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [error, setError] = useState<UploadError | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadQueue = useRef<File[]>([]);
-  const storageService = useRef<StorageService>(new StorageService());
+  const storageService = useRef(new StorageService());
 
   // Handle drag events
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -161,7 +157,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
-  // Upload files with chunking and retry logic
+  // Upload files with retry logic
   const uploadFiles = async (files: File[]) => {
     setIsUploading(true);
     const uploadIds: string[] = [];
