@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Grid, Container, Typography, Box, useTheme } from '@mui/material';
 
 // Internal components
 import { QuickActions } from '../../components/dashboard/QuickActions';
 import { RecentActivity, Activity } from '../../components/dashboard/RecentActivity';
-import { SavedItems } from '../../components/dashboard/SavedItems';
+import SavedItems from '../../components/dashboard/SavedItems';
 import { AnalyticsCard, ChartDataPoint } from '../../components/dashboard/AnalyticsCard';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 
@@ -176,10 +176,10 @@ const Home: React.FC = () => {
       };
 
       // Subscribe to activity updates
-      sendMessage({ type: 'subscribe', channel: 'activities' });
+      sendMessage({ type: 'SUBSCRIBE', channel: 'activities' });
 
       return () => {
-        sendMessage({ type: 'unsubscribe', channel: 'activities' });
+        sendMessage({ type: 'UNSUBSCRIBE', channel: 'activities' });
       };
     }
   }, [isConnected, sendMessage]);
@@ -214,7 +214,6 @@ const Home: React.FC = () => {
             <ErrorBoundary>
               <RecentActivity
                 initialActivities={state.activities}
-                loading={state.loading.activities}
                 onLoadMore={fetchDashboardData}
               />
             </ErrorBoundary>
@@ -228,14 +227,8 @@ const Home: React.FC = () => {
                 savedGrants={state.savedGrants}
                 onRemoveTechnology={handleRemoveTechnology}
                 onRemoveGrant={handleRemoveGrant}
-                onViewTechnology={async (id: string) => {
-                  // Navigate to technology
-                  return Promise.resolve();
-                }}
-                onViewGrant={async (id: string) => {
-                  // Navigate to grant
-                  return Promise.resolve();
-                }}
+                onViewTechnology={(id) => {/* Navigate to technology */}}
+                onViewGrant={(id) => {/* Navigate to grant */}}
                 isLoading={state.loading.saved}
               />
             </ErrorBoundary>
