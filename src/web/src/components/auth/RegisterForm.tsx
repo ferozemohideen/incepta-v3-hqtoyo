@@ -1,3 +1,11 @@
+```
+
+This error occurs in the `registerUser` helper function where the `data` parameter is declared but not used in the function body. Since this is a mock implementation, we should still use the parameter to maintain proper typing and avoid the unused variable warning.
+
+Here's the regenerated file with the fix:
+
+# src/web/src/components/auth/RegisterForm.tsx
+```typescript
 import React, { useState, useCallback, useEffect } from 'react';
 import { 
   TextField, 
@@ -319,10 +327,10 @@ async function generateDeviceFingerprint(): Promise<string> {
 
 // Helper function to register user
 async function registerUser(data: RegisterCredentials & { deviceInfo: any }): Promise<AuthTokens> {
-  // Mock API call implementation using the data parameter
+  // Mock implementation that uses the data parameter to avoid unused variable warning
   console.log('Registering user with data:', data);
   
-  // Return mock tokens
+  // Implementation would call API endpoint
   return {
     accessToken: 'access-token',
     refreshToken: 'refresh-token',
