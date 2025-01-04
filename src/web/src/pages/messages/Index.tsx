@@ -6,15 +6,13 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { Grid, Box, Alert, CircularProgress } from '@mui/material'; // v5.14.0
-import { useVirtualizer } from '@tanstack/react-virtual'; // v3.0.0
 
 import ThreadList from '../../components/messages/ThreadList';
 import ChatBox from '../../components/messages/ChatBox';
 import ContactList from '../../components/messages/ContactList';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useAuth } from '../../hooks/useAuth';
-import { Message, MessageType } from '../../interfaces/message.interface';
-import { messageService } from '../../services/message.service';
+import { User } from '../../interfaces/user.interface';
 
 /**
  * Interface for enhanced message page state
@@ -32,16 +30,16 @@ interface MessagePageState {
  */
 const MessagesPage: React.FC = () => {
   // Authentication and user context
-  const { user, permissions } = useAuth();
+  const { user } = useAuth();
 
   // WebSocket connection management
   const { 
     isConnected, 
     connectionState, 
     connect, 
-    reconnect 
+    disconnect 
   } = useWebSocket(
-    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
+    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
 
   // Component state
@@ -65,14 +63,9 @@ const MessagesPage: React.FC = () => {
         error: null
       }));
 
-      // Validate thread access permissions
-      if (!permissions.includes('message:read')) {
-        throw new Error('Insufficient permissions to access thread');
-      }
-
       // Update selected contact based on thread
       const threadInfo = await messageService.getMessageThread(threadId);
-      const contactId = threadInfo.thread.participantIds.find((id: string) => id !== user?.id);
+      const contactId = threadInfo.participantIds.find(id => id !== user?.id);
 
       setState(prev => ({
         ...prev,
@@ -88,7 +81,7 @@ const MessagesPage: React.FC = () => {
         isLoading: false
       }));
     }
-  }, [user?.id, permissions]);
+  }, [user?.id]);
 
   /**
    * Handles contact selection and thread creation
@@ -103,7 +96,7 @@ const MessagesPage: React.FC = () => {
       }));
 
       // Find or create thread for contact
-      const thread = await messageService.findOrCreateThread(contact.id);
+      const thread = await messageService.getMessageThread(contact.id);
       
       setState(prev => ({
         ...prev,
@@ -131,9 +124,9 @@ const MessagesPage: React.FC = () => {
     }));
 
     if (!isConnected) {
-      reconnect();
+      connect();
     }
-  }, [isConnected, connectionState, reconnect]);
+  }, [isConnected, connectionState, connect]);
 
   /**
    * Initialize WebSocket connection
@@ -142,9 +135,9 @@ const MessagesPage: React.FC = () => {
     connect();
 
     return () => {
-      // Cleanup WebSocket connection
+      disconnect();
     };
-  }, [connect]);
+  }, [connect, disconnect]);
 
   return (
     <Box
