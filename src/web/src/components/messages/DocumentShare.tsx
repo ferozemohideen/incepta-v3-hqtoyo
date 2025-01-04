@@ -138,7 +138,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
   // Handle document deletion
   const handleDocumentDelete = useCallback(async (metadata: DocumentPreviewProps['metadata']) => {
     try {
-      await storageService.current.downloadDocument(metadata.documentUrl);
+      await storageService.current.deleteDocument(metadata.documentUrl);
       setSharedDocuments(prev => 
         prev.filter(doc => doc.documentUrl !== metadata.documentUrl)
       );
