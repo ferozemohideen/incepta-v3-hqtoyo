@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -8,20 +8,18 @@ import {
   Switch,
   Dialog,
   CircularProgress,
-  LinearProgress,
   Tabs,
   Tab,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  IconButton,
   Alert,
   TextField,
-} from '@mui/material';
+} from '@mui/material'; // v5.14.0
 import { styled } from '@mui/material/styles';
-import QRCode from 'qrcode.react';
-import * as yup from 'yup';
+import QRCode from 'qrcode.react'; // v3.1.0
+import * as yup from 'yup'; // v1.2.0
 
 import Form from '../common/Form';
 import { authService } from '../../services/auth.service';
@@ -105,9 +103,10 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
   const { showSuccess, showError } = useNotification();
 
   // Handle password change
-  const handlePasswordChange = async (values: Record<string, any>, formActions: any) => {
+  const handlePasswordChange = useCallback(async (values: Record<string, any>, formActions: any) => {
     setIsLoading(true);
     try {
+      await authService.validatePassword(values.currentPassword);
       await onUpdate({ lastPasswordChange: new Date() });
       showSuccess('Password updated successfully');
     } catch (error) {
@@ -115,15 +114,15 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onUpdate, showSuccess, showError]);
 
   // Handle MFA toggle
   const handleMFAToggle = async (enabled: boolean) => {
     setIsLoading(true);
     try {
       if (enabled) {
-        const setupData = await authService.verifyMFA({ token: '', tempToken: '', method: 'setup', verificationId: '' });
-        setMfaSetupData(setupData as any);
+        const setupData = await authService.setupMFA();
+        setMfaSetupData(setupData);
         setMfaDialogOpen(true);
       } else {
         await authService.verifyMFA({ token: '', tempToken: '', method: 'disable', verificationId: '' });
@@ -323,7 +322,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
               </Alert>
               <Box mt={1}>
                 {mfaSetupData.backupCodes.map((code, index) => (
-                  <Typography key={index} variant="body2" fontFamily="monospace">
+                  <Typography key={index} variant="body2">
                     {code}
                   </Typography>
                 ))}
