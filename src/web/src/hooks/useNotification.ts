@@ -1,8 +1,8 @@
 import { useCallback } from 'react'; // v18.2.0
 import { useDispatch } from 'react-redux'; // v8.1.0
 import { v4 as uuidv4 } from 'uuid'; // v9.0.0
-import { addNotification, removeNotification } from 'store/ui.slice';
-import { ANIMATION } from 'constants/ui.constants';
+import { addNotification, removeNotification } from '../store/ui.slice';
+import { ANIMATION } from '../constants/ui.constants';
 
 // Type definitions
 type NotificationType = 'success' | 'error' | 'warning' | 'info';
