@@ -24,7 +24,7 @@ import {
   LoginCredentials,
   RegisterCredentials,
   MFACredentials,
-  SecurityContext
+  AuthError
 } from '../interfaces/auth.interface';
 import { TOKEN_CONFIG } from '../constants/auth.constants';
 
@@ -41,13 +41,17 @@ interface UseAuthReturn {
     lastLogin: Date;
   } | null;
   loading: Record<string, boolean>;
-  error: {
-    message: string;
-    code: string;
-    timestamp: Date;
-  } | null;
+  error: AuthError | null;
   mfaRequired: boolean;
-  securityContext: SecurityContext;
+  securityContext: {
+    lastActivity: number;
+    sessionExpiry: Date | null;
+    mfaVerified: boolean;
+    securityFlags: {
+      passwordChangeRequired: boolean;
+      accountLocked: boolean;
+    };
+  };
   handleLogin: (credentials: LoginCredentials) => Promise<void>;
   handleRegister: (userData: RegisterCredentials) => Promise<void>;
   handleMFAVerification: (mfaData: MFACredentials) => Promise<void>;
@@ -68,8 +72,9 @@ export const useAuth = (): UseAuthReturn => {
   /**
    * Initialize security context for session monitoring
    */
-  const securityContext: SecurityContext = {
+  const securityContext = {
     lastActivity: Date.now(),
+    sessionExpiry: authState.sessionExpiry,
     mfaVerified: authState.mfaVerified,
     securityFlags: authState.securityFlags
   };
