@@ -57,7 +57,7 @@ export const fetchThreads = createAsyncThunk(
     forceRefresh?: boolean;
   }) => {
     try {
-      const response = await messageService.getThreads(page.toString(), limit.toString());
+      const response = await messageService.getThreads(page, limit);
       return response;
     } catch (error) {
       throw error;
