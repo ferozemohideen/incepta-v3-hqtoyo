@@ -3,8 +3,8 @@ import { Grid, Container, Typography, Box, useTheme } from '@mui/material';
 
 // Internal components
 import { QuickActions } from '../../components/dashboard/QuickActions';
-import { RecentActivity, Activity } from '../../components/dashboard/RecentActivity';
 import SavedItems from '../../components/dashboard/SavedItems';
+import { RecentActivity, Activity } from '../../components/dashboard/RecentActivity';
 import { AnalyticsCard, ChartDataPoint } from '../../components/dashboard/AnalyticsCard';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 
@@ -214,6 +214,7 @@ const Home: React.FC = () => {
             <ErrorBoundary>
               <RecentActivity
                 initialActivities={state.activities}
+                isLoading={state.loading.activities}
                 onLoadMore={fetchDashboardData}
               />
             </ErrorBoundary>
@@ -227,8 +228,8 @@ const Home: React.FC = () => {
                 savedGrants={state.savedGrants}
                 onRemoveTechnology={handleRemoveTechnology}
                 onRemoveGrant={handleRemoveGrant}
-                onViewTechnology={(id) => {/* Navigate to technology */}}
-                onViewGrant={(id) => {/* Navigate to grant */}}
+                onViewTechnology={async () => {/* Navigate to technology */}}
+                onViewGrant={async () => {/* Navigate to grant */}}
                 isLoading={state.loading.saved}
               />
             </ErrorBoundary>
