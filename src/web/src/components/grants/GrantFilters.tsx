@@ -133,7 +133,7 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
   return (
     <Box
       component="form"
-      onSubmit={(e: React.FormEvent<HTMLFormElement>) => handleSubmit(e)}
+      onSubmit={(e) => handleSubmit(e)}
       className={className}
       aria-label={ariaLabel}
       sx={{
@@ -154,7 +154,7 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             name="type"
             options={GRANT_TYPE_OPTIONS}
             value={values.type}
-            onChange={(value: string | string[]) => setFieldValue('type', value)}
+            onChange={(value) => setFieldValue('type', value)}
             error={touched.type && !!errors.type}
             helperText={touched.type ? errors.type : ''}
             multiple
@@ -171,7 +171,7 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             name="agency"
             options={AGENCY_OPTIONS}
             value={values.agency}
-            onChange={(value: string | string[]) => setFieldValue('agency', value)}
+            onChange={(value) => setFieldValue('agency', value)}
             error={touched.agency && !!errors.agency}
             helperText={touched.agency ? errors.agency : ''}
             multiple
@@ -245,7 +245,7 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             name="sortBy"
             options={sortOptions}
             value={values.sortBy}
-            onChange={(value: string | string[]) => setFieldValue('sortBy', value)}
+            onChange={(value) => setFieldValue('sortBy', value)}
             fullWidth
             disabled={disabled}
             aria-label="Sort grants by field"
@@ -258,7 +258,7 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             <Tooltip title="Clear all filters">
               <Button
                 type="button"
-                onClick={() => handleFilterSubmit(validationSchema)}
+                onClick={(e) => handleSubmit(e)}
                 disabled={disabled}
                 aria-label="Clear filters"
               >
