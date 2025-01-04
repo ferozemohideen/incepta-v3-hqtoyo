@@ -7,8 +7,7 @@ import {
   FormHelperText 
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { forwardRef, ForwardedRef, memo } from 'react';
-import { lightTheme, darkTheme } from '../../styles/theme';
+import { forwardRef, ForwardedRef, memo } from 'react';
 
 // Interfaces
 interface SelectOption {
