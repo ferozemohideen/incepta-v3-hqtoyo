@@ -36,10 +36,9 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 export const isAuthenticated = (): boolean => {
   try {
     const accessToken = getLocalStorageItem<string>(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-    const deviceId = getLocalStorageItem<string>(AUTH_STORAGE_KEYS.DEVICE_ID);
-    const mfaVerified = getLocalStorageItem<boolean>(AUTH_STORAGE_KEYS.MFA_STATUS);
+    const mfaVerified = getLocalStorageItem<boolean>(AUTH_STORAGE_KEYS.MFA_ENABLED);
 
-    if (!accessToken || !deviceId) {
+    if (!accessToken) {
       return false;
     }
 
@@ -50,12 +49,6 @@ export const isAuthenticated = (): boolean => {
 
     // Check token expiration with grace period
     if (isTokenExpired(accessToken)) {
-      return false;
-    }
-
-    // Verify device binding
-    const decodedToken = parseJwt<TokenPayload>(accessToken);
-    if (AUTH_CONFIG.DEVICE_BINDING && decodedToken.sub !== deviceId) {
       return false;
     }
 
