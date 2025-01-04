@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
@@ -17,7 +17,7 @@ import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant
 import { grantService } from '../../services/grant.service';
 import { useNotification } from '../../hooks/useNotification';
 import { ANIMATION } from '../../constants/ui.constants';
-import { IDocumentRequirement } from '../../interfaces/grant.interface';
+import { IGrant } from '../../interfaces/grant.interface';
 
 // Types
 interface ValidationError {
@@ -82,7 +82,7 @@ const Application: React.FC = () => {
       // Validate all sections
       const validationErrors = await Promise.all(
         Object.entries(applicationData.sections).map(async ([sectionId, content]) => {
-          const isValid = await grantService.validateSection(sectionId.toString(), content);
+          const isValid = await grantService.validateSection(sectionId, content);
           return isValid ? null : {
             section: sectionId,
             message: 'Section validation failed'
@@ -151,13 +151,6 @@ const Application: React.FC = () => {
     );
   }
 
-  const documentRequirements = [
-    state.grant.requirements.technicalVolume,
-    state.grant.requirements.businessPlan,
-    state.grant.requirements.budget,
-    ...state.grant.requirements.additionalDocuments
-  ];
-
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box mb={4}>
@@ -171,9 +164,9 @@ const Application: React.FC = () => {
 
       <Box mb={4}>
         <Stepper activeStep={state.activeStep} alternativeLabel>
-          {documentRequirements.map((requirement: IDocumentRequirement) => (
-            <Step key={requirement.name}>
-              <StepLabel>{requirement.name}</StepLabel>
+          {state.grant.requirements.sections.map((section) => (
+            <Step key={section.id}>
+              <StepLabel>{section.title}</StepLabel>
             </Step>
           ))}
         </Stepper>
@@ -184,7 +177,7 @@ const Application: React.FC = () => {
           <GrantApplicationForm
             grantId={grantId!}
             onSuccess={handleApplicationSubmit}
-            onError={(error) => showError(error.message)}
+            onError={(error: Error) => showError(error.message)}
           />
         </Box>
 
