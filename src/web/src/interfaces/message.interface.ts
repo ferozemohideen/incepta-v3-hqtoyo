@@ -24,11 +24,6 @@ export enum MessageStatus {
 }
 
 /**
- * Type alias for message delivery status to maintain compatibility
- */
-export type MessageDeliveryStatus = MessageStatus;
-
-/**
  * Enumeration of WebSocket message event types for real-time updates
  */
 export enum MessageEventType {
@@ -40,7 +35,7 @@ export enum MessageEventType {
 /**
  * Interface for document message metadata including file details and tracking
  */
-export interface DocumentMetadata {
+export interface MessageMetadata {
   /**
    * Secure URL for accessing the shared document
    */
@@ -110,7 +105,7 @@ export interface Message {
   /**
    * Additional metadata, required for DOCUMENT type messages
    */
-  metadata: DocumentMetadata;
+  metadata: MessageMetadata;
 
   /**
    * Timestamp when the message was created
