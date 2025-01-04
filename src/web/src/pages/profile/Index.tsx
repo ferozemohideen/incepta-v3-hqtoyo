@@ -22,8 +22,7 @@ const ProfilePage: React.FC = () => {
 
   // Fetch user profile on mount
   useEffect(() => {
-    const deviceId = window.navigator.userAgent;
-    dispatch(fetchUserProfile(deviceId))
+    dispatch(fetchUserProfile())
       .unwrap()
       .catch((error: Error) => {
         showError('Failed to load profile: ' + error.message);
@@ -43,7 +42,6 @@ const ProfilePage: React.FC = () => {
       phoneNumber: currentUser.profile.phone || '',
       website: currentUser.socialProfiles?.linkedin || '',
       orcidId: currentUser.socialProfiles?.orcid || '',
-      researchInterests: currentUser.profile.interests || []
     };
   }, [currentUser]);
 
@@ -56,17 +54,22 @@ const ProfilePage: React.FC = () => {
     try {
       // Sanitize input data
       const sanitizedData = {
-        organization: sanitize(formData.organization),
-        title: sanitize(formData.organizationType),
-        bio: sanitize(formData.bio),
-        phone: sanitize(formData.phoneNumber),
-        interests: formData.researchInterests || [],
-        version: currentUser.profile.version + 1,
+        profile: {
+          organization: sanitize(formData.organization),
+          title: sanitize(formData.organizationType),
+          bio: sanitize(formData.bio),
+          phone: sanitize(formData.phoneNumber),
+          version: currentUser.profile.version + 1,
+        },
+        socialProfiles: {
+          linkedin: sanitize(formData.website),
+          orcid: sanitize(formData.orcidId),
+        },
       };
 
       // Dispatch update action
       await dispatch(updateUserProfile({
-        profileData: sanitizedData,
+        profileData: sanitizedData.profile,
         version: currentUser.profile.version,
       })).unwrap();
 
