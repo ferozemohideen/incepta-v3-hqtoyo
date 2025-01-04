@@ -78,25 +78,8 @@ export class MessageServiceImpl {
    * Initialize WebSocket event listeners for real-time updates
    */
   private initializeEventListeners(): void {
-    if (this.socket.isConnected) {
-      this.socket.sendMessage({
-        type: MessageEventType.NEW_MESSAGE,
-        payload: {} as Message,
-        timestamp: new Date()
-      });
-
-      this.socket.sendMessage({
-        type: MessageEventType.MESSAGE_DELIVERED,
-        payload: {} as Message,
-        timestamp: new Date()
-      });
-
-      this.socket.sendMessage({
-        type: MessageEventType.MESSAGE_READ,
-        payload: {} as Message,
-        timestamp: new Date()
-      });
-    }
+    this.handleNewMessage = this.handleNewMessage.bind(this);
+    this.updateMessageStatus = this.updateMessageStatus.bind(this);
   }
 
   /**
@@ -138,17 +121,16 @@ export class MessageServiceImpl {
   }
 
   /**
-   * Retrieves message threads with pagination support
+   * Retrieves message threads with pagination
    */
   public async getThreads(
     page: number = 1,
-    limit: number = 20,
-    filters?: { status?: MessageStatus; search?: string }
+    limit: number = 20
   ): Promise<{ threads: MessageThread[]; total: number }> {
     try {
       const response = await apiService.get<{ threads: MessageThread[]; total: number }>(
         `${this.baseUrl}/threads`,
-        { page, limit, ...filters }
+        { page, limit }
       );
       return response;
     } catch (error) {
@@ -158,65 +140,30 @@ export class MessageServiceImpl {
   }
 
   /**
-   * Subscribes to real-time message status updates
+   * Retrieves messages for a specific thread with pagination
    */
-  public async subscribeToStatus(
+  public async getMessages(
     threadId: string,
-    callback: (status: MessageStatus) => void
-  ): Promise<void> {
-    if (this.socket.isConnected) {
-      this.socket.sendMessage({
-        type: MessageEventType.MESSAGE_DELIVERED,
-        payload: { threadId } as Message,
-        timestamp: new Date()
-      });
-    }
-  }
-
-  /**
-   * Gets unread message count for a thread or all threads
-   */
-  public async getUnreadCount(threadId?: string): Promise<number> {
+    page: number = 1,
+    limit: number = 50
+  ): Promise<{ messages: Message[]; total: number }> {
     try {
-      const response = await apiService.get<{ count: number }>(
-        `${this.baseUrl}/unread${threadId ? `/${threadId}` : ''}`
+      const response = await apiService.get<{ messages: Message[]; total: number }>(
+        `${this.baseUrl}/thread/${threadId}/messages`,
+        { page, limit }
       );
-      return response.count;
-    } catch (error) {
-      console.error('Failed to get unread count:', error);
-      throw error;
-    }
-  }
 
-  /**
-   * Gets detailed information about a message thread
-   */
-  public async getThreadInfo(threadId: string): Promise<MessageThread> {
-    try {
-      const response = await apiService.get<MessageThread>(
-        `${this.baseUrl}/thread/${threadId}/info`
-      );
+      // Decrypt message contents
+      response.messages = response.messages.map(message => ({
+        ...message,
+        content: message.type !== MessageType.SYSTEM 
+          ? this.decryptContent(message.content)
+          : message.content
+      }));
+
       return response;
     } catch (error) {
-      console.error('Failed to get thread info:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Finds an existing thread or creates a new one
-   */
-  public async findOrCreateThread(
-    participantIds: string[]
-  ): Promise<MessageThread> {
-    try {
-      const response = await apiService.post<MessageThread>(
-        `${this.baseUrl}/thread`,
-        { participantIds }
-      );
-      return response;
-    } catch (error) {
-      console.error('Failed to find or create thread:', error);
+      console.error('Failed to retrieve messages:', error);
       throw error;
     }
   }
@@ -248,6 +195,28 @@ export class MessageServiceImpl {
       return response;
     } catch (error) {
       console.error('Failed to send message:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Marks messages as read and updates status
+   */
+  public async markAsRead(messageIds: string[]): Promise<void> {
+    try {
+      await apiService.put(`${this.baseUrl}/status/read`, {
+        messageIds,
+        status: MessageStatus.READ
+      });
+
+      // Update status via WebSocket if connected
+      if (this.socket.isConnected) {
+        for (const messageId of messageIds) {
+          await this.updateMessageStatus(messageId, MessageStatus.READ);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to mark messages as read:', error);
       throw error;
     }
   }
@@ -346,9 +315,16 @@ export class MessageServiceImpl {
 
       if (this.socket.isConnected) {
         await this.socket.sendMessage({
-          type: MessageEventType.MESSAGE_DELIVERED,
-          payload: { id: messageId, status } as Message,
-          timestamp: new Date()
+          id: messageId,
+          status,
+          type: MessageType.SYSTEM,
+          content: '',
+          threadId: '',
+          senderId: '',
+          recipientId: '',
+          metadata: { documentUrl: '', fileName: '', fileSize: 0, contentType: '', uploadedAt: new Date() },
+          createdAt: new Date(),
+          updatedAt: new Date()
         });
       }
     } catch (error) {
