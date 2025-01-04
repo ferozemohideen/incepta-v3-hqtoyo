@@ -127,7 +127,7 @@ const ResetPassword: React.FC = React.memo(() => {
           role="alert"
           aria-live="assertive"
         >
-          {typeof error === 'object' && error !== null ? error.message : validationError || error}
+          {validationError || error}
         </StyledAlert>
       )}
 
