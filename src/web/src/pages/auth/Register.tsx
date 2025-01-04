@@ -33,36 +33,47 @@ const Register: React.FC = () => {
     tokens: AuthTokens,
     deviceId: string
   ) => {
-    // Store registration completion status
-    localStorage.setItem('registration_complete', 'true');
+    try {
+      // Store registration completion status
+      localStorage.setItem('registration_complete', 'true');
 
-    // Navigate based on MFA requirement
-    if (mfaRequired) {
-      navigate('/auth/mfa-setup', {
+      // Navigate based on MFA requirement
+      if (mfaRequired) {
+        navigate('/auth/mfa-setup', {
+          state: { 
+            deviceId,
+            registrationComplete: true 
+          }
+        });
+      } else {
+        // Navigate to role-specific onboarding
+        const userRole = tokens.scope.find(scope => 
+          Object.values(UserRole).includes(scope as UserRole)
+        );
+        
+        switch (userRole) {
+          case UserRole.TTO:
+            navigate('/onboarding/tto');
+            break;
+          case UserRole.ENTREPRENEUR:
+            navigate('/onboarding/entrepreneur');
+            break;
+          case UserRole.RESEARCHER:
+            navigate('/onboarding/researcher');
+            break;
+          default:
+            navigate('/dashboard');
+        }
+      }
+    } catch (error) {
+      console.error('Registration completion failed:', error);
+      // Handle navigation errors gracefully
+      navigate('/auth/error', {
         state: { 
-          deviceId,
-          registrationComplete: true 
+          error: 'Failed to complete registration',
+          retry: true
         }
       });
-    } else {
-      // Navigate to role-specific onboarding
-      const userRole = tokens.scope.find(scope => 
-        Object.values(UserRole).includes(scope as UserRole)
-      );
-      
-      switch (userRole) {
-        case UserRole.TTO:
-          navigate('/onboarding/tto');
-          break;
-        case UserRole.ENTREPRENEUR:
-          navigate('/onboarding/entrepreneur');
-          break;
-        case UserRole.RESEARCHER:
-          navigate('/onboarding/researcher');
-          break;
-        default:
-          navigate('/dashboard');
-      }
     }
   }, [navigate, mfaRequired]);
 
@@ -91,7 +102,7 @@ const Register: React.FC = () => {
     <ErrorBoundary
       FallbackComponent={ErrorFallback}
       onReset={() => {
-        // Reset form state
+        // Reset any state that might have caused the error
       }}
     >
       <AuthLayout 
