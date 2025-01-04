@@ -5,10 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   setLocalStorageItem,
   getLocalStorageItem,
-  setSessionStorageItem,
-  getSessionStorageItem,
-  removeStorageItem,
-  StorageType,
   StorageError,
   StorageErrorCode,
 } from '../utils/storage.utils';
@@ -59,14 +55,13 @@ export class StorageService {
   constructor() {
     // Initialize AWS S3 client with server-side encryption
     this.s3Client = new S3({
-      region: process.env.AWS_REGION,
+      region: process.env['AWS_REGION'],
       apiVersion: '2006-03-01',
-      serverSideEncryption: 'AES256',
       signatureVersion: 'v4',
     });
 
-    this.bucketName = process.env.S3_BUCKET_NAME || '';
-    this.encryptionKey = process.env.ENCRYPTION_KEY || '';
+    this.bucketName = process.env['S3_BUCKET_NAME'] || '';
+    this.encryptionKey = process.env['ENCRYPTION_KEY'] || '';
 
     // Initialize allowed file types
     this.allowedFileTypes = new Set([
@@ -176,7 +171,7 @@ export class StorageService {
         .promise();
 
       let data: Blob;
-      if (metadata.Metadata?.encrypted === 'true' && options.decryption) {
+      if (metadata.Metadata && metadata.Metadata['encrypted'] === 'true' && options.decryption) {
         // Decrypt data
         const decrypted = await this.decryptFile(response.Body as Buffer);
         data = new Blob([decrypted], { type: metadata.ContentType });
