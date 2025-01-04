@@ -34,12 +34,11 @@ export interface StatisticsChartProps {
   loading?: boolean;
   height?: number | 'auto';
   showGrid?: boolean;
-  updateInterval?: number;
   accessibilityLabel?: string;
 }
 
 /**
- * Custom hook for managing chart data and real-time updates
+ * Custom hook for managing chart data
  */
 const useChartData = (data: ChartDataPoint[]) => {
   const formattedData = useMemo(() => {
@@ -47,10 +46,10 @@ const useChartData = (data: ChartDataPoint[]) => {
       ...point,
       timestamp: new Date(point.timestamp).toLocaleString(),
       // Handle multiple series data
-      ...(Array.isArray(point.value) && point.series 
-        ? point.series.reduce((acc, series, idx) => ({
+      ...(Array.isArray(point.value) 
+        ? point.series?.reduce((acc, series, idx) => ({
             ...acc,
-            [series]: Array.isArray(point.value) ? point.value[idx] : point.value
+            [series]: point.value[idx]
           }), {})
         : { value: point.value })
     }));
@@ -59,10 +58,10 @@ const useChartData = (data: ChartDataPoint[]) => {
   const seriesConfig = useMemo(() => {
     const firstPoint = data[0];
     if (Array.isArray(firstPoint?.value) && firstPoint?.series) {
-      return firstPoint.series.map((series, index) => ({
+      return firstPoint.series.map(series => ({
         name: series,
         dataKey: series,
-        stroke: useTheme().palette.primary[index === 0 ? 'main' : 'light']
+        stroke: useTheme().palette.primary.main
       }));
     }
     return [{
@@ -86,7 +85,6 @@ export const StatisticsChart: React.FC<StatisticsChartProps> = ({
   loading = false,
   height = 'auto',
   showGrid = true,
-  updateInterval = 5000,
   accessibilityLabel,
 }) => {
   const theme = useTheme();
@@ -121,7 +119,9 @@ export const StatisticsChart: React.FC<StatisticsChartProps> = ({
     const chart = chartRef.current;
     if (chart) {
       chart.addEventListener('keydown', handleKeyboardNavigation);
-      return () => chart.removeEventListener('keydown', handleKeyboardNavigation);
+      return () => {
+        chart.removeEventListener('keydown', handleKeyboardNavigation);
+      };
     }
   }, [handleKeyboardNavigation]);
 
@@ -200,7 +200,7 @@ export const StatisticsChart: React.FC<StatisticsChartProps> = ({
                     paddingTop: theme.spacing(2),
                   }}
                 />
-                {seriesConfig.map((config, index) => (
+                {seriesConfig.map((config) => (
                   <Line
                     key={config.name}
                     type="monotone"
