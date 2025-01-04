@@ -6,7 +6,7 @@ import { debounce } from 'lodash';
 import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant';
 import { useNotification } from '../../hooks/useNotification';
 import { grantService } from '../../services/grant.service';
-import { IGrant, IGrantApplication, GrantStatus } from '../../interfaces/grant.interface';
+import { IGrant, IGrantApplication } from '../../interfaces/grant.interface';
 
 // Interface for component state management
 interface WriterState {
@@ -82,11 +82,7 @@ const Writer: React.FC = () => {
         setState(prev => ({ ...prev, progress }));
 
         // Save draft
-        await grantService.saveGrantDraft(grantId, {
-          ...applicationData,
-          status: GrantStatus.DRAFT,
-          lastModifiedAt: new Date()
-        });
+        await grantService.saveGrantDraft(grantId, applicationData);
         
         setState(prev => ({
           ...prev,
@@ -112,8 +108,8 @@ const Writer: React.FC = () => {
 
       // Validate application before submission
       const validationResult = await grantService.validateApplication(applicationData);
-      if (!validationResult) {
-        showWarning('Please complete all required sections');
+      if (!validationResult.isValid) {
+        showWarning(validationResult.message || 'Please complete all required sections');
         return;
       }
 
@@ -124,11 +120,7 @@ const Writer: React.FC = () => {
       }
 
       // Submit application
-      await grantService.submitApplication(grantId, {
-        ...applicationData,
-        status: GrantStatus.SUBMITTED,
-        submittedAt: new Date()
-      });
+      await grantService.submitApplication(grantId, applicationData);
       showSuccess('Application submitted successfully');
 
       // Navigate to status page
@@ -155,18 +147,13 @@ const Writer: React.FC = () => {
   const calculateProgress = (applicationData: Partial<IGrantApplication>): number => {
     if (!state.grant) return 0;
 
-    const requiredDocs = [
-      state.grant.requirements.technicalVolume,
-      state.grant.requirements.businessPlan,
-      state.grant.requirements.budget,
-      ...state.grant.requirements.additionalDocuments
-    ].filter(doc => doc.required);
+    const sections = state.grant.requirements.sections;
+    const completedSections = sections.filter(section => {
+      const content = applicationData.sections?.[section.id]?.content;
+      return content && content.length > 0;
+    });
 
-    const completedDocs = applicationData.documents?.filter(doc => 
-      doc.status === 'approved' || doc.status === 'pending'
-    ) || [];
-
-    return Math.round((completedDocs.length / requiredDocs.length) * 100);
+    return Math.round((completedSections.length / sections.length) * 100);
   };
 
   // Loading state
@@ -208,10 +195,7 @@ const Writer: React.FC = () => {
       
       {state.grant && (
         <GrantWritingAssistant
-          grant={{
-            ...state.grant,
-            deadline: state.grant.deadline.toISOString()
-          }}
+          grant={state.grant}
           onSave={handleSaveDraft}
           onSubmit={handleSubmitApplication}
           initialData={location.state?.draftData}
