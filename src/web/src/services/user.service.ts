@@ -67,6 +67,43 @@ class UserServiceImpl implements UserService {
   };
 
   /**
+   * Validates security context for user operations
+   * @param deviceId - Unique device identifier
+   * @param timestamp - Operation timestamp
+   * @param userAgent - Browser/client user agent
+   * @returns Promise resolving to boolean indicating validity
+   */
+  private async validateSecurityContext(
+    deviceId: string,
+    timestamp: number,
+    userAgent: string
+  ): Promise<boolean> {
+    try {
+      // Validate device ID format and status
+      if (!deviceId || typeof deviceId !== 'string') {
+        return false;
+      }
+
+      // Validate timestamp is within acceptable range
+      const currentTime = Date.now();
+      const timeDiff = currentTime - timestamp;
+      if (timeDiff > 300000) { // 5 minutes max difference
+        return false;
+      }
+
+      // Validate user agent
+      if (!userAgent || typeof userAgent !== 'string') {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error validating security context:', error);
+      return false;
+    }
+  }
+
+  /**
    * Retrieves current user's profile with version information
    */
   async getProfile(): Promise<User> {
