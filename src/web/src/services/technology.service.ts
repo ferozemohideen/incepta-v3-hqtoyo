@@ -54,7 +54,7 @@ class TechnologyService {
     this.baseUrl = API_ENDPOINTS.TECHNOLOGIES.BASE;
     
     // Initialize LRU cache with configuration
-    this.cache = new LRUCache({
+    this.cache = new LRUCache<string, any>({
       max: 500, // Maximum number of items
       ttl: 1000 * 60 * 5, // 5 minutes TTL
       updateAgeOnGet: true,
