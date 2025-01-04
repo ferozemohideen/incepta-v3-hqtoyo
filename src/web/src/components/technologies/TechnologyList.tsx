@@ -126,7 +126,7 @@ export const TechnologyList: React.FC<TechnologyListProps> = ({
       onShare: onShareTechnology,
       onView: onViewTechnology,
       showActions: true,
-      matchScore: showMatchScores ? technology.metadata?.matchScore : undefined,
+      matchScore: showMatchScores ? technology.metadata?.aiMatchScore : undefined,
     };
 
     return (
