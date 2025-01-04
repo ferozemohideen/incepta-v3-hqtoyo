@@ -2,7 +2,7 @@
 import React from 'react';
 import { Box, Container, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import CustomCard from '../components/common/Card';
+import CustomCard, { CustomCardProps } from '../components/common/Card';
 
 /**
  * Props interface for the AuthLayout component
