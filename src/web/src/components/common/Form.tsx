@@ -177,8 +177,9 @@ export const Form: React.FC<FormProps> = ({
       }
 
       if (child.props.children) {
-        const newChildren = renderFormFields(child.props.children);
-        return React.cloneElement(child, { children: newChildren });
+        return React.cloneElement(child, {
+          children: renderFormFields(child.props.children),
+        });
       }
 
       return child;
