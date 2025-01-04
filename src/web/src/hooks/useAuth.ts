@@ -17,7 +17,8 @@ import {
   verifyMFA,
   selectAuth,
   refreshToken,
-  logout
+  logout,
+  TOKEN_CONFIG
 } from '../store/auth.slice';
 import {
   LoginCredentials,
@@ -26,34 +27,25 @@ import {
   MFACredentials,
   AuthError
 } from '../interfaces/auth.interface';
-import { TOKEN_CONFIG } from '../constants/auth.constants';
-
-interface SecurityContext {
-  lastActivity: number;
-  sessionExpiry: Date | null;
-  mfaVerified: boolean;
-  securityFlags: {
-    passwordChangeRequired: boolean;
-    accountLocked: boolean;
-  };
-}
+import { TokenPayload } from '../constants/auth.constants';
 
 /**
  * Interface defining the return value of useAuth hook
  */
 interface UseAuthReturn {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-    permissions: string[];
-    lastLogin: Date;
-  } | null;
+  user: TokenPayload | null;
   loading: Record<string, boolean>;
   error: AuthError | null;
   mfaRequired: boolean;
-  securityContext: SecurityContext;
+  securityContext: {
+    lastActivity: number;
+    sessionExpiry: Date | null;
+    mfaVerified: boolean;
+    securityFlags: {
+      passwordChangeRequired: boolean;
+      accountLocked: boolean;
+    };
+  };
   handleLogin: (credentials: LoginCredentials) => Promise<void>;
   handleRegister: (userData: RegisterCredentials) => Promise<void>;
   handleMFAVerification: (mfaData: MFACredentials) => Promise<void>;
@@ -74,7 +66,7 @@ export const useAuth = (): UseAuthReturn => {
   /**
    * Initialize security context for session monitoring
    */
-  const securityContext: SecurityContext = {
+  const securityContext = {
     lastActivity: Date.now(),
     sessionExpiry: authState.sessionExpiry,
     mfaVerified: authState.mfaVerified,
@@ -167,7 +159,8 @@ export const useAuth = (): UseAuthReturn => {
         throw new Error('Terms and conditions must be accepted');
       }
 
-      throw new Error('Registration functionality not implemented');
+      // Registration is handled by the parent component
+      throw new Error('Registration not implemented in auth slice');
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -223,7 +216,7 @@ export const useAuth = (): UseAuthReturn => {
   return {
     user: authState.user,
     loading: authState.loading,
-    error: authState.error,
+    error: authState.error as AuthError | null,
     mfaRequired: authState.requiresMFA,
     securityContext,
     handleLogin,
