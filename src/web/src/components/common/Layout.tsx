@@ -93,7 +93,6 @@ const Layout: React.FC<LayoutProps> = React.memo(({
       {/* App Bar */}
       <AppBarComponent
         onMenuClick={handleSidebarToggle}
-        elevation={isAnimating ? 4 : 0}
       />
 
       {/* Sidebar with responsive behavior */}
