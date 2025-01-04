@@ -1,10 +1,3 @@
-```
-This error occurs because we're using a string literal 'SENT' but need to use the enum value MessageStatus.SENT from message.interface.ts.
-
-Let's regenerate the file with all fixes:
-
-# src/web/src/components/messages/DocumentShare.tsx
-```typescript
 import React, { useState, useCallback, useRef } from 'react';
 import { 
   Box, 
