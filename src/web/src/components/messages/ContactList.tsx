@@ -13,7 +13,6 @@ import {
   ListItemText,
   Avatar,
   Badge,
-  CircularProgress,
   Alert,
   Typography,
   Skeleton
@@ -21,14 +20,14 @@ import {
 import { styled } from '@mui/material/styles';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
 
-import { CustomCard, CustomCardProps } from '../common/Card';
+import { CustomCard } from '../common/Card';
 import { User } from '../../interfaces/user.interface';
 import { messageService } from '../../services/message.service';
 
 // Enhanced styled components with Material Design 3.0
 const StyledListItem = styled(ListItem, {
-  shouldForwardProp: (prop) => !['isSelected', 'isOnline'].includes(prop as string),
-})<{ isSelected?: boolean; isOnline?: boolean }>(({ theme, isSelected, isOnline }) => ({
+  shouldForwardProp: (prop) => !['isSelected'].includes(prop as string),
+})<{ isSelected?: boolean }>(({ theme, isSelected }) => ({
   borderRadius: theme.spacing(1),
   transition: theme.transitions.create(['background-color', 'box-shadow']),
   marginBottom: theme.spacing(0.5),
@@ -116,7 +115,6 @@ const ContactItem = React.memo<ContactItemProps>(({
   return (
     <StyledListItem
       isSelected={isSelected}
-      isOnline={isOnline}
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -210,16 +208,13 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
   const loadContacts = useCallback(async () => {
     try {
       setLoading(true);
-      // Temporarily mock the response until messageService is updated
-      const mockResponse = {
-        contacts: [],
-      };
+      const response = await messageService.getThreads(page, pageSize);
       
       setContacts(prevContacts => [
         ...prevContacts,
-        ...mockResponse.contacts
+        ...response.contacts
       ]);
-      setHasNextPage(mockResponse.contacts.length === pageSize);
+      setHasNextPage(response.contacts.length === pageSize);
       setPage(prev => prev + 1);
     } catch (err) {
       setError('Failed to load contacts. Please try again.');
@@ -240,18 +235,14 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
 
   // Initialize real-time status updates
   useEffect(() => {
-    // Temporarily mock status updates until messageService is updated
-    const mockStatusUpdates = {
-      online: {},
-      typing: {}
-    };
-
-    setOnlineStatus(prev => ({ ...prev, ...mockStatusUpdates.online }));
-    setTypingStatus(prev => ({ ...prev, ...mockStatusUpdates.typing }));
+    statusSubscription.current = messageService.subscribeToStatus((updates: { online: Record<string, boolean>; typing: Record<string, boolean> }) => {
+      setOnlineStatus(prev => ({ ...prev, ...updates.online }));
+      setTypingStatus(prev => ({ ...prev, ...updates.typing }));
+    });
 
     return () => {
       if (statusSubscription.current) {
-        statusSubscription.current.unsubscribe?.();
+        statusSubscription.current.unsubscribe();
       }
     };
   }, []);
@@ -260,9 +251,8 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
   useEffect(() => {
     const loadUnreadCounts = async () => {
       try {
-        // Temporarily mock unread counts until messageService is updated
-        const mockCounts = {};
-        setUnreadCounts(mockCounts);
+        const counts = await messageService.getUnreadCount();
+        setUnreadCounts(counts);
       } catch (err) {
         console.error('Error loading unread counts:', err);
       }
