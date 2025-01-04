@@ -13,7 +13,6 @@ import {
   ListItemText,
   Avatar,
   Badge,
-  CircularProgress,
   Alert,
   Typography,
   Skeleton
@@ -21,14 +20,14 @@ import {
 import { styled } from '@mui/material/styles';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
 
-import { CustomCard, CustomCardProps } from '../common/Card';
+import { CustomCard } from '../common/Card';
 import { User } from '../../interfaces/user.interface';
-import { MessageServiceImpl } from '../../services/message.service';
+import { messageService } from '../../services/message.service';
 
 // Enhanced styled components with Material Design 3.0
 const StyledListItem = styled(ListItem, {
-  shouldForwardProp: (prop) => !['isSelected', 'isOnline'].includes(prop as string),
-})<{ isSelected?: boolean; isOnline?: boolean }>(({ theme, isSelected, isOnline }) => ({
+  shouldForwardProp: (prop) => !['isSelected'].includes(prop as string),
+})<{ isSelected?: boolean }>(({ theme, isSelected }) => ({
   borderRadius: theme.spacing(1),
   transition: theme.transitions.create(['background-color', 'box-shadow']),
   marginBottom: theme.spacing(0.5),
@@ -116,7 +115,6 @@ const ContactItem = React.memo<ContactItemProps>(({
   return (
     <StyledListItem
       isSelected={isSelected}
-      isOnline={isOnline}
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -205,13 +203,12 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
 
   // Refs for cleanup and optimization
   const statusSubscription = useRef<any>(null);
-  const messageServiceInstance = useRef<MessageServiceImpl>(new MessageServiceImpl());
 
   // Load contacts with infinite scroll
   const loadContacts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await messageServiceInstance.current.getThreads(page, pageSize);
+      const response = await messageService.getThreads(page, pageSize);
       
       setContacts(prevContacts => [
         ...prevContacts,
@@ -238,7 +235,7 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
 
   // Initialize real-time status updates
   useEffect(() => {
-    statusSubscription.current = messageServiceInstance.current.subscribeToStatus((updates: { online: Record<string, boolean>; typing: Record<string, boolean> }) => {
+    statusSubscription.current = messageService.subscribeToStatus((updates) => {
       setOnlineStatus(prev => ({ ...prev, ...updates.online }));
       setTypingStatus(prev => ({ ...prev, ...updates.typing }));
     });
@@ -254,7 +251,7 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
   useEffect(() => {
     const loadUnreadCounts = async () => {
       try {
-        const counts = await messageServiceInstance.current.getUnreadCount();
+        const counts = await messageService.getUnreadCount();
         setUnreadCounts(counts);
       } catch (err) {
         console.error('Error loading unread counts:', err);
