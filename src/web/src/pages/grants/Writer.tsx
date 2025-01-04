@@ -73,7 +73,7 @@ const Writer: React.FC = () => {
    * Handle draft saving with debounce
    */
   const handleSaveDraft = useCallback(
-    debounce(async (applicationData: Partial<IGrantApplication>) => {
+    debounce(async (applicationData: IGrantApplication) => {
       try {
         if (!grantId) return;
 
@@ -102,7 +102,7 @@ const Writer: React.FC = () => {
   /**
    * Handle application submission
    */
-  const handleSubmitApplication = useCallback(async (applicationData: Partial<IGrantApplication>) => {
+  const handleSubmitApplication = useCallback(async (applicationData: IGrantApplication) => {
     try {
       if (!grantId) return;
 
@@ -137,21 +137,17 @@ const Writer: React.FC = () => {
   /**
    * Calculate application progress
    */
-  const calculateProgress = (applicationData: Partial<IGrantApplication>): number => {
-    if (!state.grant?.requirements?.technicalVolume) return 0;
+  const calculateProgress = (applicationData: IGrantApplication): number => {
+    if (!state.grant) return 0;
 
-    const requiredDocs = [
-      state.grant.requirements.technicalVolume,
-      state.grant.requirements.businessPlan,
-      state.grant.requirements.budget,
-      ...(state.grant.requirements.additionalDocuments || [])
-    ].filter(doc => doc.required);
+    const requiredDocs = state.grant.requirements.technicalVolume.required ? 1 : 0 +
+                        state.grant.requirements.businessPlan.required ? 1 : 0 +
+                        state.grant.requirements.budget.required ? 1 : 0 +
+                        state.grant.requirements.additionalDocuments.filter(doc => doc.required).length;
 
-    const completedDocs = applicationData.documents?.filter(doc => 
-      doc.status === 'approved' || doc.status === 'pending'
-    ) || [];
+    const completedDocs = applicationData.documents.length;
 
-    return Math.round((completedDocs.length / requiredDocs.length) * 100);
+    return Math.round((completedDocs / requiredDocs) * 100);
   };
 
   // Loading state
