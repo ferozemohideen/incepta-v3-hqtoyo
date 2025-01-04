@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import {
@@ -21,21 +21,18 @@ import {
 import {
   Technology,
   PatentStatus,
-  DevelopmentStage,
-  TechnologyPermissions,
 } from '../../interfaces/technology.interface';
 import CustomCard from '../common/Card';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { technologyService } from '../../services/technology.service';
 import { useNotification } from '../../hooks/useNotification';
-import { SPACING, ANIMATION } from '../../constants/ui.constants';
+import { SPACING } from '../../constants/ui.constants';
 
 // Props interface for the component
 interface TechnologyDetailsProps {
   id?: string;
   onSave?: (technology: Technology) => Promise<void>;
   onContact?: (technology: Technology) => void;
-  securityLevel?: string;
 }
 
 /**
@@ -46,7 +43,6 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
   id: propId,
   onSave,
   onContact,
-  securityLevel,
 }) => {
   // Hooks
   const { id: urlId } = useParams<{ id: string }>();
@@ -60,11 +56,10 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
     data: technology,
     isLoading,
     isError,
-    error,
     refetch,
   } = useQuery(
     ['technology', technologyId],
-    () => technologyService.getTechnologyById(technologyId),
+    () => technologyId ? technologyService.getTechnologyById(technologyId) : Promise.reject('No technology ID provided'),
     {
       enabled: !!technologyId,
       retry: 2,
@@ -78,7 +73,7 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
 
   // Handle save action with optimistic update
   const handleSave = async () => {
-    if (!technology || !technology.permissions?.canEdit) return;
+    if (!technology || !technology.permissions?.canSave) return;
 
     try {
       await technologyService.saveTechnology(technology.id);
@@ -236,7 +231,7 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
                   variant="contained"
                   startIcon={<SaveOutlined />}
                   onClick={handleSave}
-                  disabled={!technology.permissions?.canEdit}
+                  disabled={!technology.permissions?.canSave}
                   fullWidth
                   sx={{ mb: 2 }}
                 >
