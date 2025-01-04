@@ -19,8 +19,7 @@ import {
   IGrantSearchParams,
   GrantStatus,
   GrantMatchScore,
-  GrantStats,
-  IGrantSection
+  GrantStats
 } from '../interfaces/grant.interface';
 
 /**
@@ -35,13 +34,6 @@ interface IGrantResponse {
 }
 
 /**
- * Interface for grant update subscription
- */
-interface IGrantSubscription {
-  unsubscribe: () => void;
-}
-
-/**
  * Interface defining core grant service operations
  */
 export interface GrantService {
@@ -52,9 +44,6 @@ export interface GrantService {
   getGrantStats(): Promise<GrantStats>;
   saveGrantDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
   uploadApplicationDocument(applicationId: string, document: File): Promise<void>;
-  subscribeToGrantUpdates(grantId: string, callback: (grant: IGrant) => void): IGrantSubscription;
-  validateSection(sectionId: string, data: any): Promise<boolean>;
-  saveDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
 }
 
 /**
@@ -64,7 +53,6 @@ class GrantServiceImpl implements GrantService {
   private readonly cacheTimeout: number = 5 * 60 * 1000; // 5 minutes
   private readonly maxRetries: number = 3;
   private readonly cache: Map<string, { data: any; timestamp: number }> = new Map();
-  private readonly subscriptions: Map<string, Set<(grant: IGrant) => void>> = new Map();
 
   constructor() {
     // Retry configuration is handled by ApiServiceImpl
@@ -237,55 +225,6 @@ class GrantServiceImpl implements GrantService {
       console.error('Document upload failed:', error);
       throw error;
     }
-  }
-
-  /**
-   * Subscribe to real-time grant updates
-   */
-  subscribeToGrantUpdates(grantId: string, callback: (grant: IGrant) => void): IGrantSubscription {
-    if (!this.subscriptions.has(grantId)) {
-      this.subscriptions.set(grantId, new Set());
-    }
-    
-    this.subscriptions.get(grantId)!.add(callback);
-
-    return {
-      unsubscribe: () => {
-        const callbacks = this.subscriptions.get(grantId);
-        if (callbacks) {
-          callbacks.delete(callback);
-          if (callbacks.size === 0) {
-            this.subscriptions.delete(grantId);
-          }
-        }
-      }
-    };
-  }
-
-  /**
-   * Validate grant application section
-   */
-  async validateSection(sectionId: string, data: any): Promise<boolean> {
-    try {
-      const response = await post<{ valid: boolean }>(
-        `${API_ENDPOINTS.GRANTS.BASE}/validate-section/${sectionId}`,
-        { data }
-      );
-      return response.valid;
-    } catch (error) {
-      console.error('Section validation failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Save draft implementation (alias for saveGrantDraft)
-   */
-  async saveDraft(
-    grantId: string,
-    draftData: Partial<IGrantApplication>
-  ): Promise<IGrantApplication> {
-    return this.saveGrantDraft(grantId, draftData);
   }
 
   /**
