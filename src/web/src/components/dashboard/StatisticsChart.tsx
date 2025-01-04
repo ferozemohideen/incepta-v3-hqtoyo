@@ -34,23 +34,26 @@ export interface StatisticsChartProps {
   loading?: boolean;
   height?: number | 'auto';
   showGrid?: boolean;
+  updateInterval?: number;
   accessibilityLabel?: string;
 }
 
 /**
- * Custom hook for managing chart data
+ * Custom hook for managing chart data and real-time updates
  */
-const useChartData = (data: ChartDataPoint[]) => {
+const useChartData = (data: ChartDataPoint[], updateInterval: number = 5000) => {
   const formattedData = useMemo(() => {
     return data.map(point => ({
       ...point,
       timestamp: new Date(point.timestamp).toLocaleString(),
       // Handle multiple series data
-      ...(Array.isArray(point.value) 
-        ? point.series?.reduce((acc, series, idx) => ({
-            ...acc,
-            [series]: point.value[idx]
-          }), {})
+      ...(Array.isArray(point.value) && point.series 
+        ? point.series.reduce<Record<string, number>>((acc, series, idx) => {
+            if (Array.isArray(point.value)) {
+              acc[series] = point.value[idx];
+            }
+            return acc;
+          }, {})
         : { value: point.value })
     }));
   }, [data]);
@@ -58,10 +61,10 @@ const useChartData = (data: ChartDataPoint[]) => {
   const seriesConfig = useMemo(() => {
     const firstPoint = data[0];
     if (Array.isArray(firstPoint?.value) && firstPoint?.series) {
-      return firstPoint.series.map(series => ({
+      return firstPoint.series.map((series, index) => ({
         name: series,
         dataKey: series,
-        stroke: useTheme().palette.primary.main
+        stroke: useTheme().palette.primary[index === 0 ? 'main' : 'light']
       }));
     }
     return [{
@@ -85,13 +88,14 @@ export const StatisticsChart: React.FC<StatisticsChartProps> = ({
   loading = false,
   height = 'auto',
   showGrid = true,
+  updateInterval = 5000,
   accessibilityLabel,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const chartRef = useRef<HTMLDivElement>(null);
   
-  const { formattedData, seriesConfig } = useChartData(data);
+  const { formattedData, seriesConfig } = useChartData(data, updateInterval);
 
   // Handle keyboard navigation for accessibility
   const handleKeyboardNavigation = useCallback((event: KeyboardEvent) => {
@@ -123,6 +127,7 @@ export const StatisticsChart: React.FC<StatisticsChartProps> = ({
         chart.removeEventListener('keydown', handleKeyboardNavigation);
       };
     }
+    return () => {}; // Return empty cleanup function when chart ref is null
   }, [handleKeyboardNavigation]);
 
   // Calculate responsive dimensions
@@ -200,7 +205,7 @@ export const StatisticsChart: React.FC<StatisticsChartProps> = ({
                     paddingTop: theme.spacing(2),
                   }}
                 />
-                {seriesConfig.map((config) => (
+                {seriesConfig.map((config, index) => (
                   <Line
                     key={config.name}
                     type="monotone"
