@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from '@mui/material';
-import { ErrorBoundary } from '@sentry/react';
 import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/tracing';
 import { persistStore } from 'redux-persist';
@@ -17,28 +16,28 @@ import { lightTheme } from './styles/theme';
  */
 const initializeApp = async (): Promise<void> => {
   // Initialize Sentry in production
-  if (process.env['NODE_ENV'] === 'production') {
-    initSentry({
-      dsn: process.env['REACT_APP_SENTRY_DSN'],
+  if (process.env.NODE_ENV === 'production') {
+    Sentry.init({
+      dsn: process.env.REACT_APP_SENTRY_DSN,
       integrations: [
         new BrowserTracing({
-          tracingOrigins: ['localhost', process.env['REACT_APP_API_URL'] as string],
+          tracingOrigins: ['localhost', process.env.REACT_APP_API_URL as string],
         }),
       ],
       tracesSampleRate: 0.2,
-      environment: process.env['NODE_ENV'],
+      environment: process.env.NODE_ENV,
     });
   }
 
   // Configure Content Security Policy
-  if (process.env['NODE_ENV'] === 'production') {
+  if (process.env.NODE_ENV === 'production') {
     const meta = document.createElement('meta');
     meta.httpEquiv = 'Content-Security-Policy';
     meta.content = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      `connect-src 'self' ${process.env['REACT_APP_API_URL']} *.sentry.io`,
+      `connect-src 'self' ${process.env.REACT_APP_API_URL} *.sentry.io`,
       "img-src 'self' data: blob: https:",
       "font-src 'self'",
       "object-src 'none'",
@@ -71,7 +70,7 @@ const initializeApp = async (): Promise<void> => {
 /**
  * Custom error boundary fallback component
  */
-const ErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
+const ErrorFallback = ({ error }: { error: Error }) => (
   <div role="alert" style={{ padding: '20px', textAlign: 'center' }}>
     <h2>Something went wrong</h2>
     <pre style={{ color: 'red' }}>{error.message}</pre>
@@ -91,11 +90,11 @@ const renderApp = (): void => {
 
   root.render(
     <React.StrictMode>
-      <ErrorBoundary
-        fallback={ErrorFallback}
+      <Sentry.ErrorBoundary
+        fallback={({ error }) => <ErrorFallback error={error} />}
         onError={(error) => {
           console.error('Application error:', error);
-          if (process.env['NODE_ENV'] === 'production') {
+          if (process.env.NODE_ENV === 'production') {
             Sentry.captureException(error);
           }
         }}
@@ -107,7 +106,7 @@ const renderApp = (): void => {
             </ThemeProvider>
           </PersistGate>
         </Provider>
-      </ErrorBoundary>
+      </Sentry.ErrorBoundary>
     </React.StrictMode>
   );
 };
@@ -117,17 +116,17 @@ initializeApp().then(() => {
   renderApp();
 }).catch((error) => {
   console.error('Failed to initialize application:', error);
-  if (process.env['NODE_ENV'] === 'production') {
+  if (process.env.NODE_ENV === 'production') {
     Sentry.captureException(error);
   }
 });
 
 // Register service worker
-if ('serviceWorker' in navigator && process.env['NODE_ENV'] === 'production') {
+if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js').catch((error) => {
       console.error('Service worker registration failed:', error);
-      if (process.env['NODE_ENV'] === 'production') {
+      if (process.env.NODE_ENV === 'production') {
         Sentry.captureException(error);
       }
     });
@@ -137,7 +136,7 @@ if ('serviceWorker' in navigator && process.env['NODE_ENV'] === 'production') {
 // Handle unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
-  if (process.env['NODE_ENV'] === 'production') {
+  if (process.env.NODE_ENV === 'production') {
     Sentry.captureException(event.reason);
   }
   event.preventDefault();
