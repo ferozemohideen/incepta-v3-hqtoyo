@@ -1,16 +1,17 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { 
   Box, 
   Card, 
   Typography, 
   IconButton, 
   LinearProgress, 
+  CircularProgress, 
   Snackbar, 
   Alert 
 } from '@mui/material';
-import { Delete, Download, Error } from '@mui/icons-material';
-import FileUpload from '../common/FileUpload';
-import { Message, MessageType } from '../../interfaces/message.interface';
+import { Delete, Download, CloudUpload, Error } from '@mui/icons-material';
+import FileUpload, { FileUploadProps } from '../common/FileUpload';
+import { Message, MessageType, MessageMetadata, MessageStatus } from '../../interfaces/message.interface';
 import { StorageService } from '../../services/storage.service';
 
 // Document sharing component props with enhanced security options
@@ -26,13 +27,7 @@ export interface DocumentShareProps {
 
 // Document preview component props
 interface DocumentPreviewProps {
-  metadata: {
-    documentUrl: string;
-    fileName: string;
-    fileSize: number;
-    contentType: string;
-    uploadedAt: Date;
-  };
+  metadata: MessageMetadata;
   onDelete: () => Promise<void>;
   onDownload: () => Promise<void>;
   isLoading: boolean;
@@ -65,11 +60,12 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
   // State management
   const [uploadProgress, setUploadProgress] = useState<UploadProgressState | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [sharedDocuments, setSharedDocuments] = useState<DocumentPreviewProps['metadata'][]>([]);
+  const [sharedDocuments, setSharedDocuments] = useState<MessageMetadata[]>([]);
   const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
 
   // Service and refs
   const storageService = useRef(new StorageService());
+  const uploadQueue = useRef<File[]>([]);
 
   // Handle file upload with security checks and progress tracking
   const handleFileUpload = useCallback(async (files: File[]) => {
@@ -94,6 +90,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
             originalName: file.name,
             size: file.size.toString(),
             type: file.type,
+            virusScanned: enableVirusScan,
           },
           cacheControl: 'private, max-age=3600',
         });
@@ -106,7 +103,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
           recipientId: 'recipient', // Should be replaced with actual recipient ID
           type: MessageType.DOCUMENT,
           content: '',
-          status: MessageStatus.DELIVERED,
+          status: MessageStatus.SENT,
           metadata: {
             documentUrl: response.url,
             fileName: file.name,
@@ -133,12 +130,12 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
         prev ? { ...prev, status: 'error' } : null
       );
     }
-  }, [threadId, enableEncryption, onDocumentShare]);
+  }, [threadId, enableEncryption, enableVirusScan, onDocumentShare]);
 
   // Handle document deletion
-  const handleDocumentDelete = useCallback(async (metadata: DocumentPreviewProps['metadata']) => {
+  const handleDocumentDelete = useCallback(async (metadata: MessageMetadata) => {
     try {
-      await storageService.current.downloadDocument(metadata.documentUrl);
+      await storageService.current.deleteDocument(metadata.documentUrl);
       setSharedDocuments(prev => 
         prev.filter(doc => doc.documentUrl !== metadata.documentUrl)
       );
@@ -149,7 +146,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
   }, []);
 
   // Handle document download
-  const handleDocumentDownload = useCallback(async (metadata: DocumentPreviewProps['metadata']) => {
+  const handleDocumentDownload = useCallback(async (metadata: MessageMetadata) => {
     try {
       const blob = await storageService.current.downloadDocument(metadata.documentUrl, {
         decryption: enableEncryption,
