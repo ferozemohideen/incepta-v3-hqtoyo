@@ -97,7 +97,7 @@ const Settings: React.FC = () => {
       };
 
       // Update security settings with audit log
-      await onUpdate({ ...security, auditLog });
+      await user?.security.update({ ...security, auditLog });
       setUpdateSuccess('Security settings updated successfully');
     } catch (error) {
       setUpdateError('Failed to update security settings. Please try again.');
@@ -116,7 +116,7 @@ const Settings: React.FC = () => {
     setUpdateSuccess(null);
 
     try {
-      await onUpdate({ preferences });
+      await user?.preferences.update({ preferences });
       setUpdateSuccess('Preferences updated successfully');
     } catch (error) {
       setUpdateError('Failed to update preferences. Please try again.');
@@ -124,7 +124,7 @@ const Settings: React.FC = () => {
     } finally {
       setIsUpdating(false);
     }
-  }, []);
+  }, [user]);
 
   // Render loading state if user data is not available
   if (!user) {
