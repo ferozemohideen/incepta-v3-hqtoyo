@@ -102,18 +102,32 @@ export interface ResetPasswordCredentials {
 }
 
 /**
- * Interface for authentication error handling with detailed error information
- * following standard error handling patterns.
+ * Interface defining security context for authentication and session management
+ * including device information and security metadata.
  */
-export interface AuthError {
-  /** Error code for programmatic error handling */
-  code: string;
-  /** Human-readable error message */
-  message: string;
-  /** HTTP status code associated with the error */
-  status: number;
-  /** Additional error details for debugging */
-  details?: Record<string, unknown>;
-  /** Timestamp when the error occurred */
-  timestamp: number;
+export interface SecurityContext {
+  /** Client IP address */
+  ipAddress: string;
+  /** Session identifier */
+  sessionId: string;
+  /** Last authentication timestamp */
+  lastAuthTime: number;
+  /** Device fingerprint */
+  deviceFingerprint: string;
+  /** Geographic location data */
+  geoLocation?: {
+    country: string;
+    region: string;
+    city: string;
+  };
+  /** Security flags */
+  flags: {
+    mfaEnabled: boolean;
+    passwordExpired: boolean;
+    accountLocked: boolean;
+  };
+  /** Authentication method used */
+  authMethod: string;
+  /** Risk score based on security factors */
+  riskScore: number;
 }
