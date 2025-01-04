@@ -318,8 +318,9 @@ async function generateDeviceFingerprint(): Promise<string> {
 }
 
 // Helper function to register user
-async function registerUser(credentials: RegisterCredentials & { deviceInfo: any }): Promise<AuthTokens> {
-  // Implementation would call API endpoint
+async function registerUser(data: RegisterCredentials & { deviceInfo: any }): Promise<AuthTokens> {
+  // Implementation would call API endpoint with the provided data
+  // For now, returning mock data
   return {
     accessToken: 'access-token',
     refreshToken: 'refresh-token',
