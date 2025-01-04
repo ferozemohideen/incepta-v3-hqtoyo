@@ -27,7 +27,7 @@ interface IGrantSearchState {
 const GrantListPage: React.FC = () => {
   const navigate = useNavigate();
   const { showError } = useNotification();
-  const [isLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Initialize search state
   const [searchState, setSearchState] = useState<IGrantSearchState>({
@@ -37,8 +37,8 @@ const GrantListPage: React.FC = () => {
       sortBy: GrantSortField.DEADLINE,
       sortOrder: SortOrder.ASC
     },
-    sortBy: 'deadline',
-    sortOrder: 'asc',
+    sortBy: GrantSortField.DEADLINE,
+    sortOrder: SortOrder.ASC,
     page: 1
   });
 
