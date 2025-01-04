@@ -5,7 +5,7 @@ import { Box, Typography, Link, CircularProgress } from '@mui/material'; // ^5.1
 import { LoginForm } from '../../components/auth/LoginForm';
 import { AuthLayout } from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { AuthError, LoginCredentials } from '../../interfaces/auth.interface';
+import { AuthError } from '../../interfaces/auth.interface';
 
 /**
  * Login page component implementing secure authentication with:
@@ -31,22 +31,12 @@ const LoginPage: React.FC = () => {
   /**
    * Handles successful login with enhanced security
    */
-  const handleLoginSuccess = useCallback(async (tokens: { accessToken: string; refreshToken: string }) => {
+  const handleLoginSuccess = useCallback(async (credentials: LoginCredentials) => {
     try {
       setLoading(true);
       
-      // Store authentication state securely
-      await handleLogin({
-        email: '',
-        password: '',
-        ipAddress: '',
-        deviceInfo: {
-          userAgent: window.navigator.userAgent,
-          platform: window.navigator.platform,
-          version: window.navigator.appVersion,
-          fingerprint: ''
-        }
-      });
+      // Handle login with credentials
+      await handleLogin(credentials);
 
       // Handle MFA requirement
       if (mfaRequired) {
