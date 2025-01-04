@@ -24,12 +24,54 @@ export enum MessageStatus {
 }
 
 /**
+ * Enumeration of message delivery statuses for granular tracking
+ */
+export enum MessageDeliveryStatus {
+  PENDING = 'PENDING',
+  SENDING = 'SENDING',
+  SENT = 'SENT',
+  DELIVERED = 'DELIVERED',
+  READ = 'READ',
+  FAILED = 'FAILED'
+}
+
+/**
  * Enumeration of WebSocket message event types for real-time updates
  */
 export enum MessageEventType {
   NEW_MESSAGE = 'NEW_MESSAGE',
   MESSAGE_READ = 'MESSAGE_READ',
   MESSAGE_DELIVERED = 'MESSAGE_DELIVERED'
+}
+
+/**
+ * Interface for document metadata including file details and tracking
+ */
+export interface DocumentMetadata {
+  /**
+   * Secure URL for accessing the shared document
+   */
+  documentUrl: string;
+
+  /**
+   * Original filename of the shared document
+   */
+  fileName: string;
+
+  /**
+   * Size of the file in bytes
+   */
+  fileSize: number;
+
+  /**
+   * MIME type of the document
+   */
+  contentType: string;
+
+  /**
+   * Timestamp when the document was uploaded
+   */
+  uploadedAt: Date;
 }
 
 /**
@@ -136,16 +178,6 @@ export interface MessageThread {
    * ID of the most recent message in the thread
    */
   lastMessageId: string;
-
-  /**
-   * Type of the last message in the thread
-   */
-  type: MessageType;
-
-  /**
-   * Content of the last message in the thread
-   */
-  content: string;
 
   /**
    * Count of unread messages in the thread
