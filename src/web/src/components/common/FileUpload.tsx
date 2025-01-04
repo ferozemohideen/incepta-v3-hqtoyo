@@ -59,7 +59,6 @@ export interface FileUploadProps {
   maxSize?: number;
   disabled?: boolean;
   maxConcurrent?: number;
-  retryAttempts?: number;
   onError?: (error: UploadError) => void;
   onProgress?: (progress: number) => void;
 }
@@ -72,7 +71,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   maxSize = 100 * 1024 * 1024, // 100MB default
   disabled = false,
   maxConcurrent = 3,
-  retryAttempts = 3,
   onError,
   onProgress,
 }) => {
@@ -168,30 +166,22 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       for (let i = 0; i < files.length; i += maxConcurrent) {
         const batch = files.slice(i, i + maxConcurrent);
         const uploadPromises = batch.map(async (file) => {
-          let attempts = 0;
-          while (attempts < retryAttempts) {
-            try {
-              const response = await storageService.current.uploadDocument(file, 'documents', {
-                encryption: true,
-                metadata: {
-                  originalName: file.name,
-                  size: file.size.toString(),
-                  type: file.type,
-                },
-                cacheControl: 'private, max-age=3600',
-              });
-              uploadIds.push(response.documentId);
-              totalProgress += (1 / files.length) * 100;
-              setUploadProgress(Math.round(totalProgress));
-              onProgress?.(Math.round(totalProgress));
-              break;
-            } catch (error) {
-              attempts++;
-              if (attempts === retryAttempts) {
-                throw error instanceof Error ? error : new Error('Upload failed');
-              }
-              await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
-            }
+          try {
+            const response = await storageService.current.uploadDocument(file, 'documents', {
+              encryption: true,
+              metadata: {
+                originalName: file.name,
+                size: file.size.toString(),
+                type: file.type,
+              },
+              cacheControl: 'private, max-age=3600',
+            });
+            uploadIds.push(response.documentId);
+            totalProgress += (1 / files.length) * 100;
+            setUploadProgress(Math.round(totalProgress));
+            onProgress?.(Math.round(totalProgress));
+          } catch (err) {
+            throw err instanceof Error ? err : new Error('Upload failed');
           }
         });
 
@@ -199,10 +189,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       }
 
       await onFileUpload(files, uploadIds);
-    } catch (error) {
+    } catch (err) {
       const uploadError: UploadError = {
         code: 'UPLOAD_FAILED',
-        message: error instanceof Error ? error.message : 'Upload failed',
+        message: err instanceof Error ? err.message : 'Upload failed',
       };
       setError(uploadError);
       onError?.(uploadError);
