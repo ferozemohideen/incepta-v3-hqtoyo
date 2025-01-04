@@ -1,21 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
-  Grid, 
   Typography, 
   Button, 
   Stepper, 
   Step, 
   StepLabel,
-  CircularProgress,
-  Alert
+  CircularProgress
 } from '@mui/material'; // v5.14.0
 import { useFormik, FormikHelpers } from 'formik'; // v2.4.2
 import { debounce } from 'lodash'; // v4.17.21
 import * as Yup from 'yup'; // v1.2.0
 
 import Form from '../common/Form';
-import FileUpload from '../common/FileUpload';
 import { useNotification } from '../../hooks/useNotification';
 
 // Form section interfaces
@@ -72,8 +69,8 @@ interface GrantApplicationFormProps {
   initialData?: Partial<IGrantApplication>;
 }
 
-// Form validation schemas
-const validationSchemas = {
+// Form validation schemas with index signature
+const validationSchemas: { [key: string]: Yup.ObjectSchema<any> } = {
   projectDetails: Yup.object({
     projectTitle: Yup.string()
       .required('Project title is required')
@@ -163,28 +160,29 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
   
   // Hooks
   const { showSuccess, showError } = useNotification();
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize form with Formik
-  const formik = useFormik<IGrantApplication>({
-    initialValues: {
+  const formik = useFormik({
+    initialValues: initialData || {
       projectDetails: {
-        projectTitle: initialData?.projectDetails?.projectTitle || '',
-        abstract: initialData?.projectDetails?.abstract || '',
-        keywords: initialData?.projectDetails?.keywords || [],
-        researchArea: initialData?.projectDetails?.researchArea || ''
+        projectTitle: '',
+        abstract: '',
+        keywords: [],
+        researchArea: ''
       },
       budgetTimeline: {
-        totalBudget: initialData?.budgetTimeline?.totalBudget || 0,
-        timeline: initialData?.budgetTimeline?.timeline || '',
-        startDate: initialData?.budgetTimeline?.startDate || '',
-        endDate: initialData?.budgetTimeline?.endDate || '',
-        milestones: initialData?.budgetTimeline?.milestones || []
+        totalBudget: 0,
+        timeline: '',
+        startDate: '',
+        endDate: '',
+        milestones: []
       },
       teamInformation: {
-        teamMembers: initialData?.teamInformation?.teamMembers || []
+        teamMembers: []
       },
       documentAttachments: {
-        files: initialData?.documentAttachments?.files || []
+        files: []
       }
     },
     validationSchema: validationSchemas[formSteps[activeStep].key],
@@ -299,7 +297,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
         sx={{ mb: 4 }}
         aria-label="Application Progress"
       >
-        {formSteps.map((step, index) => (
+        {formSteps.map((step) => (
           <Step key={step.key}>
             <StepLabel>{step.label}</StepLabel>
           </Step>
@@ -307,8 +305,6 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
       </Stepper>
 
       <Form
-        initialValues={formik.values}
-        validationSchema={validationSchemas[formSteps[activeStep].key]}
         onSubmit={formik.handleSubmit}
         aria-label={`${formSteps[activeStep].label} Form`}
       >
