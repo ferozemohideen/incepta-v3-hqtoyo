@@ -1,6 +1,3 @@
-// vite/client v4.3.0 - Required for static asset imports and URL resolution
-import { ImageAsset } from 'vite/client';
-
 /**
  * Type definition for image assets with required metadata
  */
