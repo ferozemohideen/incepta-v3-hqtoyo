@@ -10,7 +10,7 @@ import { format } from 'date-fns'; // v2.30.0
 import { useInfiniteScroll } from 'react-infinite-scroll-hook'; // v4.1.1
 import { useVirtualizer } from '@tanstack/react-virtual'; // v3.0.0
 
-import { MessageThread, MessageType, MessageStatus, Message } from '../../interfaces/message.interface';
+import { MessageThread, MessageType, MessageStatus } from '../../interfaces/message.interface';
 import { messageService } from '../../services/message.service';
 import Loading from '../common/Loading';
 
@@ -78,12 +78,15 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
   const fetchThreads = useCallback(async (pageNum: number) => {
     try {
       setLoading(true);
-      const response = await messageService.getMessageThread(pageNum);
+      const response = await messageService.getThreads({
+        page: pageNum,
+        limit: THREADS_PER_PAGE
+      });
 
       setThreads(prevThreads => 
-        pageNum === 1 ? response.messages : [...prevThreads, ...response.messages]
+        pageNum === 1 ? response.threads : [...prevThreads, ...response.threads]
       );
-      setHasMore(response.messages.length === THREADS_PER_PAGE);
+      setHasMore(response.threads.length === THREADS_PER_PAGE);
       setError(null);
     } catch (err) {
       setError(err as Error);
@@ -122,7 +125,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
    * Handles real-time thread updates
    */
   useEffect(() => {
-    const subscription = messageService.socket.on('message_update', (event: { threadId: string; messageId: string }) => {
+    const subscription = messageService.subscribeToUpdates((event) => {
       setThreads(prevThreads => {
         const threadIndex = prevThreads.findIndex(t => t.id === event.threadId);
         if (threadIndex === -1) return prevThreads;
@@ -140,7 +143,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
     });
 
     return () => {
-      subscription.off('message_update');
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -151,7 +154,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
     onThreadSelect(threadId);
 
     try {
-      await messageService.updateMessageStatus(threadId, MessageStatus.READ);
+      await messageService.markAsRead(threadId);
       
       setThreads(prevThreads => 
         prevThreads.map(thread => 
@@ -183,7 +186,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
       for (const op of operations) {
         try {
           if (op.type === 'markAsRead') {
-            await messageService.updateMessageStatus(op.threadId, MessageStatus.READ);
+            await messageService.markAsRead(op.threadId);
           }
         } catch (err) {
           console.error('Failed to process offline operation:', err);
