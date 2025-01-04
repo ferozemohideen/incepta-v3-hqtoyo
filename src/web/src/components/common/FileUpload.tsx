@@ -189,10 +189,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               setUploadProgress(Math.round(totalProgress));
               onProgress?.(Math.round(totalProgress));
               break;
-            } catch (err) {
+            } catch (error) {
               attempts++;
               if (attempts === retryAttempts) {
-                throw err instanceof Error ? err : new Error(String(err));
+                throw error instanceof Error ? error : new Error('Upload failed');
               }
               await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
             }
@@ -203,10 +203,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       }
 
       await onFileUpload(files, uploadIds);
-    } catch (err) {
+    } catch (error) {
       const uploadError: UploadError = {
         code: 'UPLOAD_FAILED',
-        message: err instanceof Error ? err.message : String(err),
+        message: error instanceof Error ? error.message : 'Upload failed',
       };
       setError(uploadError);
       onError?.(uploadError);
