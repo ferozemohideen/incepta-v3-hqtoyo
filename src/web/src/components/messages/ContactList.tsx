@@ -23,8 +23,7 @@ import useInfiniteScroll from 'react-infinite-scroll-hook';
 
 import { CustomCard, CustomCardProps } from '../common/Card';
 import { User } from '../../interfaces/user.interface';
-import { messageService } from '../../services/message.service';
-import { MessageEvent } from '../../interfaces/message.interface';
+import { MessageServiceImpl } from '../../services/message.service';
 
 // Enhanced styled components with Material Design 3.0
 const StyledListItem = styled(ListItem, {
@@ -94,11 +93,6 @@ interface ContactItemProps {
   isTyping: boolean;
   lastSeen?: Date;
   ariaLabel?: string;
-}
-
-interface StatusUpdate {
-  online: Record<string, boolean>;
-  typing: Record<string, boolean>;
 }
 
 // Contact item component with memoization
@@ -211,12 +205,13 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
 
   // Refs for cleanup and optimization
   const statusSubscription = useRef<any>(null);
+  const messageServiceInstance = useRef<MessageServiceImpl>(new MessageServiceImpl());
 
   // Load contacts with infinite scroll
   const loadContacts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await messageService.getThreads(page, pageSize);
+      const response = await messageServiceInstance.current.getThreads(page, pageSize);
       
       setContacts(prevContacts => [
         ...prevContacts,
@@ -243,7 +238,7 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
 
   // Initialize real-time status updates
   useEffect(() => {
-    statusSubscription.current = messageService.subscribeToStatus((updates: StatusUpdate) => {
+    statusSubscription.current = messageServiceInstance.current.subscribeToStatus((updates: { online: Record<string, boolean>; typing: Record<string, boolean> }) => {
       setOnlineStatus(prev => ({ ...prev, ...updates.online }));
       setTypingStatus(prev => ({ ...prev, ...updates.typing }));
     });
@@ -259,7 +254,7 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
   useEffect(() => {
     const loadUnreadCounts = async () => {
       try {
-        const counts = await messageService.getUnreadCount();
+        const counts = await messageServiceInstance.current.getUnreadCount();
         setUnreadCounts(counts);
       } catch (err) {
         console.error('Error loading unread counts:', err);
