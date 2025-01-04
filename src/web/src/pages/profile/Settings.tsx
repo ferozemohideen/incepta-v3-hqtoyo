@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
   Container,
-  Grid,
   Typography,
   Tabs,
   Tab,
@@ -15,7 +14,7 @@ import { useNavigate } from 'react-router-dom'; // v6.14.0
 import SecuritySettings from '../../components/profile/SecuritySettings';
 import PreferencesForm from '../../components/profile/PreferencesForm';
 import { useAuth } from '../../hooks/useAuth';
-import { UserSecurity, UserPreferences } from '../../interfaces/user.interface';
+import { UserPreferences, UserSecurity } from '../../interfaces/user.interface';
 
 /**
  * Interface for accessible tab panel props
@@ -62,7 +61,6 @@ const TabPanel: React.FC<TabPanelProps> = ({
  */
 const Settings: React.FC = () => {
   // Initialize hooks
-  const navigate = useNavigate();
   const { user } = useAuth();
   
   // State management
@@ -74,7 +72,7 @@ const Settings: React.FC = () => {
   /**
    * Handle tab changes with accessibility focus management
    */
-  const handleTabChange = useCallback((event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
     // Reset status messages on tab change
     setUpdateError(null);
@@ -99,7 +97,7 @@ const Settings: React.FC = () => {
       };
 
       // Update security settings with audit log
-      await user?.updateSecurity({ ...security, auditLog });
+      await onUpdate({ ...security, auditLog });
       setUpdateSuccess('Security settings updated successfully');
     } catch (error) {
       setUpdateError('Failed to update security settings. Please try again.');
@@ -118,7 +116,7 @@ const Settings: React.FC = () => {
     setUpdateSuccess(null);
 
     try {
-      await user?.updatePreferences(preferences);
+      await onUpdate({ preferences });
       setUpdateSuccess('Preferences updated successfully');
     } catch (error) {
       setUpdateError('Failed to update preferences. Please try again.');
@@ -126,7 +124,7 @@ const Settings: React.FC = () => {
     } finally {
       setIsUpdating(false);
     }
-  }, [user]);
+  }, []);
 
   // Render loading state if user data is not available
   if (!user) {
