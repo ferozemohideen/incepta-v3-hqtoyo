@@ -45,6 +45,8 @@ export interface GrantService {
   getGrantStats(): Promise<GrantStats>;
   saveGrantDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
   uploadApplicationDocument(applicationId: string, document: File): Promise<void>;
+  saveDraft(applicationId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
+  validateApplication(applicationId: string): Promise<{ isValid: boolean; errors?: string[] }>;
 }
 
 /**
@@ -232,6 +234,46 @@ class GrantServiceImpl implements GrantService {
       );
     } catch (error) {
       console.error('Document upload failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Save draft application with auto-save functionality
+   */
+  async saveDraft(
+    applicationId: string,
+    draftData: Partial<IGrantApplication>
+  ): Promise<IGrantApplication> {
+    try {
+      return await apiService.put<IGrantApplication>(
+        `${API_ENDPOINTS.GRANTS.DRAFTS}/${applicationId}`,
+        {
+          ...draftData,
+          status: GrantStatus.DRAFT,
+          lastModifiedAt: new Date()
+        }
+      );
+    } catch (error) {
+      console.error('Draft save failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Validate application before submission
+   */
+  async validateApplication(
+    applicationId: string
+  ): Promise<{ isValid: boolean; errors?: string[] }> {
+    try {
+      return await apiService.get(
+        `${API_ENDPOINTS.GRANTS.BASE}/${applicationId}/validate`,
+        undefined,
+        { cache: false }
+      );
+    } catch (error) {
+      console.error('Application validation failed:', error);
       throw error;
     }
   }
