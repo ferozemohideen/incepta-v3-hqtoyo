@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { 
   Box, 
   Typography, 
@@ -21,6 +21,7 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 // Constants for offline handling and performance
 const OFFLINE_QUEUE_LIMIT = 100;
 const RECONNECT_DELAY = 5000;
+const MESSAGE_BATCH_SIZE = 50;
 
 /**
  * Interface for thread component state
@@ -58,6 +59,8 @@ const Thread: React.FC = () => {
   });
 
   // Refs for managing component lifecycle
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<string | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
   // WebSocket connection for real-time updates
