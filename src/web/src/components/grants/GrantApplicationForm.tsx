@@ -6,7 +6,7 @@ import {
   Stepper, 
   Step, 
   StepLabel,
-  CircularProgress
+  CircularProgress,
 } from '@mui/material'; // v5.14.0
 import { useFormik, FormikHelpers } from 'formik'; // v2.4.2
 import { debounce } from 'lodash'; // v4.17.21
@@ -66,11 +66,11 @@ interface GrantApplicationFormProps {
   grantId: string;
   onSuccess: (application: IGrantApplication) => void;
   onError: (error: Error) => void;
-  initialData?: Partial<IGrantApplication>;
+  initialData?: IGrantApplication;
 }
 
-// Form validation schemas with type safety
-const validationSchemas: Record<keyof IGrantApplication, Yup.ObjectSchema<any>> = {
+// Form validation schemas
+const validationSchemas: Record<string, Yup.ObjectSchema<any>> = {
   projectDetails: Yup.object({
     projectTitle: Yup.string()
       .required('Project title is required')
@@ -137,10 +137,10 @@ const validationSchemas: Record<keyof IGrantApplication, Yup.ObjectSchema<any>> 
 
 // Form steps configuration
 const formSteps = [
-  { label: 'Project Details', key: 'projectDetails' as keyof IGrantApplication },
-  { label: 'Budget & Timeline', key: 'budgetTimeline' as keyof IGrantApplication },
-  { label: 'Team Information', key: 'teamInformation' as keyof IGrantApplication },
-  { label: 'Documents', key: 'documentAttachments' as keyof IGrantApplication }
+  { label: 'Project Details', key: 'projectDetails' },
+  { label: 'Budget & Timeline', key: 'budgetTimeline' },
+  { label: 'Team Information', key: 'teamInformation' },
+  { label: 'Documents', key: 'documentAttachments' }
 ];
 
 /**
@@ -151,7 +151,27 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
   grantId,
   onSuccess,
   onError,
-  initialData
+  initialData = {
+    projectDetails: {
+      projectTitle: '',
+      abstract: '',
+      keywords: [],
+      researchArea: ''
+    },
+    budgetTimeline: {
+      totalBudget: 0,
+      timeline: '',
+      startDate: '',
+      endDate: '',
+      milestones: []
+    },
+    teamInformation: {
+      teamMembers: []
+    },
+    documentAttachments: {
+      files: []
+    }
+  }
 }) => {
   // State management
   const [activeStep, setActiveStep] = useState(0);
@@ -163,28 +183,8 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
   const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize form with Formik
-  const formik = useFormik<IGrantApplication>({
-    initialValues: {
-      projectDetails: {
-        projectTitle: initialData?.projectDetails?.projectTitle || '',
-        abstract: initialData?.projectDetails?.abstract || '',
-        keywords: initialData?.projectDetails?.keywords || [],
-        researchArea: initialData?.projectDetails?.researchArea || ''
-      },
-      budgetTimeline: {
-        totalBudget: initialData?.budgetTimeline?.totalBudget || 0,
-        timeline: initialData?.budgetTimeline?.timeline || '',
-        startDate: initialData?.budgetTimeline?.startDate || '',
-        endDate: initialData?.budgetTimeline?.endDate || '',
-        milestones: initialData?.budgetTimeline?.milestones || []
-      },
-      teamInformation: {
-        teamMembers: initialData?.teamInformation?.teamMembers || []
-      },
-      documentAttachments: {
-        files: initialData?.documentAttachments?.files || []
-      }
-    },
+  const formik = useFormik({
+    initialValues: initialData,
     validationSchema: validationSchemas[formSteps[activeStep].key],
     validateOnBlur: true,
     validateOnChange: false,
@@ -224,28 +224,15 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
       // Validate all sections before final submission
       for (const step of formSteps) {
         const isValid = await validationSchemas[step.key].isValid(
-          values[step.key]
+          values[step.key as keyof IGrantApplication]
         );
         if (!isValid) {
           throw new Error(`Validation failed for ${step.label}`);
         }
       }
 
-      // Process file uploads
-      const processedFiles = await Promise.all(
-        values.documentAttachments.files.map(async (file) => {
-          // File processing logic here
-          return file;
-        })
-      );
-
       // Submit application
-      await onSuccess({
-        ...values,
-        documentAttachments: {
-          files: processedFiles
-        }
-      });
+      await onSuccess(values);
 
       showSuccess('Grant application submitted successfully');
       helpers.resetForm();
@@ -263,7 +250,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
     const currentSchema = validationSchemas[formSteps[activeStep].key];
     try {
       await currentSchema.validate(
-        formik.values[formSteps[activeStep].key]
+        formik.values[formSteps[activeStep].key as keyof IGrantApplication]
       );
       setActiveStep((prev) => Math.min(prev + 1, formSteps.length - 1));
     } catch (error) {
