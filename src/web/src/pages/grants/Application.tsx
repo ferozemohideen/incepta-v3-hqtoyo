@@ -43,7 +43,7 @@ const Application: React.FC = () => {
   const { grantId } = useParams<{ grantId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { showSuccess, showError, showWarning } = useNotification();
+  const { showSuccess, showError } = useNotification();
 
   // State
   const [state, setState] = useState<ApplicationState>({
@@ -93,7 +93,7 @@ const Application: React.FC = () => {
       const errors = validationErrors.filter(Boolean) as ValidationError[];
       if (errors.length > 0) {
         setState(prev => ({ ...prev, validationErrors: errors, loading: false }));
-        showWarning('Please correct validation errors before submitting');
+        showError('Please correct validation errors before submitting');
         return;
       }
 
@@ -105,7 +105,7 @@ const Application: React.FC = () => {
       showError('Failed to submit application');
       setState(prev => ({ ...prev, loading: false }));
     }
-  }, [grantId, navigate, showSuccess, showError, showWarning]);
+  }, [grantId, navigate, showSuccess, showError]);
 
   /**
    * Handles draft saving with auto-save functionality
@@ -126,13 +126,13 @@ const Application: React.FC = () => {
   const handleStepChange = useCallback((newStep: number) => {
     // Validate current step before proceeding
     if (state.validationErrors.length > 0) {
-      showWarning('Please correct validation errors before proceeding');
+      showError('Please correct validation errors before proceeding');
       return;
     }
 
     setState(prev => ({ ...prev, activeStep: newStep }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [state.validationErrors, showWarning]);
+  }, [state.validationErrors, showError]);
 
   // Memoized progress calculation
   const totalProgress = useMemo(() => {
