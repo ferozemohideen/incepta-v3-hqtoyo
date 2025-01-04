@@ -6,10 +6,13 @@
  */
 
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from '@reduxjs/toolkit'; // ^1.9.5
+import { debounce } from 'lodash'; // ^4.17.21
 
 import { 
   Technology, 
-  TechnologySearchParams
+  TechnologySearchParams, 
+  PatentStatus,
+  TechnologyMetadata 
 } from '../interfaces/technology.interface';
 import { technologyService } from '../services/technology.service';
 
@@ -71,7 +74,17 @@ const initialState: TechnologyState = {
     page: 1,
     limit: 20,
     sortBy: 'title',
-    sortDirection: 'asc'
+    sortOrder: 'asc',
+    trlRange: {
+      min: 1,
+      max: 9
+    },
+    domains: [],
+    stage: [],
+    dateRange: {
+      start: null,
+      end: null
+    }
   },
   selectedTechnologyId: null,
   loading: {
