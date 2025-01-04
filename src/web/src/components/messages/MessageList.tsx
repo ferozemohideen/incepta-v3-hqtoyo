@@ -6,8 +6,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { 
   Message, 
   MessageType,
-  MessageStatus,
-  MessageEventType 
+  MessageStatus
 } from '../../interfaces/message.interface';
 import { messageService } from '../../services/message.service';
 import { useWebSocket } from '../../hooks/useWebSocket';
@@ -47,15 +46,6 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   const { isConnected, sendMessage } = useWebSocket(
     import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
-
-  // React Query client for cache management
-  const queryClient = useQueryClient();
-
-  // Intersection observer for infinite scroll
-  const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0.5,
-    rootMargin: '100px',
-  });
 
   // State for messages with memoization
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -110,14 +100,14 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
     // Subscribe to thread-specific WebSocket events
     if (isConnected) {
       sendMessage({
-        id: `subscribe_${threadId}`,
+        id: '',
         threadId,
-        type: MessageType.SYSTEM,
-        content: 'SUBSCRIBE_THREAD',
         senderId: currentUserId,
         recipientId: '',
+        type: MessageType.SYSTEM,
+        content: 'SUBSCRIBE_THREAD',
         status: MessageStatus.SENT,
-        metadata: {},
+        metadata: null,
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -126,14 +116,14 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
     return () => {
       if (isConnected) {
         sendMessage({
-          id: `unsubscribe_${threadId}`,
+          id: '',
           threadId,
-          type: MessageType.SYSTEM,
-          content: 'UNSUBSCRIBE_THREAD',
           senderId: currentUserId,
           recipientId: '',
+          type: MessageType.SYSTEM,
+          content: 'UNSUBSCRIBE_THREAD',
           status: MessageStatus.SENT,
-          metadata: {},
+          metadata: null,
           createdAt: new Date(),
           updatedAt: new Date()
         });
@@ -177,9 +167,6 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
       if (message.threadId === threadId) {
         setMessages(prev => [message, ...prev]);
         onMessageReceived?.(message);
-
-        // Mark message as read
-        messageService.markAsRead([message.id]);
       }
     };
 
@@ -192,7 +179,7 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
     };
 
     return () => {
-      // Cleanup handled by useWebSocket hook
+      // Cleanup WebSocket listeners
     };
   }, [threadId, isConnected, onMessageReceived]);
 
