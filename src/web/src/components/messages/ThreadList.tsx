@@ -5,12 +5,12 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { List, ListItem, ListItemText, Badge, Typography, CircularProgress } from '@mui/material'; // v5.14.0
+import { List, ListItem, ListItemText, Badge, Typography } from '@mui/material'; // v5.14.0
 import { format } from 'date-fns'; // v2.30.0
-import { useInfiniteScroll } from 'react-infinite-scroll-hook'; // v4.1.1
+import useInfiniteScroll from 'react-infinite-scroll-hook'; // v4.1.1
 import { useVirtualizer } from '@tanstack/react-virtual'; // v3.0.0
 
-import { MessageThread, MessageType, MessageStatus } from '../../interfaces/message.interface';
+import { MessageThread, MessageType } from '../../interfaces/message.interface';
 import { messageService } from '../../services/message.service';
 import Loading from '../common/Loading';
 
@@ -36,7 +36,6 @@ interface PendingOperation {
  */
 const THREAD_ITEM_HEIGHT = 72; // Height of each thread item in pixels
 const THREADS_PER_PAGE = 20; // Number of threads to load per page
-const SCROLL_THRESHOLD = 0.8; // Threshold for triggering infinite scroll
 
 /**
  * Formats thread preview text based on message type and content
@@ -45,15 +44,15 @@ const formatThreadPreview = (thread: MessageThread): string => {
   const lastMessage = thread.lastMessageId;
   if (!lastMessage) return '';
 
-  switch (thread.type) {
+  switch (lastMessage.type) {
     case MessageType.DOCUMENT:
       return 'Shared a document';
     case MessageType.SYSTEM:
-      return thread.content;
+      return lastMessage.content;
     default:
-      return thread.content.length > 50 
-        ? `${thread.content.substring(0, 50)}...` 
-        : thread.content;
+      return lastMessage.content.length > 50 
+        ? `${lastMessage.content.substring(0, 50)}...` 
+        : lastMessage.content;
   }
 };
 
@@ -71,7 +70,6 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
-  const threadUpdateTimeoutRef = useRef<NodeJS.Timeout>();
 
   /**
    * Fetches threads with pagination
@@ -126,7 +124,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
    * Handles real-time thread updates
    */
   useEffect(() => {
-    const subscription = messageService.subscribeToUpdates((event) => {
+    const subscription = messageService.subscribeToUpdates((event: { threadId: string; messageId: string }) => {
       setThreads(prevThreads => {
         const threadIndex = prevThreads.findIndex(t => t.id === event.threadId);
         if (threadIndex === -1) return prevThreads;
