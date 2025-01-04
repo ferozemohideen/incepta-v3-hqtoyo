@@ -1,12 +1,6 @@
-```
-
-I'll regenerate the file with the fix by using the `isLoading` state in the RegisterForm component.
-
-# src/web/src/pages/auth/Register.tsx
-```tsx
 import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // v6.14.0
-import { ErrorBoundary } from 'react-error-boundary'; // v4.0.11
+import { useNavigate } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
 import RegisterForm from '../../components/auth/RegisterForm';
 import AuthLayout from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
