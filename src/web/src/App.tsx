@@ -1,8 +1,16 @@
+```
+
+The issue is that the Analytics initialization is using an incorrect property. According to the @vercel/analytics package, we should use `mode` instead of `trackPageViews` for configuring analytics tracking.
+
+Here's the regenerated file with the fix:
+
+# src/web/src/App.tsx
+```tsx
 import React, { useEffect, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
-import { inject } from '@vercel/analytics';
+import { Analytics } from '@vercel/analytics';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -10,16 +18,13 @@ import AuthLayout from './layouts/AuthLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 
 // Store and hooks
-import { store } from './store';
+import { store, useAppSelector } from './store';
 import useAuth from './hooks/useAuth';
-import { useTheme } from './hooks/useTheme';
+import useTheme from './hooks/useTheme';
 
 // Constants
 import { PUBLIC_ROUTES, PROTECTED_ROUTES, ADMIN_ROUTES } from './constants/routes.constants';
 import { UserRole } from './constants/auth.constants';
-
-// Theme
-import { lightTheme, darkTheme } from './styles/theme';
 
 /**
  * Protected route wrapper component with role-based access control
@@ -29,15 +34,15 @@ const ProtectedRoute: React.FC<{
   allowedRoles?: UserRole[];
 }> = ({ children, allowedRoles = [] }) => {
   const location = useLocation();
-  const { user, loading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   // Handle loading state
-  if (loading) {
+  if (isLoading) {
     return null;
   }
 
   // Redirect to login if not authenticated
-  if (!user) {
+  if (!isAuthenticated) {
     return <Navigate to={PUBLIC_ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
@@ -59,10 +64,10 @@ const App: React.FC = () => {
 
   // Initialize analytics
   useEffect(() => {
-    if (process.env['NODE_ENV'] === 'production') {
-      inject({
+    if (process.env.NODE_ENV === 'production') {
+      Analytics.init({
         debug: false,
-        trackPageViews: true
+        mode: 'production'
       });
     }
   }, []);
@@ -90,14 +95,12 @@ const App: React.FC = () => {
             <Route path={PUBLIC_ROUTES.LOGIN} element={
               <AuthLayout title="Sign In">
                 {/* Login component will be rendered here */}
-                <div />
               </AuthLayout>
             } />
 
             <Route path={PUBLIC_ROUTES.REGISTER} element={
               <AuthLayout title="Create Account">
                 {/* Register component will be rendered here */}
-                <div />
               </AuthLayout>
             } />
 
@@ -106,7 +109,6 @@ const App: React.FC = () => {
               <ProtectedRoute>
                 <DashboardLayout>
                   {/* Dashboard component will be rendered here */}
-                  <div />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -115,7 +117,6 @@ const App: React.FC = () => {
               <ProtectedRoute>
                 <DashboardLayout>
                   {/* Technologies component will be rendered here */}
-                  <div />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -124,7 +125,6 @@ const App: React.FC = () => {
               <ProtectedRoute>
                 <DashboardLayout>
                   {/* Grants component will be rendered here */}
-                  <div />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -134,7 +134,6 @@ const App: React.FC = () => {
               <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
                 <DashboardLayout>
                   {/* Admin Dashboard component will be rendered here */}
-                  <div />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -143,7 +142,6 @@ const App: React.FC = () => {
             <Route path="*" element={
               <MainLayout>
                 {/* 404 component will be rendered here */}
-                <div />
               </MainLayout>
             } />
           </Routes>
