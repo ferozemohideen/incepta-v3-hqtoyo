@@ -1,7 +1,7 @@
 import React, { Component, ErrorInfo } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { ErrorOutline, RefreshRounded } from '@mui/icons-material';
-import { useNotification } from '../../hooks/useNotification';
+import { showNotification, clearNotifications } from './Notification';
 import { ANIMATION } from '../../constants/ui.constants';
 
 // Props interface with comprehensive error handling options
@@ -24,7 +24,6 @@ interface ErrorBoundaryState {
   isRecovering: boolean;
   errorId: string;
   showFallback: boolean;
-  maxRetryAttempts: number;
 }
 
 /**
@@ -51,7 +50,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       isRecovering: false,
       errorId: '',
       showFallback: false,
-      maxRetryAttempts: props.maxRetryAttempts || 3,
     };
   }
 
@@ -73,7 +71,10 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   /**
    * Lifecycle method for handling caught errors
    */
-  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Clear any existing notifications
+    clearNotifications();
+
     // Log error details for debugging
     console.error('ErrorBoundary caught an error:', {
       error,
@@ -98,12 +99,16 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
     // Show notification if enabled
     if (this.props.showNotification) {
-      const { showError } = useNotification();
-      showError('An unexpected error occurred. We\'re working to fix it.');
+      showNotification({
+        message: 'An unexpected error occurred. We\'re working to fix it.',
+        type: 'error',
+        duration: ANIMATION.DURATION_LONG,
+        ariaLive: 'assertive',
+      });
     }
 
     // Attempt auto-recovery if enabled
-    if (this.props.enableAutoRetry && this.state.retryCount < this.state.maxRetryAttempts) {
+    if (this.props.enableAutoRetry && this.state.retryCount < (this.props.maxRetryAttempts || 3)) {
       this.handleReset();
     }
   }
@@ -111,7 +116,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   /**
    * Cleanup on component unmount
    */
-  override componentWillUnmount(): void {
+  componentWillUnmount(): void {
     if (this.recoveryTimeout) {
       clearTimeout(this.recoveryTimeout);
     }
@@ -121,7 +126,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
    * Handles error recovery and retry attempts
    */
   handleReset = (): void => {
-    if (this.state.retryCount >= this.state.maxRetryAttempts) {
+    const { maxRetryAttempts = 3 } = this.props;
+    
+    if (this.state.retryCount >= maxRetryAttempts) {
       this.setState({ showFallback: true });
       return;
     }
@@ -130,6 +137,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       isRecovering: true,
       retryCount: prevState.retryCount + 1,
     }));
+
+    // Clear notifications before retry
+    clearNotifications();
 
     // Attempt recovery after a delay
     this.recoveryTimeout = setTimeout(() => {
@@ -143,10 +153,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     }, ANIMATION.DURATION_MEDIUM);
   };
 
-  /**
-   * Render method
-   */
-  override render(): React.ReactNode {
+  render(): React.ReactNode {
     const { children, fallbackComponent } = this.props;
     const { hasError, isRecovering, showFallback, retryCount, maxRetryAttempts } = this.state;
 
@@ -222,7 +229,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             color="primary"
             startIcon={<RefreshRounded />}
             onClick={this.handleReset}
-            disabled={retryCount >= maxRetryAttempts}
+            disabled={retryCount >= (maxRetryAttempts || 3)}
             aria-label="Try again"
             sx={{ mt: 2 }}
           >
