@@ -71,8 +71,8 @@ const MessagesPage: React.FC = () => {
       }
 
       // Update selected contact based on thread
-      const threadInfo = await messageService.getMessageThread(threadId);
-      const contactId = threadInfo.thread.participantIds.find(id => id !== user?.sub);
+      const threadInfo = await messageService.getThreadInfo(threadId);
+      const contactId = threadInfo.participantIds.find(id => id !== user?.id);
 
       setState(prev => ({
         ...prev,
@@ -88,7 +88,7 @@ const MessagesPage: React.FC = () => {
         isLoading: false
       }));
     }
-  }, [user?.sub, permissions]);
+  }, [user?.id, permissions]);
 
   /**
    * Handles contact selection and thread creation
@@ -175,7 +175,7 @@ const MessagesPage: React.FC = () => {
           {state.selectedThreadId ? (
             <ChatBox
               threadId={state.selectedThreadId}
-              currentUserId={user?.sub || ''}
+              currentUserId={user?.id || ''}
               recipientId={state.selectedContactId || ''}
             />
           ) : (
