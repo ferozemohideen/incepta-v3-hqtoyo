@@ -22,9 +22,9 @@ import { LoginCredentials } from '../../interfaces/auth.interface';
 const fpPromise = FingerprintJS.load();
 
 interface LoginFormProps {
-  onSuccess: (tokens: { accessToken: string; refreshToken: string }) => void;
+  onSuccess: (tokens: AuthTokens) => void;
   onMFARequired: () => void;
-  onError: (error: { message: string; code?: string }) => void;
+  onError: (error: AuthError) => void;
   maxAttempts?: number;
 }
 
@@ -41,17 +41,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   // Custom hooks
   const { handleLogin, loading, error, mfaRequired } = useAuth();
-  const { values, errors, handleChange, handleSubmit } = useForm<LoginCredentials>({
+  const { values, errors, handleChange, handleSubmit, validateField } = useForm<LoginCredentials>({
     initialValues: {
       email: '',
       password: '',
-      ipAddress: '',
-      deviceInfo: {
-        userAgent: '',
-        platform: '',
-        version: '',
-        fingerprint: ''
-      }
+      deviceId: ''
     },
     validationSchema: {
       email: {
@@ -88,12 +82,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
         if (mfaRequired) {
           onMFARequired();
-        } else {
+        } else if (response) {
           onSuccess(response);
         }
       } catch (err) {
         setAttempts(prev => prev + 1);
-        onError(err instanceof Error ? { message: err.message } : { message: 'An error occurred' });
+        onError(err as AuthError);
       }
     }
   });
@@ -118,6 +112,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     setShowPassword(!showPassword);
   };
 
+  // Keyboard accessibility
+  const handleKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      handleSubmit(event as any);
+    }
+  };
+
+  const isDisabled = loading || attempts >= maxAttempts;
+
   return (
     <Box
       component="form"
@@ -139,7 +142,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           aria-live="polite"
           sx={{ mb: 2 }}
         >
-          {error}
+          {error.message || 'An error occurred during login'}
         </Alert>
       )}
 
@@ -150,16 +153,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         label="Email Address"
         value={values.email}
         onChange={handleChange}
-        error={Boolean(errors['email'])}
-        helperText={errors['email']}
-        disabled={loading || attempts >= maxAttempts}
+        error={!!errors.email}
+        helperText={errors.email}
+        disabled={isDisabled}
         required
         fullWidth
         autoComplete="email"
         autoFocus
         inputProps={{
           'aria-label': 'Email address',
-          'aria-describedby': errors['email'] ? 'email-error' : undefined
+          'aria-describedby': errors.email ? 'email-error' : undefined
         }}
       />
 
@@ -170,15 +173,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         label="Password"
         value={values.password}
         onChange={handleChange}
-        error={Boolean(errors['password'])}
-        helperText={errors['password']}
-        disabled={loading || attempts >= maxAttempts}
+        error={!!errors.password}
+        helperText={errors.password}
+        disabled={isDisabled}
         required
         fullWidth
         autoComplete="current-password"
         InputProps={{
           'aria-label': 'Password',
-          'aria-describedby': errors['password'] ? 'password-error' : undefined,
+          'aria-describedby': errors.password ? 'password-error' : undefined,
           endAdornment: (
             <InputAdornment position="end">
               <IconButton
@@ -204,7 +207,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         type="submit"
         variant="contained"
         color="primary"
-        disabled={loading || attempts >= maxAttempts}
+        disabled={isDisabled}
         fullWidth
         sx={{ mt: 2 }}
       >
