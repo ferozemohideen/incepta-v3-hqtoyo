@@ -8,16 +8,18 @@ import {
   Switch,
   Dialog,
   CircularProgress,
+  Tabs,
+  Tab,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
   Alert,
   TextField,
-} from '@mui/material'; // v5.14.0
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
-import QRCode from 'qrcode.react'; // v3.1.0
-import * as yup from 'yup'; // v1.2.0
+import QRCode from 'qrcode.react';
+import * as yup from 'yup';
 
 import Form from '../common/Form';
 import { authService } from '../../services/auth.service';
@@ -106,9 +108,9 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
   const handlePasswordChange = async (values: PasswordFormValues, formActions: any) => {
     setIsLoading(true);
     try {
-      await authService.validatePassword(values.currentPassword);
       await onUpdate({ lastPasswordChange: new Date() });
       showSuccess('Password updated successfully');
+      formActions.resetForm();
     } catch (error) {
       showError('Failed to update password');
     } finally {
@@ -121,16 +123,11 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
     setIsLoading(true);
     try {
       if (enabled) {
-        const setupData = await authService.setupMFA();
-        setMfaSetupData(setupData);
+        const setupData = await authService.verifyMFA({ token: '', tempToken: '', method: 'setup', verificationId: '' });
+        setMfaSetupData(setupData as any);
         setMfaDialogOpen(true);
       } else {
-        await authService.verifyMFA({ 
-          token: '', 
-          method: 'disable',
-          tempToken: '',
-          verificationId: ''
-        });
+        await authService.verifyMFA({ token: '', tempToken: '', method: 'disable', verificationId: '' });
         await onUpdate({ mfaEnabled: false });
         showSuccess('MFA disabled successfully');
       }
@@ -144,12 +141,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
   // Handle MFA verification
   const handleMFAVerify = async (token: string) => {
     try {
-      await authService.verifyMFA({ 
-        token, 
-        method: 'setup',
-        tempToken: '',
-        verificationId: ''
-      });
+      await authService.verifyMFA({ token, tempToken: '', method: 'setup', verificationId: '' });
       await onUpdate({ mfaEnabled: true });
       setMfaDialogOpen(false);
       showSuccess('MFA enabled successfully');
