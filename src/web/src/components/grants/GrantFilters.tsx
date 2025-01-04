@@ -1,13 +1,12 @@
 // @mui/material v5.14.0, @mui/x-date-pickers v6.10.0
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, useCallback, memo } from 'react';
 import { 
   Grid, 
   TextField, 
   Button, 
   Box, 
   Tooltip,
-  InputAdornment,
-  Typography
+  InputAdornment
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { CustomSelect } from '../common/Select';
@@ -71,6 +70,16 @@ const validationSchema = {
   }
 };
 
+interface FormValues {
+  type: GrantType[];
+  agency: string[];
+  minAmount: number;
+  maxAmount: number;
+  deadline: Date | null;
+  sortBy: GrantSortField;
+  sortOrder: SortOrder;
+}
+
 /**
  * GrantFilters Component
  * 
@@ -85,7 +94,7 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
   'aria-label': ariaLabel = 'Grant filter form'
 }) => {
   // Initialize form with validation and security measures
-  const { values, errors, touched, handleChange, handleSubmit, setFieldValue } = useForm({
+  const { values, errors, touched, handleChange, handleSubmit, setFieldValue } = useForm<FormValues>({
     initialValues: {
       type: initialFilters.type || [],
       agency: initialFilters.agency || [],
@@ -96,7 +105,28 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
       sortOrder: initialFilters.sortOrder || SortOrder.ASC
     },
     validationSchema,
-    onSubmit: handleFilterSubmit
+    onSubmit: async (formValues) => {
+      // Validate amount range
+      if (formValues.maxAmount > 0 && formValues.minAmount > formValues.maxAmount) {
+        return;
+      }
+
+      // Construct filter params with proper validation
+      const filters: IGrantSearchParams = {
+        type: formValues.type,
+        agency: formValues.agency,
+        minAmount: formValues.minAmount || undefined,
+        maxAmount: formValues.maxAmount || undefined,
+        deadline: formValues.deadline ? {
+          start: formValues.deadline,
+          end: new Date(formValues.deadline.getTime() + 90 * 24 * 60 * 60 * 1000) // 90 days range
+        } : undefined,
+        sortBy: formValues.sortBy,
+        sortOrder: formValues.sortOrder
+      };
+
+      onFilterChange(filters);
+    }
   });
 
   // Memoized sort options
@@ -105,35 +135,11 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
     label: field.replace('_', ' ').toLowerCase()
   })), []);
 
-  // Handle filter submission with validation
-  function handleFilterSubmit(formValues: typeof values) {
-    // Validate amount range
-    if (formValues.maxAmount > 0 && formValues.minAmount > formValues.maxAmount) {
-      return;
-    }
-
-    // Construct filter params with proper validation
-    const filters: IGrantSearchParams = {
-      type: formValues.type,
-      agency: formValues.agency,
-      minAmount: formValues.minAmount || undefined,
-      maxAmount: formValues.maxAmount || undefined,
-      deadline: formValues.deadline ? {
-        start: formValues.deadline,
-        end: new Date(formValues.deadline.getTime() + 90 * 24 * 60 * 60 * 1000) // 90 days range
-      } : undefined,
-      sortBy: formValues.sortBy,
-      sortOrder: formValues.sortOrder
-    };
-
-    onFilterChange(filters);
-  }
-
   // Render filter form with accessibility support
   return (
     <Box
       component="form"
-      onSubmit={(e) => handleSubmit(e)}
+      onSubmit={handleSubmit}
       className={className}
       aria-label={ariaLabel}
       sx={{
@@ -155,8 +161,8 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             options={GRANT_TYPE_OPTIONS}
             value={values.type}
             onChange={(value) => setFieldValue('type', value)}
-            error={touched.type && !!errors.type}
-            helperText={touched.type ? errors.type : ''}
+            error={touched['type'] && !!errors['type']}
+            helperText={touched['type'] ? errors['type'] : ''}
             multiple
             fullWidth
             disabled={disabled}
@@ -172,8 +178,8 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             options={AGENCY_OPTIONS}
             value={values.agency}
             onChange={(value) => setFieldValue('agency', value)}
-            error={touched.agency && !!errors.agency}
-            helperText={touched.agency ? errors.agency : ''}
+            error={touched['agency'] && !!errors['agency']}
+            helperText={touched['agency'] ? errors['agency'] : ''}
             multiple
             fullWidth
             disabled={disabled}
@@ -189,8 +195,8 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             type="number"
             value={values.minAmount}
             onChange={handleChange}
-            error={touched.minAmount && !!errors.minAmount}
-            helperText={touched.minAmount ? errors.minAmount : ''}
+            error={touched['minAmount'] && !!errors['minAmount']}
+            helperText={touched['minAmount'] ? errors['minAmount'] : ''}
             fullWidth
             disabled={disabled}
             InputProps={{
@@ -207,8 +213,8 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             type="number"
             value={values.maxAmount}
             onChange={handleChange}
-            error={touched.maxAmount && !!errors.maxAmount}
-            helperText={touched.maxAmount ? errors.maxAmount : ''}
+            error={touched['maxAmount'] && !!errors['maxAmount']}
+            helperText={touched['maxAmount'] ? errors['maxAmount'] : ''}
             fullWidth
             disabled={disabled}
             InputProps={{
@@ -228,8 +234,8 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             slotProps={{
               textField: {
                 fullWidth: true,
-                error: touched.deadline && !!errors.deadline,
-                helperText: touched.deadline ? errors.deadline : '',
+                error: touched['deadline'] && !!errors['deadline'],
+                helperText: touched['deadline'] ? errors['deadline'] : '',
                 inputProps: {
                   'aria-label': 'Filter by grant deadline'
                 }
@@ -258,7 +264,7 @@ const GrantFilters: React.FC<GrantFiltersProps> = memo(({
             <Tooltip title="Clear all filters">
               <Button
                 type="button"
-                onClick={() => handleFilterSubmit(validationSchema)}
+                onClick={() => handleSubmit()}
                 disabled={disabled}
                 aria-label="Clear filters"
               >
