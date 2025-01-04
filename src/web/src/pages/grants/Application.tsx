@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -16,7 +16,7 @@ import GrantApplicationForm from '../../components/grants/GrantApplicationForm';
 import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant';
 import { grantService } from '../../services/grant.service';
 import { useNotification } from '../../hooks/useNotification';
-import { ANIMATION } from '../../constants/ui.constants';
+import { IGrant } from '../../interfaces/grant.interface';
 
 // Types
 interface ValidationError {
@@ -41,7 +41,6 @@ const Application: React.FC = () => {
   // Hooks
   const { grantId } = useParams<{ grantId: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { showSuccess, showError, showWarning } = useNotification();
 
   // State
@@ -119,20 +118,6 @@ const Application: React.FC = () => {
     }
   }, [grantId, showSuccess, showError]);
 
-  /**
-   * Handles step navigation with validation
-   */
-  const handleStepChange = useCallback((newStep: number) => {
-    // Validate current step before proceeding
-    if (state.validationErrors.length > 0) {
-      showWarning('Please correct validation errors before proceeding');
-      return;
-    }
-
-    setState(prev => ({ ...prev, activeStep: newStep }));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [state.validationErrors, showWarning]);
-
   // Memoized progress calculation
   const totalProgress = useMemo(() => {
     if (!state.progress || Object.keys(state.progress).length === 0) return 0;
@@ -170,7 +155,7 @@ const Application: React.FC = () => {
 
       <Box mb={4}>
         <Stepper activeStep={state.activeStep} alternativeLabel>
-          {state.grant.requirements.sections.map((section, index) => (
+          {state.grant.requirements.sections.map((section) => (
             <Step key={section.id}>
               <StepLabel>{section.title}</StepLabel>
             </Step>

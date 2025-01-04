@@ -9,7 +9,6 @@
 import { useState, useCallback, useRef, ChangeEvent, FormEvent } from 'react'; // v18.2.0
 import { sanitize } from 'dompurify'; // v3.0.5
 import FingerprintJS from '@fingerprintjs/fingerprintjs'; // v3.4.0
-import { validateLoginCredentials, validateRegistrationData } from '../utils/validation.utils';
 import { useNotification } from './useNotification';
 
 // Initialize fingerprint generator
@@ -82,6 +81,14 @@ export function useForm<T extends Record<string, any>>({
   onSubmit,
   securityOptions = {}
 }: UseFormProps<T>): UseFormReturn<T> {
+  // Sanitize values utility function
+  const sanitizeValues = useCallback((values: Record<string, any>): T => {
+    return Object.entries(values).reduce((acc, [key, value]) => ({
+      ...acc,
+      [key]: typeof value === 'string' ? sanitize(value) : value,
+    }), {} as T);
+  }, []);
+
   // Initialize state
   const [values, setValues] = useState<T>(sanitizeValues(initialValues));
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -106,16 +113,6 @@ export function useForm<T extends Record<string, any>>({
     attempts: 0,
     lastAttempt: 0,
   });
-
-  /**
-   * Sanitizes form values for security
-   */
-  const sanitizeValues = useCallback((values: Record<string, any>): T => {
-    return Object.entries(values).reduce((acc, [key, value]) => ({
-      ...acc,
-      [key]: typeof value === 'string' ? sanitize(value) : value,
-    }), {} as T);
-  }, []);
 
   /**
    * Validates a single field
@@ -311,48 +308,3 @@ export function useForm<T extends Record<string, any>>({
     securityStatus: securityContext,
   };
 }
-```
-
-This implementation provides a comprehensive form management hook with the following features:
-
-1. Secure input handling with DOMPurify sanitization
-2. Device fingerprinting for enhanced security
-3. Rate limiting for form submissions
-4. Comprehensive validation system
-5. Error tracking and management
-6. Field touch tracking
-7. Form state management
-8. Security context tracking
-9. Integration with notification system
-10. Type safety with TypeScript
-11. Memory leak prevention
-12. Proper cleanup and reset functionality
-
-The hook can be used throughout the application to manage forms securely while maintaining consistent validation and security measures.
-
-Example usage:
-```typescript
-const { values, errors, handleChange, handleSubmit } = useForm({
-  initialValues: {
-    email: '',
-    password: '',
-  },
-  validationSchema: {
-    email: {
-      required: true,
-      pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-    },
-    password: {
-      required: true,
-      minLength: 8,
-    },
-  },
-  onSubmit: async (values, securityContext) => {
-    // Handle form submission
-  },
-  securityOptions: {
-    enableFingerprinting: true,
-    rateLimitAttempts: 5,
-    validationLevel: 'strict',
-  },
-});

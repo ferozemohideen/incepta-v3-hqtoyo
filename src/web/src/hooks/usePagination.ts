@@ -85,9 +85,7 @@ export const usePagination = (config: PaginationConfig) => {
     totalItems,
     maxVisiblePages = DEFAULT_MAX_VISIBLE_PAGES,
     showFirstLast = true,
-    showPageSize = true,
     disabled = false,
-    ariaLabels = DEFAULT_ARIA_LABELS,
     onPageChange,
     onPageSizeChange,
   } = config;
@@ -119,6 +117,9 @@ export const usePagination = (config: PaginationConfig) => {
     Math.min(startIndex + pageSize, totalItems),
     [startIndex, pageSize, totalItems]
   );
+
+  const isFirstPage = currentPage === MIN_PAGE;
+  const isLastPage = currentPage === totalPages;
 
   // Validate current page when total pages changes
   useEffect(() => {
@@ -182,7 +183,7 @@ export const usePagination = (config: PaginationConfig) => {
 
     window.addEventListener('keydown', handleKeyboard);
     return () => window.removeEventListener('keydown', handleKeyboard);
-  }, [disabled, currentPage, totalPages, showFirstLast]);
+  }, [disabled, currentPage, totalPages, showFirstLast, isFirstPage, isLastPage, changePage]);
 
   // Computed state
   const state: PaginationState = {
@@ -192,8 +193,8 @@ export const usePagination = (config: PaginationConfig) => {
     startIndex,
     endIndex,
     visiblePages,
-    isFirstPage: currentPage === MIN_PAGE,
-    isLastPage: currentPage === totalPages,
+    isFirstPage,
+    isLastPage,
     isLoading,
     announcement,
   };

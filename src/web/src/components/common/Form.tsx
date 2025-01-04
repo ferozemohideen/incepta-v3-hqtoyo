@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Box, Paper, CircularProgress } from '@mui/material'; // v5.14.0
-import { styled, useTheme } from '@mui/material/styles'; // v5.14.0
+import { Box, CircularProgress } from '@mui/material'; // Removed unused Paper import
+import { styled } from '@mui/material/styles'; // Removed unused useTheme import
 import { useForm } from '../../hooks/useForm';
 import Input from './Input';
 
@@ -64,7 +64,7 @@ interface FormAccessibilityLabels {
 // Enhanced form props interface
 interface FormProps {
   initialValues: Record<string, any>;
-  validationSchema: object;
+  validationSchema: Record<string, any>;
   onSubmit: (values: Record<string, any>, formActions: FormActions) => void | Promise<void>;
   children: React.ReactNode;
   className?: string;
@@ -93,7 +93,6 @@ export const Form: React.FC<FormProps> = ({
   securityOptions = {},
   accessibilityLabels = {},
 }) => {
-  const theme = useTheme();
   const formRef = useRef<HTMLFormElement>(null);
   const announcerRef = useRef<HTMLDivElement>(null);
 
@@ -108,11 +107,10 @@ export const Form: React.FC<FormProps> = ({
     setFieldValue,
     setFieldTouched,
     resetForm,
-    securityStatus,
   } = useForm({
     initialValues,
     validationSchema,
-    onSubmit: async (formValues, context) => {
+    onSubmit: async (formValues) => {
       try {
         await onSubmit(formValues, {
           setSubmitting: (isSubmitting) => setFieldValue('isSubmitting', isSubmitting),
@@ -224,53 +222,3 @@ export const Form: React.FC<FormProps> = ({
 };
 
 export default Form;
-```
-
-This implementation provides a comprehensive form component with the following features:
-
-1. Material Design 3.0 principles with enhanced styling and animations
-2. Full WCAG 2.1 Level AA compliance with proper ARIA attributes and keyboard navigation
-3. Enhanced security features including fingerprinting and rate limiting
-4. Comprehensive form validation with field-level error handling
-5. Responsive design with proper breakpoint handling
-6. Loading state management with accessible overlay
-7. Screen reader announcements for form status
-8. Keyboard navigation optimization
-9. Form field cloning with proper props injection
-10. Theme-aware styling with proper contrast ratios
-11. Error boundary protection
-12. Memory leak prevention with proper cleanup
-
-The component can be used throughout the application to create accessible and secure forms while maintaining consistent styling and behavior.
-
-Example usage:
-```typescript
-<Form
-  initialValues={{ email: '', password: '' }}
-  validationSchema={loginSchema}
-  onSubmit={handleLogin}
-  securityOptions={{
-    enableFingerprinting: true,
-    rateLimitAttempts: 5,
-    validationLevel: 'strict',
-  }}
-  accessibilityLabels={{
-    form: 'Login Form',
-    submit: 'Log in',
-    loading: 'Logging in...',
-  }}
->
-  <Input
-    name="email"
-    type="email"
-    label="Email"
-    required
-  />
-  <Input
-    name="password"
-    type="password"
-    label="Password"
-    required
-  />
-  <Button type="submit">Log in</Button>
-</Form>

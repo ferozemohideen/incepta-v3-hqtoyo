@@ -55,9 +55,9 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
   const getPadding = useCallback(() => {
     return {
       xs: SPACING.SCALE.md,
-      sm: SPACING.SCALE.lg,
-      md: SPACING.SCALE.xl,
-    }[theme.breakpoints.keys[0]] || SPACING.SCALE.xl;
+      sm: SPACING.SCALE.md,
+      md: SPACING.SCALE.md,
+    }[theme.breakpoints.keys[0]] || SPACING.SCALE.md;
   }, [theme.breakpoints]);
 
   // Handle keyboard navigation for accessibility
@@ -133,7 +133,6 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
               title={title}
               description={description}
               loading={loading}
-              onExport={onExport}
             />
           </Box>
         </Box>

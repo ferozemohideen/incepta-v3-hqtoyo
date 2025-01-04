@@ -31,7 +31,6 @@ const IP_REGEX = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
  * Rate limiting configuration
  */
 const RATE_LIMIT_ATTEMPTS = 5;
-const RATE_LIMIT_WINDOW = 300000; // 5 minutes in milliseconds
 
 /**
  * Validation error class with enhanced error details
@@ -78,6 +77,36 @@ const registrationSchema = z.object({
   organization: z.string().min(2).max(200),
   organizationType: z.string().min(2).max(50),
   acceptedTerms: z.literal(true)
+});
+
+/**
+ * User data validation schema
+ */
+const userDataSchema = z.object({
+  profile: z.object({
+    name: z.string().min(2).max(100),
+    title: z.string().min(2).max(100).optional(),
+    bio: z.string().max(500).optional(),
+    avatar: z.string().url().optional(),
+    phone: z.string().regex(/^\+?[\d\s-]{10,}$/).optional()
+  }),
+  preferences: z.object({
+    emailNotifications: z.boolean(),
+    twoFactorEnabled: z.boolean(),
+    theme: z.enum(['light', 'dark', 'system']),
+    language: z.string().min(2).max(5),
+    timezone: z.string()
+  }),
+  security: z.object({
+    lastPasswordChange: z.string().datetime(),
+    passwordExpiryDays: z.number().int().min(30).max(90),
+    loginAttempts: z.number().int().min(0),
+    accountLocked: z.boolean(),
+    securityQuestions: z.array(z.object({
+      question: z.string(),
+      answerHash: z.string()
+    })).min(2).max(5)
+  })
 });
 
 /**
@@ -200,12 +229,67 @@ export async function validateRegistrationData(
 }
 
 /**
+ * Validates user data including profile, preferences, and security settings
+ * @param userData - User data to validate
+ * @returns Promise resolving to true if validation passes
+ * @throws ValidationError if validation fails
+ */
+export async function validateUserData(
+  userData: any
+): Promise<boolean> {
+  try {
+    // Validate basic schema
+    userDataSchema.parse(userData);
+
+    // Validate security settings
+    if (userData.security.loginAttempts >= RATE_LIMIT_ATTEMPTS) {
+      throw new ValidationError(
+        'Account locked due to excessive login attempts',
+        'security.loginAttempts',
+        'ACCOUNT_LOCKED'
+      );
+    }
+
+    // Validate password expiry
+    const lastPasswordChange = new Date(userData.security.lastPasswordChange);
+    const daysSinceChange = Math.floor((Date.now() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSinceChange > userData.security.passwordExpiryDays) {
+      throw new ValidationError(
+        'Password expired',
+        'security.lastPasswordChange',
+        'PASSWORD_EXPIRED'
+      );
+    }
+
+    // Log validation attempt
+    await logValidationAttempt({
+      type: 'user_data_update',
+      profile: userData.profile,
+      preferences: userData.preferences
+    });
+
+    return true;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ValidationError(
+        error.errors[0].message,
+        error.errors[0].path.join('.'),
+        'SCHEMA_VALIDATION_ERROR'
+      );
+    }
+    throw error;
+  }
+}
+
+/**
  * Checks rate limiting for an IP address
  * @param ipAddress - IP address to check
  * @returns Promise resolving to rate limit check result
  */
 async function checkRateLimit(ipAddress: string): Promise<{ allowed: boolean; remaining: number }> {
   // Implementation would connect to rate limiting service
+  // Using ipAddress in a real implementation to track rate limits per IP
+  console.log(`Checking rate limit for IP: ${ipAddress}`);
   return { allowed: true, remaining: RATE_LIMIT_ATTEMPTS };
 }
 
@@ -218,6 +302,7 @@ async function validateOrganization(
   organization: string
 ): Promise<{ valid: boolean; details?: string }> {
   // Implementation would connect to organization validation service
+  console.log(`Validating organization: ${organization}`);
   return { valid: true };
 }
 
@@ -228,6 +313,7 @@ async function validateOrganization(
  */
 async function checkDuplicateEmail(email: string): Promise<boolean> {
   // Implementation would connect to user service
+  console.log(`Checking for duplicate email: ${email}`);
   return false;
 }
 
@@ -238,6 +324,7 @@ async function checkDuplicateEmail(email: string): Promise<boolean> {
  */
 async function validateRolePermissions(role: UserRole): Promise<boolean> {
   // Implementation would connect to authorization service
+  console.log(`Validating permissions for role: ${role}`);
   return true;
 }
 

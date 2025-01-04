@@ -69,6 +69,8 @@ export type TechnologyPermissions = {
   canContact: boolean;
   /** Permission to download attachments */
   canDownload: boolean;
+  /** Permission to save technology */
+  canSave: boolean;
 };
 
 /**
@@ -113,6 +115,8 @@ export interface Technology {
   createdAt: Date;
   /** Last update timestamp */
   updatedAt: Date;
+  /** Security level classification */
+  securityLevel: string;
 }
 
 /**

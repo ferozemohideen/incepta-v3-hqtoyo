@@ -63,7 +63,9 @@ export const AUTH_STORAGE_KEYS = {
   REFRESH_TOKEN: '_incepta_rt',
   USER_ROLE: '_incepta_role',
   MFA_ENABLED: '_incepta_mfa',
-  LAST_ACTIVE: '_incepta_last'
+  LAST_ACTIVE: '_incepta_last',
+  DEVICE_ID: '_incepta_device',
+  MFA_STATUS: '_incepta_mfa_status'
 } as const;
 
 /**

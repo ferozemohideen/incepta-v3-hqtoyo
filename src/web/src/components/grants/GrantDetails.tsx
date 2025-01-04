@@ -48,7 +48,6 @@ export const GrantDetails: React.FC<GrantDetailsProps> = ({
   refreshInterval = 30000,
   onStatusChange
 }) => {
-  const theme = useTheme();
   const { grantId: urlGrantId } = useParams<{ grantId: string }>();
   const navigate = useNavigate();
   const location = useLocation();

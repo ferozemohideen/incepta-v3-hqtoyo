@@ -126,13 +126,3 @@ export type UserIconType = keyof typeof UserIcons;
 export type FeatureIconType = keyof typeof FeatureIcons;
 export type StatusIconType = keyof typeof StatusIcons;
 export type DataIconType = keyof typeof DataIcons;
-
-// Re-export all icon groups for convenient access
-export {
-  NavigationIcons,
-  ActionIcons,
-  UserIcons,
-  FeatureIcons,
-  StatusIcons,
-  DataIcons,
-};

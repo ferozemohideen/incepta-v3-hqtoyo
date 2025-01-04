@@ -2,6 +2,23 @@
 import { createTheme, ThemeOptions, Theme } from '@mui/material';
 import { BREAKPOINTS, COLORS } from '../config/theme.config';
 
+// Extend the Palette and PaletteOptions interfaces
+declare module '@mui/material/styles' {
+  interface Palette {
+    tto: typeof COLORS['light']['tto']
+  }
+  interface PaletteOptions {
+    tto?: typeof COLORS['light']['tto']
+  }
+}
+
+// Extend the Components interface for custom variants
+declare module '@mui/material/Chip' {
+  interface ChipPropsVariantOverrides {
+    'tto-status': true;
+  }
+}
+
 /**
  * Creates base theme configuration with shared settings between light/dark modes
  * Implements WCAG 2.1 Level AA compliance and TTO-specific customizations

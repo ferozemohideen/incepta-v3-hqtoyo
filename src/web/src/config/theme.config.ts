@@ -1,7 +1,6 @@
 // @mui/material v5.14.0
 import { 
   ThemeOptions, 
-  PaletteOptions, 
   createTheme, 
   responsiveFontSizes 
 } from '@mui/material';
@@ -194,15 +193,6 @@ export const TYPOGRAPHY = {
   },
 } as const;
 
-// Spacing scale
-const SPACING = {
-  xs: '0.25rem',
-  sm: '0.5rem',
-  md: '1rem',
-  lg: '1.5rem',
-  xl: '2rem',
-} as const;
-
 // Shadow definitions
 const SHADOWS = {
   sm: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)',
@@ -272,14 +262,33 @@ export const createAppTheme = (mode: ThemeMode) => {
     // Configure spacing
     spacing: (factor: number) => `${0.25 * factor}rem`,
     
-    // Configure shadows
+    // Configure shadows with exactly 25 elements
     shadows: [
       'none',
       SHADOWS.sm,
       SHADOWS.md,
       SHADOWS.lg,
-      // Fill remaining shadow slots with medium shadow
-      ...Array(21).fill(SHADOWS.md),
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
+      SHADOWS.md,
     ],
     
     // Configure z-index

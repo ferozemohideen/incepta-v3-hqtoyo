@@ -9,7 +9,6 @@ import {
   useTheme 
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { lightTheme, darkTheme } from '../../styles/theme';
 
 // Interface for Footer component props
 interface FooterProps {

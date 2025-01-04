@@ -7,8 +7,7 @@ import {
   FormHelperText 
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { forwardRef, ForwardedRef, memo } from 'react';
-import { lightTheme, darkTheme } from '../../styles/theme';
+import { forwardRef, ForwardedRef, memo } from 'react';
 
 // Interfaces
 interface SelectOption {
@@ -88,7 +87,7 @@ const StyledSelect = styled(MuiSelect)(({ theme }) => ({
  * A reusable select component with enhanced accessibility and Material Design compliance
  * Implements WCAG 2.1 Level AA standards for keyboard navigation and visual feedback
  */
-const CustomSelect = forwardRef((
+const Select = forwardRef((
   props: CustomSelectProps,
   ref: ForwardedRef<HTMLSelectElement>
 ) => {
@@ -181,12 +180,7 @@ const CustomSelect = forwardRef((
 });
 
 // Display name for debugging
-CustomSelect.displayName = 'CustomSelect';
-
-// Memoize component for performance
-const Select = memo(CustomSelect);
+Select.displayName = 'Select';
 
 export default Select;
-
-// Type exports for consumers
 export type { SelectOption, CustomSelectProps };

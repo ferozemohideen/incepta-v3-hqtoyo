@@ -11,15 +11,13 @@
  * - Optimistic updates
  */
 
-import { AxiosResponse } from 'axios'; // ^1.4.0
 import LRUCache from 'lru-cache'; // ^9.1.1
-import { v4 as uuidv4 } from 'uuid'; // ^9.0.0
 
 import { 
   Technology, 
   TechnologySearchParams, 
-  PatentStatus,
-  isTechnology 
+  isTechnology,
+  TechnologyPermissions 
 } from '../interfaces/technology.interface';
 import { apiService } from './api.service';
 import { API_ENDPOINTS } from '../constants/api.constants';
@@ -49,7 +47,6 @@ interface TechnologyMatchResponse {
 class TechnologyService {
   private readonly baseUrl: string;
   private readonly cache: LRUCache<string, any>;
-  private readonly requestQueue: Set<Promise<any>>;
 
   constructor() {
     this.baseUrl = API_ENDPOINTS.TECHNOLOGIES.BASE;
@@ -61,8 +58,24 @@ class TechnologyService {
       updateAgeOnGet: true,
       allowStale: false
     });
+  }
 
-    this.requestQueue = new Set();
+  /**
+   * Check permissions for a technology
+   * @param technology - Technology object to check permissions for
+   * @returns Technology permissions
+   */
+  checkPermissions(technology: Technology): TechnologyPermissions {
+    if (!technology || !technology.permissions) {
+      return {
+        canView: false,
+        canEdit: false,
+        canDelete: false,
+        canContact: false,
+        canDownload: false
+      };
+    }
+    return technology.permissions;
   }
 
   /**

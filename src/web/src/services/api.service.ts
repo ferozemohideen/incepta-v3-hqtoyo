@@ -13,12 +13,11 @@
  * - Retry mechanism with exponential backoff
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'; // ^1.4.0
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'; // ^1.4.0
 import CircuitBreaker from 'opossum'; // ^7.1.0
-import cacheManager from 'cache-manager'; // ^5.2.0
+import { Cache, caching } from 'cache-manager'; // ^5.2.0
 
 import { apiConfig } from '../config/api.config';
-import { API_ENDPOINTS } from '../constants/api.constants';
 import { formatRequestUrl, handleApiError, retryRequest } from '../utils/api.utils';
 
 /**
@@ -93,7 +92,7 @@ class RequestQueue {
 class ApiServiceImpl implements ApiService {
   private axiosInstance: AxiosInstance;
   private circuitBreaker: CircuitBreaker;
-  private cacheManager: typeof cacheManager;
+  private cache: Cache;
   private requestQueue: RequestQueue;
 
   constructor() {
@@ -114,14 +113,20 @@ class ApiServiceImpl implements ApiService {
       resetTimeout: 30000
     });
 
-    // Initialize cache manager
-    this.cacheManager = cacheManager.caching({
-      store: 'memory',
-      max: 100,
-      ttl: 60 * 5 // 5 minutes
-    });
+    // Initialize cache
+    this.initializeCache();
 
     this.setupInterceptors();
+  }
+
+  /**
+   * Initialize cache asynchronously
+   */
+  private async initializeCache(): Promise<void> {
+    this.cache = await caching('memory', {
+      ttl: 300, // 5 minutes
+      max: 100
+    });
   }
 
   /**
@@ -137,9 +142,6 @@ class ApiServiceImpl implements ApiService {
           config.headers.Authorization = `Bearer ${token}`;
         }
 
-        // Add request timestamp for tracking
-        config.metadata = { startTime: new Date() };
-
         return config;
       },
       (error) => Promise.reject(handleApiError(error))
@@ -148,10 +150,6 @@ class ApiServiceImpl implements ApiService {
     // Response interceptor for error handling and response transformation
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        // Calculate request duration
-        const duration = new Date().getTime() - response.config.metadata.startTime.getTime();
-        console.debug(`Request completed in ${duration}ms:`, response.config.url);
-
         return response.data;
       },
       (error) => Promise.reject(handleApiError(error))
@@ -180,9 +178,9 @@ class ApiServiceImpl implements ApiService {
 
     // Check cache if enabled
     if (config.cache !== false) {
-      const cachedResponse = await this.cacheManager.get(cacheKey);
+      const cachedResponse = await this.cache.get<T>(cacheKey);
       if (cachedResponse) {
-        return cachedResponse as T;
+        return cachedResponse;
       }
     }
 
@@ -200,7 +198,7 @@ class ApiServiceImpl implements ApiService {
 
     // Cache successful response
     if (config.cache !== false) {
-      await this.cacheManager.set(cacheKey, response);
+      await this.cache.set(cacheKey, response);
     }
 
     return response;

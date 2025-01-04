@@ -6,6 +6,7 @@ import { useNotification } from '../../hooks/useNotification';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import ProfileForm from '../../components/profile/ProfileForm';
 import { fetchUserProfile, updateUserProfile, selectCurrentUser, selectUserUpdateStatus } from '../../store/user.slice';
+import { UserProfile } from '../../interfaces/user.interface';
 
 /**
  * Main profile page component implementing Material Design 3.0 principles
@@ -23,10 +24,10 @@ const ProfilePage: React.FC = () => {
   // Fetch user profile on mount
   useEffect(() => {
     const deviceId = window.navigator.userAgent;
-    dispatch(fetchUserProfile(deviceId))
+    dispatch(fetchUserProfile(deviceId) as any)
       .unwrap()
-      .catch((error) => {
-        showError('Failed to load profile: ' + error);
+      .catch((error: Error) => {
+        showError('Failed to load profile: ' + error.message);
       });
   }, [dispatch, showError]);
 
@@ -49,30 +50,24 @@ const ProfilePage: React.FC = () => {
   /**
    * Handle profile update with security measures and optimistic updates
    */
-  const handleProfileUpdate = useCallback(async (formData: typeof profileData) => {
+  const handleProfileUpdate = useCallback(async (formData: UserProfile) => {
     if (!formData || !currentUser) return;
 
     try {
       // Sanitize input data
-      const sanitizedData = {
-        profile: {
-          organization: sanitize(formData.organization),
-          title: sanitize(formData.organizationType),
-          bio: sanitize(formData.bio),
-          phone: sanitize(formData.phoneNumber),
-          version: currentUser.profile.version + 1,
-        },
-        socialProfiles: {
-          linkedin: sanitize(formData.website),
-          orcid: sanitize(formData.orcidId),
-        },
+      const sanitizedData: Partial<UserProfile> = {
+        organization: sanitize(formData.organization),
+        title: sanitize(formData.title),
+        bio: sanitize(formData.bio || ''),
+        phone: sanitize(formData.phone || ''),
+        version: currentUser.profile.version + 1,
       };
 
       // Dispatch update action
       await dispatch(updateUserProfile({
         profileData: sanitizedData,
         version: currentUser.profile.version,
-      })).unwrap();
+      }) as any).unwrap();
 
       showSuccess('Profile updated successfully');
     } catch (error) {

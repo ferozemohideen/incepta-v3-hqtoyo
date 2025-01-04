@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Skeleton } from '@mui/material';
 
@@ -6,17 +6,16 @@ import { Box, Typography, Skeleton } from '@mui/material';
 import MainLayout from '../../layouts/MainLayout';
 import GrantList from '../../components/grants/GrantList';
 import { useNotification } from '../../hooks/useNotification';
-import { grantService } from '../../services/grant.service';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
-import { IGrant, IGrantSearchParams } from '../../interfaces/grant.interface';
+import { IGrant, IGrantSearchParams, GrantSortField, SortOrder } from '../../interfaces/grant.interface';
 
 /**
  * Interface for grant search state with URL synchronization
  */
 interface IGrantSearchState {
   filters: IGrantSearchParams;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
+  sortBy: GrantSortField;
+  sortOrder: SortOrder;
   page: number;
 }
 
@@ -27,32 +26,21 @@ interface IGrantSearchState {
  */
 const GrantListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { showError, showSuccess } = useNotification();
-  const [isLoading, setIsLoading] = useState(true);
+  const { showError } = useNotification();
+  const [isLoading] = useState(true);
 
   // Initialize search state
-  const [searchState, setSearchState] = useState<IGrantSearchState>({
+  const [searchState] = useState<IGrantSearchState>({
     filters: {
       page: 1,
       limit: 10,
-      sortBy: 'deadline',
-      sortOrder: 'asc'
+      sortBy: GrantSortField.DEADLINE,
+      sortOrder: SortOrder.ASC
     },
-    sortBy: 'deadline',
-    sortOrder: 'asc',
+    sortBy: GrantSortField.DEADLINE,
+    sortOrder: SortOrder.ASC,
     page: 1
   });
-
-  // Subscribe to real-time grant updates
-  useEffect(() => {
-    const subscription = grantService.subscribeToGrantUpdates((update) => {
-      showSuccess(`Grant "${update.title}" has been updated`);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [showSuccess]);
 
   /**
    * Handle grant selection and navigation
@@ -60,20 +48,6 @@ const GrantListPage: React.FC = () => {
   const handleGrantSelect = useCallback((grant: IGrant) => {
     navigate(`/grants/${grant.id}`);
   }, [navigate]);
-
-  /**
-   * Handle search filter changes
-   */
-  const handleFilterChange = useCallback((newFilters: IGrantSearchParams) => {
-    setSearchState(prev => ({
-      ...prev,
-      filters: {
-        ...prev.filters,
-        ...newFilters
-      },
-      page: 1 // Reset to first page on filter change
-    }));
-  }, []);
 
   /**
    * Handle errors from child components

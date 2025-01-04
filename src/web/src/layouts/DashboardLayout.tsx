@@ -21,7 +21,7 @@ interface DashboardLayoutProps {
 }
 
 // Styled component for main content area with responsive behavior
-const DashboardContent = styled(Box)(({ theme }) => ({
+const DashboardContent = styled('div')(({ theme }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
   minHeight: '100vh',
@@ -50,7 +50,7 @@ const DashboardContent = styled(Box)(({ theme }) => ({
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, className }) => {
   const theme = useTheme();
   const location = useLocation();
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // State for sidebar visibility
@@ -67,7 +67,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, className }
   }, [isMobile]);
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (loading?.login) {
     return (
       <Box 
         sx={{ 

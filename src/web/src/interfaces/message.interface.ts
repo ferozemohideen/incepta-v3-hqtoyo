@@ -24,6 +24,11 @@ export enum MessageStatus {
 }
 
 /**
+ * Alias for MessageStatus to maintain backward compatibility
+ */
+export const MessageDeliveryStatus = MessageStatus;
+
+/**
  * Enumeration of WebSocket message event types for real-time updates
  */
 export enum MessageEventType {
@@ -61,6 +66,11 @@ export interface MessageMetadata {
    */
   uploadedAt: Date;
 }
+
+/**
+ * Alias for MessageMetadata to maintain backward compatibility
+ */
+export type DocumentMetadata = MessageMetadata;
 
 /**
  * Core message interface defining structure of messages in the frontend

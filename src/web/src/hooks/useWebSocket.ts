@@ -43,9 +43,7 @@ const DEFAULT_OPTIONS: Required<WebSocketOptions> = {
 
 // Constants for connection management
 const RECONNECT_INTERVAL = 5000;
-const MAX_RECONNECT_ATTEMPTS = 5;
 const HEALTH_CHECK_INTERVAL = 30000;
-const MESSAGE_QUEUE_LIMIT = 100;
 const CONNECTION_TIMEOUT = 10000;
 
 /**
@@ -179,6 +177,15 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}) {
   }, [socket]);
 
   /**
+   * Handles manual reconnection attempts
+   */
+  const reconnect = useCallback(async () => {
+    disconnect();
+    reconnectAttempts.current = 0;
+    await connect();
+  }, [disconnect, connect]);
+
+  /**
    * Sends a message with offline queuing support
    */
   const sendMessage = useCallback(async (message: Message): Promise<boolean> => {
@@ -242,6 +249,7 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}) {
     connectionState,
     connect,
     disconnect,
-    sendMessage
+    sendMessage,
+    reconnect
   };
 }
