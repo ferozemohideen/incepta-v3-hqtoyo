@@ -1,5 +1,5 @@
 // @mui/material v5.14.0
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Box, 
   Container, 
@@ -43,7 +43,7 @@ const DEFAULT_SEARCH_PARAMS: TechnologySearchParams = {
 const TechnologyList: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isSmallScreen = useMediaQuery('(max-width:900px)');
+  const isSmallScreen = useMediaQuery('(max-width:960px)');
 
   // Component state
   const [technologies, setTechnologies] = useState<Technology[]>([]);
@@ -100,7 +100,7 @@ const TechnologyList: React.FC = () => {
         liveRegion.textContent = announcement;
       }
     } catch (err) {
-      setError(new Error('Failed to load technologies. Please try again.'));
+      setError(err instanceof Error ? err : new Error('Failed to load technologies. Please try again.'));
       console.error('Error fetching technologies:', err);
     } finally {
       setLoading(false);
