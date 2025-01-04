@@ -1,8 +1,8 @@
 import { useCallback } from 'react'; // v18.2.0
 import { useDispatch } from 'react-redux'; // v8.1.0
 import { v4 as uuidv4 } from 'uuid'; // v9.0.0
-import { addNotification, removeNotification } from '../store/ui.slice';
-import { ANIMATION } from '../constants/ui.constants';
+import { showNotification, hideNotification } from 'store/ui.slice';
+import { ANIMATION } from 'constants/ui.constants';
 
 // Type definitions
 type NotificationType = 'success' | 'error' | 'warning' | 'info';
@@ -57,7 +57,7 @@ export const useNotification = (): UseNotificationReturn => {
    * @param options - Notification configuration options
    * @returns Unique ID of the created notification
    */
-  const showNotification = useCallback((options: NotificationOptions): string => {
+  const showNotificationFn = useCallback((options: NotificationOptions): string => {
     const id = uuidv4();
     const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
 
@@ -68,32 +68,16 @@ export const useNotification = (): UseNotificationReturn => {
     }
 
     // Dispatch notification with enhanced configuration
-    dispatch(addNotification({
-      id,
+    dispatch(showNotification({
       message: mergedOptions.message,
       type: mergedOptions.type!,
       duration: mergedOptions.duration!,
-      anchorOrigin: mergedOptions.anchorOrigin!,
-      sx: {
-        ...mergedOptions.sx,
-        // Ensure accessibility contrast
-        '& .MuiAlert-message': {
-          color: 'text.primary',
-        },
-        // Add responsive positioning
-        '@media (max-width: 600px)': {
-          width: '100%',
-          margin: 0,
-          borderRadius: 0,
-        },
-      },
-      'aria-label': mergedOptions.ariaLabel || `${mergedOptions.type} notification: ${mergedOptions.message}`,
     }));
 
     // Set up auto-dismiss timer if enabled
     if (mergedOptions.autoHideDuration && mergedOptions.autoHideDuration > 0) {
       const timer = setTimeout(() => {
-        hideNotification(id);
+        hideNotificationFn(id);
       }, mergedOptions.autoHideDuration);
 
       // Handle window blur if enabled
@@ -102,7 +86,7 @@ export const useNotification = (): UseNotificationReturn => {
           clearTimeout(timer);
         });
         window.addEventListener('focus', () => {
-          hideNotification(id);
+          hideNotificationFn(id);
         });
       }
 
@@ -116,7 +100,7 @@ export const useNotification = (): UseNotificationReturn => {
    * Hides a notification with the specified ID
    * @param id - ID of the notification to hide
    */
-  const hideNotification = useCallback((id: string): void => {
+  const hideNotificationFn = useCallback((id: string): void => {
     // Clear any existing timer
     if (notificationTimers[id]) {
       clearTimeout(notificationTimers[id]);
@@ -125,7 +109,7 @@ export const useNotification = (): UseNotificationReturn => {
 
     // Remove notification with animation
     setTimeout(() => {
-      dispatch(removeNotification(id));
+      dispatch(hideNotification());
     }, ANIMATION.DURATION_MEDIUM);
   }, [dispatch]);
 
@@ -136,8 +120,8 @@ export const useNotification = (): UseNotificationReturn => {
     message: string,
     options?: Omit<NotificationOptions, 'message' | 'type'>
   ): string => {
-    return showNotification({ ...options, message, type: 'success' });
-  }, [showNotification]);
+    return showNotificationFn({ ...options, message, type: 'success' });
+  }, [showNotificationFn]);
 
   /**
    * Convenience method for showing error notifications
@@ -146,8 +130,8 @@ export const useNotification = (): UseNotificationReturn => {
     message: string,
     options?: Omit<NotificationOptions, 'message' | 'type'>
   ): string => {
-    return showNotification({ ...options, message, type: 'error' });
-  }, [showNotification]);
+    return showNotificationFn({ ...options, message, type: 'error' });
+  }, [showNotificationFn]);
 
   /**
    * Convenience method for showing warning notifications
@@ -156,8 +140,8 @@ export const useNotification = (): UseNotificationReturn => {
     message: string,
     options?: Omit<NotificationOptions, 'message' | 'type'>
   ): string => {
-    return showNotification({ ...options, message, type: 'warning' });
-  }, [showNotification]);
+    return showNotificationFn({ ...options, message, type: 'warning' });
+  }, [showNotificationFn]);
 
   /**
    * Convenience method for showing info notifications
@@ -166,12 +150,12 @@ export const useNotification = (): UseNotificationReturn => {
     message: string,
     options?: Omit<NotificationOptions, 'message' | 'type'>
   ): string => {
-    return showNotification({ ...options, message, type: 'info' });
-  }, [showNotification]);
+    return showNotificationFn({ ...options, message, type: 'info' });
+  }, [showNotificationFn]);
 
   return {
-    showNotification,
-    hideNotification,
+    showNotification: showNotificationFn,
+    hideNotification: hideNotificationFn,
     showSuccess,
     showError,
     showWarning,
