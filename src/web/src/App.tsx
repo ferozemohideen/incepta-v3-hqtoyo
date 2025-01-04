@@ -1,6 +1,6 @@
 ```
 
-The issue is that the Analytics initialization is using an incorrect property. According to the @vercel/analytics package, we should use `mode` instead of `trackPageViews` for configuring analytics tracking.
+The issue is that the Analytics initialization is using an incorrect property. According to the @vercel/analytics documentation, we should use `mode` instead of passing individual tracking options.
 
 Here's the regenerated file with the fix:
 
@@ -66,8 +66,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') {
       Analytics.init({
-        debug: false,
-        mode: 'production'
+        mode: 'production',
+        debug: false
       });
     }
   }, []);
