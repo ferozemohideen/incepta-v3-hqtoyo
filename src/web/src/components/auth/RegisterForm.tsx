@@ -1,19 +1,16 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   TextField, 
   Select, 
   MenuItem, 
   Button, 
-  Tooltip, 
   CircularProgress,
   FormControl,
   InputLabel,
-  FormHelperText,
   Box,
   Typography,
   Checkbox,
-  FormControlLabel,
-  Alert
+  FormControlLabel
 } from '@mui/material'; // v5.14.0
 import { styled } from '@mui/material/styles'; // v5.14.0
 import zxcvbn from 'zxcvbn'; // v4.4.2
@@ -69,8 +66,8 @@ const initialValues: RegisterCredentials = {
   acceptedTerms: false,
 };
 
-// Password strength colors
-const strengthColors = {
+// Password strength colors with type assertion
+const strengthColors: { [key: number]: string } = {
   0: '#ff4444',
   1: '#ffbb33',
   2: '#ffbb33',
@@ -96,7 +93,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     email: {
       required: true,
       pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-      validate: async (value: string) => {
+      validate: async () => {
         // Add domain validation for organization emails if needed
         return true;
       },
@@ -139,7 +136,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   }, []);
 
   // Handle form submission
-  const handleSubmit = async (values: RegisterCredentials) => {
+  const handleSubmit = async (values: Record<string, any>, formActions: any) => {
     try {
       setIsSubmitting(true);
 
@@ -148,7 +145,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
       // Submit registration with enhanced security context
       const tokens = await registerUser({
-        ...values,
+        ...values as RegisterCredentials,
         deviceInfo: {
           fingerprint: deviceId,
           userAgent: navigator.userAgent,
@@ -163,6 +160,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       showError(error instanceof Error ? error.message : 'Registration failed');
     } finally {
       setIsSubmitting(false);
+      formActions?.setSubmitting(false);
     }
   };
 
@@ -319,8 +317,7 @@ async function generateDeviceFingerprint(): Promise<string> {
 
 // Helper function to register user
 async function registerUser(data: RegisterCredentials & { deviceInfo: any }): Promise<AuthTokens> {
-  // Implementation would call API endpoint with the provided data
-  // For now, returning mock data
+  // Implementation would call API endpoint
   return {
     accessToken: 'access-token',
     refreshToken: 'refresh-token',
