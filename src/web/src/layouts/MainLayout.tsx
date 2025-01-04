@@ -34,12 +34,21 @@ const MainContainer = styled(Box)(({ theme }) => ({
 }));
 
 /**
+ * Interface for ContentContainer props
+ */
+interface ContentContainerProps {
+  sidebarOpen?: boolean;
+  isMobile?: boolean;
+}
+
+/**
  * Styled content container with responsive margins and transitions
  */
-const ContentContainer = styled(Container)(({ theme }) => ({
+const ContentContainer = styled(Container)<ContentContainerProps>(({ theme, sidebarOpen = false, isMobile = false }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
   marginTop: LAYOUT.APPBAR_HEIGHT,
+  marginLeft: isMobile ? 0 : (sidebarOpen ? LAYOUT.SIDEBAR_WIDTH : 0),
   transition: theme.transitions.create(['margin', 'width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -136,9 +145,8 @@ const MainLayout: React.FC<MainLayoutProps> = React.memo(({
       <ContentContainer
         component="main"
         id="main-content"
-        sx={{
-          marginLeft: !isMobile && sidebarOpen && !disableSidebar ? LAYOUT.SIDEBAR_WIDTH : 0
-        }}
+        sidebarOpen={sidebarOpen && !disableSidebar}
+        isMobile={isMobile}
         role="main"
         tabIndex={-1}
       >
