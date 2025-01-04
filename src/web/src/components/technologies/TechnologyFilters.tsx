@@ -57,6 +57,11 @@ const ActiveFiltersContainer = styled(Box)(({ theme }) => ({
 interface TechnologyFiltersProps {
   initialFilters: TechnologySearchParams;
   onFilterChange: (filters: TechnologySearchParams) => void;
+  presets?: Array<{
+    id: string;
+    name: string;
+    filters: Partial<TechnologySearchParams>;
+  }>;
   isLoading?: boolean;
 }
 
@@ -67,6 +72,7 @@ interface TechnologyFiltersProps {
 export const TechnologyFilters: React.FC<TechnologyFiltersProps> = ({
   initialFilters,
   onFilterChange,
+  presets = [],
   isLoading = false,
 }) => {
   const theme = useTheme();
@@ -147,6 +153,17 @@ export const TechnologyFilters: React.FC<TechnologyFiltersProps> = ({
       stage: (Array.isArray(value) ? value : [value]) as DevelopmentStage[],
     }));
   }, []);
+
+  // Handle preset selection
+  const handlePresetSelect = useCallback((presetId: string) => {
+    const selectedPreset = presets.find(p => p.id === presetId);
+    if (selectedPreset) {
+      setFilters(prev => ({
+        ...prev,
+        ...selectedPreset.filters,
+      }));
+    }
+  }, [presets]);
 
   // Handle filter reset
   const handleReset = useCallback(() => {
