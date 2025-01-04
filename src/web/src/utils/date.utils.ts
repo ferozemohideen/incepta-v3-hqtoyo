@@ -41,7 +41,7 @@ const DEFAULT_FORMATS = {
 
 /**
  * Formats a date object or ISO string into a standardized display format
- * with support for locale preferences
+ * with support for timezone and locale preferences
  * 
  * @param date - Date to format (Date object or ISO string)
  * @param formatString - Optional format string (defaults to full date)
@@ -81,14 +81,12 @@ export const formatDate = (
  * 
  * @param deadline - Grant deadline date
  * @param thresholds - Custom urgency thresholds
- * @param timezone - Optional timezone
  * @returns Object containing formatted deadline information
  * @throws Error if deadline is invalid
  */
 export const formatDeadline = (
   deadline: Date | string,
-  thresholds: DeadlineThresholds = { urgent: 7, warning: 14 },
-  timezone?: string
+  thresholds: DeadlineThresholds = { urgent: 7, warning: 14 }
 ): DeadlineInfo => {
   try {
     // Convert and validate deadline
