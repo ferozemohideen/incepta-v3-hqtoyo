@@ -100,7 +100,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
         const message = activity.data as Message;
         return message.type === MessageType.SYSTEM 
           ? message.content 
-          : `New message received regarding ${message.metadata.documentUrl ? 'shared document' : 'your inquiry'}`;
+          : `New message received regarding your inquiry`;
       }
       default:
         return 'New notification received';
