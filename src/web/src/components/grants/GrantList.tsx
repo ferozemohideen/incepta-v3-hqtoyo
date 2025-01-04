@@ -1,10 +1,10 @@
 // @mui/material v5.14.0
-import React, { useState, useEffect, useCallback } from 'react';
-import { Grid, Box, CircularProgress, Typography } from '@mui/material';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Grid, Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { useDebounce } from 'use-debounce';
 
 // Internal imports
-import GrantCard from './GrantCard';
+import GrantCard, { GrantCardProps } from './GrantCard';
 import GrantFilters from './GrantFilters';
 import Pagination from '../common/Pagination';
 import { grantService } from '../../services/grant.service';
@@ -35,6 +35,9 @@ const GrantList: React.FC<GrantListProps> = React.memo(({
   onError,
   className
 }) => {
+  // Theme and responsive breakpoints
+  const theme = useTheme();
+
   // Component state
   const [grants, setGrants] = useState<IGrant[]>([]);
   const [totalItems, setTotalItems] = useState(0);
