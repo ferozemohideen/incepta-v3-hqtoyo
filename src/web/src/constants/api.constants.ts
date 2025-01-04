@@ -62,8 +62,12 @@ export const API_ENDPOINTS = {
     PREFERENCES: '/users/preferences'
   },
   ANALYTICS: {
-    /** Analytics endpoints */
-    BASE: '/analytics'
+    /** Analytics data endpoints */
+    BASE: '/analytics',
+    DASHBOARD: '/analytics/dashboard',
+    REPORTS: '/analytics/reports',
+    METRICS: '/analytics/metrics',
+    EXPORT: '/analytics/export'
   }
 } as const;
 
