@@ -67,7 +67,7 @@ const initialValues: RegisterCredentials = {
 };
 
 // Password strength colors with proper typing
-const strengthColors: Record<number, string> = {
+const strengthColors: { [key: number]: string } = {
   0: '#ff4444',
   1: '#ffbb33',
   2: '#ffbb33',
@@ -136,7 +136,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   }, []);
 
   // Handle form submission
-  const handleSubmit = async (values: Record<string, any>, formActions: any) => {
+  const handleSubmit = async (values: Record<string, any>, formActions: { setSubmitting: (isSubmitting: boolean) => void }) => {
     try {
       setIsSubmitting(true);
 
@@ -145,7 +145,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
       // Submit registration with enhanced security context
       const tokens = await registerUser({
-        ...values as RegisterCredentials,
+        ...(values as RegisterCredentials),
         deviceInfo: {
           fingerprint: deviceId,
           userAgent: navigator.userAgent,
@@ -160,6 +160,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       showError(error instanceof Error ? error.message : 'Registration failed');
     } finally {
       setIsSubmitting(false);
+      formActions.setSubmitting(false);
     }
   };
 
