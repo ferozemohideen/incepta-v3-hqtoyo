@@ -36,7 +36,7 @@ const MainContainer = styled(Box)(({ theme }) => ({
 /**
  * Styled content container with responsive margins and transitions
  */
-const ContentContainer = styled(Container, {
+const ContentContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'sidebarOpen' && prop !== 'isMobile',
 })<{ sidebarOpen: boolean; isMobile: boolean }>(({ theme, sidebarOpen, isMobile }) => ({
   flexGrow: 1,
@@ -70,7 +70,6 @@ const MainLayout: React.FC<MainLayoutProps> = React.memo(({
   // Theme and responsive hooks
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   // Sidebar state management
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile && !disableSidebar);
@@ -124,7 +123,6 @@ const MainLayout: React.FC<MainLayoutProps> = React.memo(({
       {/* App Bar */}
       <AppBarComponent
         onMenuClick={handleSidebarToggle}
-        elevation={sidebarOpen ? 0 : 4}
       />
 
       {/* Sidebar */}
@@ -139,7 +137,6 @@ const MainLayout: React.FC<MainLayoutProps> = React.memo(({
 
       {/* Main Content */}
       <ContentContainer
-        component="main"
         id="main-content"
         sidebarOpen={sidebarOpen && !disableSidebar}
         isMobile={isMobile}
