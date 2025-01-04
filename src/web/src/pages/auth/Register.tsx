@@ -102,7 +102,7 @@ const Register: React.FC = () => {
     <ErrorBoundary
       FallbackComponent={ErrorFallback}
       onReset={() => {
-        // Reset any state that might have caused the error
+        // Reset form state if needed
       }}
     >
       <AuthLayout 
