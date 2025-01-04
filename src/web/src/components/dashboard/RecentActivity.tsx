@@ -11,8 +11,7 @@ import {
   List,
   ListItem,
   Typography,
-  Skeleton,
-  IconButton
+  Skeleton
 } from '@mui/material'; // v5.0.0
 
 // Internal imports
@@ -76,11 +75,11 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
   const activitiesRef = useRef<Activity[]>(activities);
 
   // WebSocket connection for real-time updates
-  const { isConnected, connectionState, connect } = useWebSocket(
-    process.env.REACT_APP_WS_URL || 'ws://localhost:8080',
+  const { isConnected } = useWebSocket(
+    process.env['REACT_APP_WS_URL'] || 'ws://localhost:8080',
     {
       autoConnect: true,
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env['NODE_ENV'] === 'production'
     }
   );
 
@@ -95,13 +94,13 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
       }
       case ActivityType.GRANT_DEADLINE: {
         const grant = activity.data as IGrant;
-        return `Upcoming deadline: ${grant.title} - ${formatDistanceToNow(new Date(grant.deadline))} remaining`;
+        return `Upcoming deadline: ${grant.title} - ${formatDistanceToNow(grant.deadline)} remaining`;
       }
       case ActivityType.NEW_MESSAGE: {
         const message = activity.data as Message;
         return message.type === MessageType.SYSTEM 
           ? message.content 
-          : `New message received regarding ${message.metadata.subject || 'your inquiry'}`;
+          : `New message received regarding ${message.metadata.documentUrl ? 'shared document' : 'your inquiry'}`;
       }
       default:
         return 'New notification received';
@@ -170,7 +169,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
   // WebSocket event listeners
   useEffect(() => {
     if (isConnected) {
-      const socket = new WebSocket(process.env.REACT_APP_WS_URL || 'ws://localhost:8080');
+      const socket = new WebSocket(process.env['REACT_APP_WS_URL'] || 'ws://localhost:8080');
 
       socket.addEventListener('message', (event) => {
         const activity = JSON.parse(event.data) as Activity;
@@ -181,6 +180,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
         socket.close();
       };
     }
+    return undefined;
   }, [isConnected, handleNewActivity]);
 
   // Error display component
