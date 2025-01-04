@@ -17,7 +17,7 @@ import {
   AuthTokens, 
   MFACredentials 
 } from '../interfaces/auth.interface';
-import { AUTH_ENDPOINTS, TOKEN_CONFIG, AUTH_STORAGE_KEYS, UserRole, PASSWORD_POLICY } from '../constants/auth.constants';
+import { AUTH_ENDPOINTS, TOKEN_CONFIG, AUTH_STORAGE_KEYS } from '../constants/auth.constants';
 import { 
   setLocalStorageItem, 
   getLocalStorageItem, 
@@ -34,8 +34,6 @@ export interface AuthService {
   logout(): Promise<void>;
   refreshToken(): Promise<AuthTokens>;
   verifyMFA(credentials: MFACredentials): Promise<AuthTokens>;
-  validatePassword(password: string): boolean;
-  setupMFA(): Promise<{ qrCode: string; secret: string }>;
 }
 
 /**
@@ -43,7 +41,6 @@ export interface AuthService {
  */
 class AuthServiceImpl implements AuthService {
   private readonly tokenRefreshInterval: number = TOKEN_CONFIG.ROTATION_WINDOW * 1000;
-  private readonly maxRetryAttempts: number = 3;
   private refreshTimer?: NodeJS.Timeout;
 
   constructor() {
@@ -174,45 +171,6 @@ class AuthServiceImpl implements AuthService {
 
       // Update MFA status
       setLocalStorageItem(AUTH_STORAGE_KEYS.MFA_ENABLED, true);
-
-      return response;
-    } catch (error) {
-      throw this.handleAuthError(error);
-    }
-  }
-
-  /**
-   * Validates password against security policy
-   * @param password - Password to validate
-   * @returns Boolean indicating if password meets requirements
-   */
-  validatePassword(password: string): boolean {
-    if (!password || password.length < PASSWORD_POLICY.MIN_LENGTH) {
-      return false;
-    }
-
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-    return (
-      (!PASSWORD_POLICY.REQUIRE_UPPERCASE || hasUpperCase) &&
-      (!PASSWORD_POLICY.REQUIRE_NUMBERS || hasNumber) &&
-      (!PASSWORD_POLICY.REQUIRE_SPECIAL || hasSpecial)
-    );
-  }
-
-  /**
-   * Sets up MFA for user account
-   * @returns Promise resolving to MFA setup data
-   */
-  async setupMFA(): Promise<{ qrCode: string; secret: string }> {
-    try {
-      const response = await apiService.post<{ qrCode: string; secret: string }>(
-        AUTH_ENDPOINTS.SETUP_MFA,
-        {},
-        { priority: 1 }
-      );
 
       return response;
     } catch (error) {
