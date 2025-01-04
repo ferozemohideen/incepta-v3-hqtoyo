@@ -69,39 +69,36 @@ const Writer: React.FC = () => {
   }, [grantId, showError]);
 
   /**
-   * Handle draft saving with debounce
+   * Handle draft saving
    */
-  const handleSaveDraft = useCallback(
-    async (applicationData: Partial<IGrantApplication>) => {
-      try {
-        if (!grantId) return;
+  const handleSaveDraft = useCallback(async (applicationData: IGrantApplication) => {
+    try {
+      if (!grantId) return;
 
-        // Update progress before saving
-        const progress = calculateProgress(applicationData);
-        setState(prev => ({ ...prev, progress }));
+      // Update progress before saving
+      const progress = calculateProgress(applicationData);
+      setState(prev => ({ ...prev, progress }));
 
-        // Save draft
-        await grantService.saveGrantDraft(grantId, applicationData);
-        
-        setState(prev => ({
-          ...prev,
-          lastSaved: new Date(),
-          isDirty: false
-        }));
+      // Save draft
+      await grantService.saveGrantDraft(grantId, applicationData);
+      
+      setState(prev => ({
+        ...prev,
+        lastSaved: new Date(),
+        isDirty: false
+      }));
 
-        showSuccess('Draft saved successfully');
-      } catch (error) {
-        showError('Failed to save draft');
-        setState(prev => ({ ...prev, isDirty: true }));
-      }
-    },
-    [grantId, showSuccess, showError]
-  );
+      showSuccess('Draft saved successfully');
+    } catch (error) {
+      showError('Failed to save draft');
+      setState(prev => ({ ...prev, isDirty: true }));
+    }
+  }, [grantId, showSuccess, showError]);
 
   /**
    * Handle application submission
    */
-  const handleSubmitApplication = useCallback(async (applicationData: Partial<IGrantApplication>) => {
+  const handleSubmitApplication = useCallback(async (applicationData: IGrantApplication) => {
     try {
       if (!grantId) return;
 
@@ -136,12 +133,12 @@ const Writer: React.FC = () => {
   /**
    * Calculate application progress
    */
-  const calculateProgress = (applicationData: Partial<IGrantApplication>): number => {
+  const calculateProgress = (applicationData: IGrantApplication): number => {
     if (!state.grant) return 0;
 
     const sections = state.grant.requirements.sections;
     const completedSections = sections.filter(section => {
-      const content = applicationData.sections?.[section.id]?.content;
+      const content = applicationData.sections && applicationData.sections[section.id]?.content;
       return content && content.length > 0;
     });
 
