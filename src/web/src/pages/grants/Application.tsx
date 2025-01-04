@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -16,8 +16,6 @@ import GrantApplicationForm from '../../components/grants/GrantApplicationForm';
 import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant';
 import { grantService } from '../../services/grant.service';
 import { useNotification } from '../../hooks/useNotification';
-import { ANIMATION } from '../../constants/ui.constants';
-import { IGrant } from '../../interfaces/grant.interface';
 
 // Types
 interface ValidationError {
@@ -42,7 +40,6 @@ const Application: React.FC = () => {
   // Hooks
   const { grantId } = useParams<{ grantId: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { showSuccess, showError, showWarning } = useNotification();
 
   // State
@@ -120,20 +117,6 @@ const Application: React.FC = () => {
     }
   }, [grantId, showSuccess, showError]);
 
-  /**
-   * Handles step navigation with validation
-   */
-  const handleStepChange = useCallback((newStep: number) => {
-    // Validate current step before proceeding
-    if (state.validationErrors.length > 0) {
-      showWarning('Please correct validation errors before proceeding');
-      return;
-    }
-
-    setState(prev => ({ ...prev, activeStep: newStep }));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [state.validationErrors, showWarning]);
-
   if (state.loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -177,16 +160,14 @@ const Application: React.FC = () => {
           <GrantApplicationForm
             grantId={grantId!}
             onSuccess={handleApplicationSubmit}
-            onError={(error: Error) => showError(error.message)}
+            onError={(error) => showError(error.message)}
+            onAutoSave={handleDraftSave}
           />
         </Box>
 
         <Box width={400}>
           <GrantWritingAssistant
-            grant={{
-              ...state.grant,
-              deadline: new Date(state.grant.deadline).toISOString()
-            }}
+            grant={state.grant}
             onSave={handleDraftSave}
             onSubmit={handleApplicationSubmit}
           />
