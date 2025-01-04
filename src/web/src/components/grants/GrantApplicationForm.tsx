@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Grid, 
@@ -9,10 +9,10 @@ import {
   StepLabel,
   CircularProgress,
   Alert
-} from '@mui/material';
-import { useFormik, FormikHelpers } from 'formik';
-import { debounce } from 'lodash';
-import * as Yup from 'yup';
+} from '@mui/material'; // v5.14.0
+import { useFormik, FormikHelpers } from 'formik'; // v2.4.2
+import { debounce } from 'lodash'; // v4.17.21
+import * as Yup from 'yup'; // v1.2.0
 
 import Form from '../common/Form';
 import FileUpload from '../common/FileUpload';
@@ -163,7 +163,6 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
   
   // Hooks
   const { showSuccess, showError } = useNotification();
-  const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize form with Formik
   const formik = useFormik<IGrantApplication>({
@@ -308,13 +307,9 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
       </Stepper>
 
       <Form
-        ref={formRef}
         initialValues={formik.values}
         validationSchema={validationSchemas[formSteps[activeStep].key]}
-        onSubmit={(values, formActions) => {
-          formik.handleSubmit();
-          formActions.setSubmitting(false);
-        }}
+        onSubmit={formik.handleSubmit}
         aria-label={`${formSteps[activeStep].label} Form`}
       >
         {renderStepContent(activeStep)}
