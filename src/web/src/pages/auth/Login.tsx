@@ -5,7 +5,7 @@ import { Box, Typography, Link, CircularProgress } from '@mui/material'; // ^5.1
 import { LoginForm } from '../../components/auth/LoginForm';
 import { AuthLayout } from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { AuthError, AuthTokens } from '../../interfaces/auth.interface';
+import { AuthError, LoginCredentials } from '../../interfaces/auth.interface';
 
 /**
  * Login page component implementing secure authentication with:
@@ -30,9 +30,8 @@ const LoginPage: React.FC = () => {
 
   /**
    * Handles successful login with enhanced security
-   * @param tokens - Authentication tokens from successful login
    */
-  const handleLoginSuccess = useCallback(async (tokens: AuthTokens) => {
+  const handleLoginSuccess = useCallback(async (tokens: { accessToken: string; refreshToken: string }) => {
     try {
       setLoading(true);
       
@@ -45,7 +44,7 @@ const LoginPage: React.FC = () => {
           userAgent: window.navigator.userAgent,
           platform: window.navigator.platform,
           version: window.navigator.appVersion,
-          fingerprint: tokens.accessToken
+          fingerprint: ''
         }
       });
 
@@ -67,7 +66,6 @@ const LoginPage: React.FC = () => {
 
   /**
    * Handles login errors with user feedback
-   * @param error - Authentication error details
    */
   const handleLoginError = useCallback((error: AuthError) => {
     setLoading(false);
@@ -106,7 +104,7 @@ const LoginPage: React.FC = () => {
         )}
 
         {/* Error message */}
-        {(error || (authError && typeof authError === 'string')) && (
+        {(error || authError) && (
           <Typography
             color="error"
             variant="body2"
@@ -114,7 +112,7 @@ const LoginPage: React.FC = () => {
             sx={{ mb: 2 }}
             role="alert"
           >
-            {error || (typeof authError === 'string' ? authError : 'Authentication failed')}
+            {error || (typeof authError === 'string' ? authError : authError?.message)}
           </Typography>
         )}
 
