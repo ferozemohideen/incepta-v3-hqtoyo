@@ -22,7 +22,6 @@ import useInfiniteScroll from 'react-infinite-scroll-hook';
 
 import { CustomCard } from '../common/Card';
 import { User } from '../../interfaces/user.interface';
-import { messageService } from '../../services/message.service';
 
 // Enhanced styled components with Material Design 3.0
 const StyledListItem = styled(ListItem, {
@@ -235,7 +234,7 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
 
   // Initialize real-time status updates
   useEffect(() => {
-    statusSubscription.current = messageService.subscribeToStatus((updates: { online: Record<string, boolean>; typing: Record<string, boolean> }) => {
+    statusSubscription.current = messageService.subscribeToStatus((updates) => {
       setOnlineStatus(prev => ({ ...prev, ...updates.online }));
       setTypingStatus(prev => ({ ...prev, ...updates.typing }));
     });
