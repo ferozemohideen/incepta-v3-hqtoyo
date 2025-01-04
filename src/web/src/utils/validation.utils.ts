@@ -31,7 +31,6 @@ const IP_REGEX = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
  * Rate limiting configuration
  */
 const RATE_LIMIT_ATTEMPTS = 5;
-const RATE_LIMIT_WINDOW = 300000; // 5 minutes in milliseconds
 
 /**
  * Validation error class with enhanced error details
@@ -206,6 +205,8 @@ export async function validateRegistrationData(
  */
 async function checkRateLimit(ipAddress: string): Promise<{ allowed: boolean; remaining: number }> {
   // Implementation would connect to rate limiting service
+  // Using ipAddress in a real implementation to track rate limits per IP
+  console.log(`Checking rate limit for IP: ${ipAddress}`);
   return { allowed: true, remaining: RATE_LIMIT_ATTEMPTS };
 }
 
@@ -218,6 +219,7 @@ async function validateOrganization(
   organization: string
 ): Promise<{ valid: boolean; details?: string }> {
   // Implementation would connect to organization validation service
+  console.log(`Validating organization: ${organization}`);
   return { valid: true };
 }
 
@@ -228,6 +230,7 @@ async function validateOrganization(
  */
 async function checkDuplicateEmail(email: string): Promise<boolean> {
   // Implementation would connect to user service
+  console.log(`Checking for duplicate email: ${email}`);
   return false;
 }
 
@@ -238,6 +241,7 @@ async function checkDuplicateEmail(email: string): Promise<boolean> {
  */
 async function validateRolePermissions(role: UserRole): Promise<boolean> {
   // Implementation would connect to authorization service
+  console.log(`Validating permissions for role: ${role}`);
   return true;
 }
 
