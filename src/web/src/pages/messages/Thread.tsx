@@ -62,6 +62,9 @@ const Thread: React.FC = () => {
     readReceipts: new Map()
   });
 
+  // Refs for managing component lifecycle
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+
   // WebSocket connection for real-time updates
   const { 
     isConnected, 
@@ -159,15 +162,19 @@ const Thread: React.FC = () => {
       processOfflineQueue();
     } else {
       // Set reconnection timeout
-      const reconnectTimeout = setTimeout(() => {
+      reconnectTimeoutRef.current = setTimeout(() => {
         setState(prev => ({
           ...prev,
           error: 'Connection lost. Attempting to reconnect...'
         }));
       }, RECONNECT_DELAY);
-
-      return () => clearTimeout(reconnectTimeout);
     }
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
   }, [isConnected, processOfflineQueue]);
 
   return (
