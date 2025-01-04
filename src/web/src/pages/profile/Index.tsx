@@ -56,18 +56,12 @@ const ProfilePage: React.FC = () => {
     try {
       // Sanitize input data
       const sanitizedData = {
-        profile: {
-          organization: sanitize(formData.organization),
-          title: sanitize(formData.organizationType),
-          bio: sanitize(formData.bio),
-          phone: sanitize(formData.phoneNumber),
-          interests: formData.researchInterests,
-          version: currentUser.profile.version + 1,
-        },
-        socialProfiles: {
-          linkedin: sanitize(formData.website),
-          orcid: sanitize(formData.orcidId),
-        },
+        organization: sanitize(formData.organization),
+        title: sanitize(formData.organizationType),
+        bio: sanitize(formData.bio),
+        phone: sanitize(formData.phoneNumber),
+        interests: formData.researchInterests || [],
+        version: currentUser.profile.version + 1,
       };
 
       // Dispatch update action
@@ -138,6 +132,7 @@ const ProfilePage: React.FC = () => {
                 user={profileData}
                 onSubmit={handleProfileUpdate}
                 onError={(error) => showError(error.message)}
+                isSubmitting={isProfileUpdating}
               />
             </Paper>
           </Grid>
