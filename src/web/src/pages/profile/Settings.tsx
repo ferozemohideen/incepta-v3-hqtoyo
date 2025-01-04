@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom'; // v6.14.0
 import SecuritySettings from '../../components/profile/SecuritySettings';
 import PreferencesForm from '../../components/profile/PreferencesForm';
 import { useAuth } from '../../hooks/useAuth';
-import { UserSecurity } from '../../interfaces/user.interface';
+import { UserSecurity, UserPreferences } from '../../interfaces/user.interface';
 
 /**
  * Interface for accessible tab panel props
@@ -63,7 +63,7 @@ const TabPanel: React.FC<TabPanelProps> = ({
 const Settings: React.FC = () => {
   // Initialize hooks
   const navigate = useNavigate();
-  const { user, securityContext } = useAuth();
+  const { user } = useAuth();
   
   // State management
   const [activeTab, setActiveTab] = useState(0);
@@ -96,12 +96,10 @@ const Settings: React.FC = () => {
         userId: user?.id,
         action: 'security_update',
         changes: security,
-        ipAddress: window.location.hostname,
-        userAgent: navigator.userAgent,
       };
 
       // Update security settings with audit log
-      await updateUserSettings({ security, auditLog });
+      await user?.updateSecurity({ ...security, auditLog });
       setUpdateSuccess('Security settings updated successfully');
     } catch (error) {
       setUpdateError('Failed to update security settings. Please try again.');
@@ -120,7 +118,7 @@ const Settings: React.FC = () => {
     setUpdateSuccess(null);
 
     try {
-      await updateUserSettings({ preferences });
+      await user?.updatePreferences(preferences);
       setUpdateSuccess('Preferences updated successfully');
     } catch (error) {
       setUpdateError('Failed to update preferences. Please try again.');
@@ -128,7 +126,7 @@ const Settings: React.FC = () => {
     } finally {
       setIsUpdating(false);
     }
-  }, []);
+  }, [user]);
 
   // Render loading state if user data is not available
   if (!user) {
@@ -186,7 +184,7 @@ const Settings: React.FC = () => {
           ariaLabel="Security settings section"
         >
           <SecuritySettings
-            userSecurity={user.security || {}}
+            userSecurity={user.security}
             onUpdate={handleSecurityUpdate}
           />
         </TabPanel>
@@ -198,7 +196,7 @@ const Settings: React.FC = () => {
           ariaLabel="Preferences section"
         >
           <PreferencesForm
-            initialPreferences={user.preferences || {}}
+            initialPreferences={user.preferences}
             onSave={handlePreferencesUpdate}
             isLoading={isUpdating}
           />
