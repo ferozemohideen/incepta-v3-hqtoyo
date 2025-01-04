@@ -80,6 +80,36 @@ const registrationSchema = z.object({
 });
 
 /**
+ * User data validation schema
+ */
+const userDataSchema = z.object({
+  profile: z.object({
+    name: z.string().min(2).max(100),
+    title: z.string().min(2).max(100).optional(),
+    bio: z.string().max(500).optional(),
+    avatar: z.string().url().optional(),
+    phone: z.string().regex(/^\+?[\d\s-]{10,}$/).optional()
+  }),
+  preferences: z.object({
+    emailNotifications: z.boolean(),
+    twoFactorEnabled: z.boolean(),
+    theme: z.enum(['light', 'dark', 'system']),
+    language: z.string().min(2).max(5),
+    timezone: z.string()
+  }),
+  security: z.object({
+    lastPasswordChange: z.string().datetime(),
+    passwordExpiryDays: z.number().int().min(30).max(90),
+    loginAttempts: z.number().int().min(0),
+    accountLocked: z.boolean(),
+    securityQuestions: z.array(z.object({
+      question: z.string(),
+      answerHash: z.string()
+    })).min(2).max(5)
+  })
+});
+
+/**
  * Validates login credentials with enhanced security checks
  * @param credentials - Login credentials to validate
  * @returns Promise resolving to true if validation passes
@@ -183,6 +213,59 @@ export async function validateRegistrationData(
       email: data.email,
       organization: data.organization,
       role: data.role
+    });
+
+    return true;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ValidationError(
+        error.errors[0].message,
+        error.errors[0].path.join('.'),
+        'SCHEMA_VALIDATION_ERROR'
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * Validates user data including profile, preferences, and security settings
+ * @param userData - User data to validate
+ * @returns Promise resolving to true if validation passes
+ * @throws ValidationError if validation fails
+ */
+export async function validateUserData(
+  userData: any
+): Promise<boolean> {
+  try {
+    // Validate basic schema
+    userDataSchema.parse(userData);
+
+    // Validate security settings
+    if (userData.security.loginAttempts >= RATE_LIMIT_ATTEMPTS) {
+      throw new ValidationError(
+        'Account locked due to excessive login attempts',
+        'security.loginAttempts',
+        'ACCOUNT_LOCKED'
+      );
+    }
+
+    // Validate password expiry
+    const lastPasswordChange = new Date(userData.security.lastPasswordChange);
+    const daysSinceChange = Math.floor((Date.now() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSinceChange > userData.security.passwordExpiryDays) {
+      throw new ValidationError(
+        'Password expired',
+        'security.lastPasswordChange',
+        'PASSWORD_EXPIRED'
+      );
+    }
+
+    // Log validation attempt
+    await logValidationAttempt({
+      type: 'user_data_update',
+      profile: userData.profile,
+      preferences: userData.preferences
     });
 
     return true;
