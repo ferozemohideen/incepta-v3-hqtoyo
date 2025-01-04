@@ -1,3 +1,16 @@
+```
+
+2. Error with Container component props:
+```
+error TS2322: Type '{ children: ReactNode; component: string; id: string; role: "main"; tabIndex: number; sx: { marginLeft: string | number; }; }' is not assignable to type...
+```
+
+These errors indicate issues with the styled component usage and Container component props. I'll fix them by properly typing the styled component and adjusting the Container usage.
+
+Here's the regenerated file:
+
+# src/web/src/layouts/MainLayout.tsx
+```typescript
 import React, { useState, useCallback } from 'react';
 import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -36,10 +49,18 @@ const MainContainer = styled(Box)(({ theme }) => ({
 /**
  * Styled content container with responsive margins and transitions
  */
-const ContentContainer = styled(Container)(({ theme }) => ({
+interface ContentContainerProps {
+  sidebarOpen: boolean;
+  isMobile: boolean;
+}
+
+const ContentContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'sidebarOpen' && prop !== 'isMobile',
+})<ContentContainerProps>(({ theme, sidebarOpen, isMobile }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
   marginTop: LAYOUT.APPBAR_HEIGHT,
+  marginLeft: isMobile ? 0 : (sidebarOpen ? LAYOUT.SIDEBAR_WIDTH : 0),
   transition: theme.transitions.create(['margin', 'width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -67,6 +88,7 @@ const MainLayout: React.FC<MainLayoutProps> = React.memo(({
   // Theme and responsive hooks
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   // Sidebar state management
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile && !disableSidebar);
@@ -120,6 +142,7 @@ const MainLayout: React.FC<MainLayoutProps> = React.memo(({
       {/* App Bar */}
       <AppBarComponent
         onMenuClick={handleSidebarToggle}
+        elevation={sidebarOpen ? 0 : 4}
       />
 
       {/* Sidebar */}
@@ -136,13 +159,14 @@ const MainLayout: React.FC<MainLayoutProps> = React.memo(({
       <ContentContainer
         component="main"
         id="main-content"
-        role="main"
+        sidebarOpen={sidebarOpen && !disableSidebar}
+        isMobile={isMobile}
         tabIndex={-1}
-        sx={{
-          marginLeft: !isMobile && sidebarOpen && !disableSidebar ? `${LAYOUT.SIDEBAR_WIDTH}px` : 0
-        }}
+        role="main"
       >
-        {children}
+        <Container maxWidth="lg">
+          {children}
+        </Container>
       </ContentContainer>
 
       {/* Footer */}
