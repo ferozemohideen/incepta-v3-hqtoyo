@@ -56,6 +56,7 @@ interface DocumentAttachments {
   }>;
 }
 
+// Combined form data interface
 interface IGrantApplication {
   projectDetails: ProjectDetails;
   budgetTimeline: BudgetTimeline;
@@ -63,6 +64,7 @@ interface IGrantApplication {
   documentAttachments: DocumentAttachments;
 }
 
+// Component props interface
 interface GrantApplicationFormProps {
   grantId: string;
   onSuccess: (application: IGrantApplication) => void;
@@ -70,6 +72,7 @@ interface GrantApplicationFormProps {
   initialData?: Partial<IGrantApplication>;
 }
 
+// Form validation schemas
 const validationSchemas = {
   projectDetails: Yup.object({
     projectTitle: Yup.string()
@@ -135,6 +138,7 @@ const validationSchemas = {
   })
 };
 
+// Form steps configuration
 const formSteps = [
   { label: 'Project Details', key: 'projectDetails' },
   { label: 'Budget & Timeline', key: 'budgetTimeline' },
@@ -142,19 +146,26 @@ const formSteps = [
   { label: 'Documents', key: 'documentAttachments' }
 ];
 
+/**
+ * Grant Application Form Component
+ * Implements a multi-step form with auto-save, validation, and accessibility features
+ */
 export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
   grantId,
   onSuccess,
   onError,
   initialData
 }) => {
+  // State management
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   
+  // Hooks
   const { showSuccess, showError } = useNotification();
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Initialize form with Formik
   const formik = useFormik({
     initialValues: initialData || {
       projectDetails: {
@@ -183,6 +194,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
     onSubmit: handleSubmit
   });
 
+  // Auto-save functionality
   const autoSave = useCallback(
     debounce(async (values: IGrantApplication) => {
       try {
@@ -198,18 +210,21 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
     [grantId]
   );
 
+  // Effect for auto-save
   useEffect(() => {
     if (formik.dirty) {
       autoSave(formik.values);
     }
   }, [formik.values, autoSave]);
 
+  // Handle form submission
   async function handleSubmit(
     values: IGrantApplication,
     helpers: FormikHelpers<IGrantApplication>
   ) {
     setIsSubmitting(true);
     try {
+      // Validate all sections before final submission
       for (const step of formSteps) {
         const isValid = await validationSchemas[step.key].isValid(
           values[step.key as keyof IGrantApplication]
@@ -219,12 +234,15 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
         }
       }
 
+      // Process file uploads
       const processedFiles = await Promise.all(
         values.documentAttachments.files.map(async (file) => {
+          // File processing logic here
           return file;
         })
       );
 
+      // Submit application
       await onSuccess({
         ...values,
         documentAttachments: {
@@ -243,6 +261,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
     }
   }
 
+  // Navigation handlers
   const handleNext = async () => {
     const currentSchema = validationSchemas[formSteps[activeStep].key];
     try {
@@ -259,6 +278,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
     setActiveStep((prev) => Math.max(prev - 1, 0));
   };
 
+  // Render form content based on active step
   const renderStepContent = (step: number) => {
     const currentStep = formSteps[step];
     return (
@@ -268,6 +288,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
     );
   };
 
+  // Wrapper function to adapt formik.handleSubmit to Form's onSubmit
   const handleFormSubmit = (values: Record<string, any>, formActions: any) => {
     formik.handleSubmit(values as any);
   };
