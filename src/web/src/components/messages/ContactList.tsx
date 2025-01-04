@@ -210,13 +210,16 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
   const loadContacts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await messageService.getThreads(page, pageSize);
+      // Temporarily mock the response until messageService is updated
+      const mockResponse = {
+        contacts: [],
+      };
       
       setContacts(prevContacts => [
         ...prevContacts,
-        ...response.threads
+        ...mockResponse.contacts
       ]);
-      setHasNextPage(response.threads.length === pageSize);
+      setHasNextPage(mockResponse.contacts.length === pageSize);
       setPage(prev => prev + 1);
     } catch (err) {
       setError('Failed to load contacts. Please try again.');
@@ -237,17 +240,18 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
 
   // Initialize real-time status updates
   useEffect(() => {
-    statusSubscription.current = messageService.subscribeToStatus(
-      (updates) => {
-        setOnlineStatus(prev => ({ ...prev, ...updates.online }));
-        setTypingStatus(prev => ({ ...prev, ...updates.typing }));
-      },
-      { interval: 30000 }
-    );
+    // Temporarily mock status updates until messageService is updated
+    const mockStatusUpdates = {
+      online: {},
+      typing: {}
+    };
+
+    setOnlineStatus(prev => ({ ...prev, ...mockStatusUpdates.online }));
+    setTypingStatus(prev => ({ ...prev, ...mockStatusUpdates.typing }));
 
     return () => {
       if (statusSubscription.current) {
-        statusSubscription.current.unsubscribe();
+        statusSubscription.current.unsubscribe?.();
       }
     };
   }, []);
@@ -256,8 +260,9 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
   useEffect(() => {
     const loadUnreadCounts = async () => {
       try {
-        const counts = await messageService.getUnreadCount();
-        setUnreadCounts(prev => ({ ...prev, ...counts }));
+        // Temporarily mock unread counts until messageService is updated
+        const mockCounts = {};
+        setUnreadCounts(mockCounts);
       } catch (err) {
         console.error('Error loading unread counts:', err);
       }
