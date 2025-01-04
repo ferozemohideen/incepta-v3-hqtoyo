@@ -168,8 +168,7 @@ export const Form: React.FC<FormProps> = ({
 
       if (child.type === Input) {
         const name = child.props.name;
-        return React.cloneElement(child, {
-          ...child.props,
+        return React.cloneElement(child as React.ReactElement<any>, {
           value: values[name] || '',
           onChange: handleChange,
           error: touched[name] ? errors[name] : undefined,
@@ -180,8 +179,7 @@ export const Form: React.FC<FormProps> = ({
       }
 
       if (child.props.children) {
-        return React.cloneElement(child, {
-          ...child.props,
+        return React.cloneElement(child as React.ReactElement<any>, {
           children: renderFormFields(child.props.children),
         });
       }
@@ -191,30 +189,14 @@ export const Form: React.FC<FormProps> = ({
   }, [values, errors, touched, handleChange, setFieldTouched]);
 
   return (
-    <Box
+    <StyledForm
       component="form"
       ref={formRef}
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit as React.FormEventHandler<HTMLFormElement>}
       className={className}
       role="form"
       aria-label={accessibilityLabels.form || 'Form'}
       noValidate
-      sx={{
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 3,
-        padding: 3,
-        bgcolor: 'background.paper',
-        borderRadius: 1,
-        boxShadow: 1,
-        position: 'relative',
-        '&:focus-within': {
-          outline: `2px solid`,
-          outlineColor: 'primary.main',
-          outlineOffset: '2px',
-        },
-      }}
     >
       {renderFormFields(children)}
 
@@ -237,7 +219,7 @@ export const Form: React.FC<FormProps> = ({
         className="sr-only"
         style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', border: 0 }}
       />
-    </Box>
+    </StyledForm>
   );
 };
 
