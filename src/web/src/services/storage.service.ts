@@ -193,6 +193,22 @@ export class StorageService {
   }
 
   /**
+   * Deletes a document from S3
+   */
+  public async deleteDocument(documentId: string): Promise<void> {
+    try {
+      await this.s3Client
+        .deleteObject({
+          Bucket: this.bucketName,
+          Key: documentId,
+        })
+        .promise();
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
    * Generates a secure, time-limited URL for document access
    */
   public async generateSecureUrl(
