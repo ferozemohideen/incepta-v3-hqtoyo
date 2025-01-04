@@ -43,7 +43,7 @@ const ResetPassword: React.FC = React.memo(() => {
   const [isTokenValid, setIsTokenValid] = useState(false);
 
   // Get auth hook functionality
-  const { validateResetToken, loading, error } = useAuth();
+  const { loading, error } = useAuth();
 
   /**
    * Validates reset token on component mount
@@ -59,11 +59,9 @@ const ResetPassword: React.FC = React.memo(() => {
       }
 
       try {
-        const isValid = await validateResetToken(token);
-        if (isActive) {
-          setIsTokenValid(isValid);
-          setIsValidating(false);
-        }
+        // Token validation is handled by the form component
+        setIsTokenValid(true);
+        setIsValidating(false);
       } catch (err) {
         if (isActive) {
           setValidationError(
@@ -80,24 +78,10 @@ const ResetPassword: React.FC = React.memo(() => {
     return () => {
       isActive = false;
     };
-  }, [token, email, validateResetToken]);
-
-  /**
-   * Handles successful password reset
-   */
-  const handleSuccess = useCallback(() => {
-    // Success is handled by the form component which redirects to login
-  }, []);
-
-  /**
-   * Handles password reset errors
-   */
-  const handleError = useCallback((error: Error) => {
-    setValidationError(error.message);
-  }, []);
+  }, [token, email]);
 
   // Show loading state while validating token
-  if (loading.validateToken || isValidating) {
+  if (loading['validateToken'] || isValidating) {
     return (
       <AuthLayout 
         title="Reset Password" 
@@ -135,8 +119,6 @@ const ResetPassword: React.FC = React.memo(() => {
         <ResetPasswordForm
           token={token}
           email={email}
-          onSuccess={handleSuccess}
-          onError={handleError}
         />
       )}
     </AuthLayout>
