@@ -169,6 +169,74 @@ export class MessageServiceImpl {
   }
 
   /**
+   * Marks a message as read and updates status
+   */
+  public async markAsRead(messageId: string): Promise<void> {
+    try {
+      await this.updateMessageStatus(messageId, MessageStatus.READ);
+    } catch (error) {
+      console.error('Failed to mark message as read:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves message threads with pagination
+   */
+  public async getThreads(
+    page: number = 1,
+    limit: number = 20
+  ): Promise<{ threads: MessageThread[]; total: number }> {
+    try {
+      return await apiService.get(`${this.baseUrl}/threads`, { page, limit });
+    } catch (error) {
+      console.error('Failed to retrieve threads:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Subscribes to real-time status updates
+   */
+  public async subscribeToStatus(threadId: string): Promise<void> {
+    if (this.socket.isConnected) {
+      await this.socket.sendMessage({
+        type: MessageEventType.MESSAGE_DELIVERED,
+        payload: { threadId } as Message,
+        timestamp: new Date()
+      });
+    }
+  }
+
+  /**
+   * Gets unread message count for threads
+   */
+  public async getUnreadCount(): Promise<number> {
+    try {
+      const response = await apiService.get<{ count: number }>(
+        `${this.baseUrl}/unread-count`
+      );
+      return response.count;
+    } catch (error) {
+      console.error('Failed to get unread count:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Subscribes to real-time message updates
+   */
+  public async subscribeToUpdates(threadId: string): Promise<void> {
+    if (this.socket.isConnected) {
+      await this.socket.sendMessage({
+        type: MessageEventType.NEW_MESSAGE,
+        payload: { threadId } as Message,
+        timestamp: new Date()
+      });
+    }
+  }
+
+  /**
    * Uploads and shares documents with optimized handling
    */
   public async uploadDocument(
