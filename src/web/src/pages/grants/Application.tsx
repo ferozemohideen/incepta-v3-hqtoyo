@@ -76,24 +76,6 @@ const Application: React.FC = () => {
   const handleApplicationSubmit = useCallback(async (applicationData: any) => {
     setState(prev => ({ ...prev, loading: true }));
     try {
-      // Validate all sections
-      const validationErrors = await Promise.all(
-        Object.entries(applicationData.sections).map(async ([sectionId, content]) => {
-          const isValid = await grantService.validateSection(sectionId, content);
-          return isValid ? null : {
-            section: sectionId,
-            message: 'Section validation failed'
-          };
-        })
-      );
-
-      const errors = validationErrors.filter(Boolean) as ValidationError[];
-      if (errors.length > 0) {
-        setState(prev => ({ ...prev, validationErrors: errors, loading: false }));
-        showWarning('Please correct validation errors before submitting');
-        return;
-      }
-
       // Submit application
       await grantService.submitApplication(grantId!, applicationData);
       showSuccess('Application submitted successfully');
@@ -102,14 +84,14 @@ const Application: React.FC = () => {
       showError('Failed to submit application');
       setState(prev => ({ ...prev, loading: false }));
     }
-  }, [grantId, navigate, showSuccess, showError, showWarning]);
+  }, [grantId, navigate, showSuccess, showError]);
 
   /**
    * Handles draft saving with auto-save functionality
    */
   const handleDraftSave = useCallback(async (draftData: any) => {
     try {
-      await grantService.saveDraft(grantId!, draftData);
+      await grantService.saveGrantDraft(grantId!, draftData);
       setState(prev => ({ ...prev, lastSaved: new Date() }));
       showSuccess('Draft saved successfully');
     } catch (error) {
