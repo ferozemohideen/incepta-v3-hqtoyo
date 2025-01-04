@@ -43,9 +43,7 @@ const DEFAULT_OPTIONS: Required<WebSocketOptions> = {
 
 // Constants for connection management
 const RECONNECT_INTERVAL = 5000;
-const MAX_RECONNECT_ATTEMPTS = 5;
 const HEALTH_CHECK_INTERVAL = 30000;
-const MESSAGE_QUEUE_LIMIT = 100;
 const CONNECTION_TIMEOUT = 10000;
 
 /**
