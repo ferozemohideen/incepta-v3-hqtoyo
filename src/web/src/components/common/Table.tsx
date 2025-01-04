@@ -8,12 +8,12 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
-  Paper,
   Checkbox,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { visuallyHidden } from '@mui/utils';
 import Loading from './Loading';
+import { PaginationProps } from './Pagination';
 import { lightTheme } from '../../styles/theme';
 
 // Enhanced table container with Material Design styling
@@ -60,7 +60,10 @@ export interface TableProps {
   data: any[];
   loading?: boolean;
   sortable?: boolean;
+  pagination?: boolean;
+  pageSize?: number;
   onSort?: (column: string, direction: 'asc' | 'desc') => void;
+  onPageChange?: (page: number) => void;
   onRowClick?: (row: any) => void;
   emptyMessage?: string;
   ariaLabel?: string;
@@ -77,7 +80,10 @@ export const CustomTable = React.memo<TableProps>(({
   data,
   loading = false,
   sortable = true,
+  pagination = true,
+  pageSize = 10,
   onSort,
+  onPageChange,
   onRowClick,
   emptyMessage = 'No data available',
   ariaLabel = 'Data table',
