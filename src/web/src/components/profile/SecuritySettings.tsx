@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -15,11 +15,10 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   Alert,
-  Divider,
   TextField,
+  Theme,
 } from '@mui/material'; // v5.14.0
 import { styled } from '@mui/material/styles';
-import { Theme } from '@mui/material/styles';
 import QRCode from 'qrcode.react'; // v3.1.0
 import * as yup from 'yup'; // v1.2.0
 
