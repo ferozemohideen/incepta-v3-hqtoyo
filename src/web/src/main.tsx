@@ -2,11 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from '@mui/material';
-import * as Sentry from '@sentry/react';
-import { BrowserTracing } from '@sentry/react';
-import { persistStore } from 'redux-persist';
-import { PersistGate } from 'redux-persist/integration/react';
-
+import { ErrorBoundary, init as initSentry, Sentry } from '@sentry/react';
 import App from './App';
 import { store } from './store';
 import { lightTheme } from './styles/theme';
@@ -17,13 +13,9 @@ import { lightTheme } from './styles/theme';
 const initializeApp = async (): Promise<void> => {
   // Initialize Sentry in production
   if (process.env.NODE_ENV === 'production') {
-    Sentry.init({
+    initSentry({
       dsn: process.env.REACT_APP_SENTRY_DSN,
-      integrations: [
-        new BrowserTracing({
-          tracingOrigins: ['localhost', process.env.REACT_APP_API_URL as string],
-        }),
-      ],
+      integrations: [],
       tracesSampleRate: 0.2,
       environment: process.env.NODE_ENV,
     });
