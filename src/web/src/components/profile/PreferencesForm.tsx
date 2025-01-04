@@ -51,7 +51,7 @@ const PreferencesForm: React.FC<PreferencesFormProps> = memo(({
   const { showSuccess, showError } = useNotification();
 
   // Handle form submission
-  const handleSubmit = async (values: Record<string, any>, formActions: { setSubmitting: (isSubmitting: boolean) => void }) => {
+  const handleSubmit = async (values: Record<string, any>, formActions: any) => {
     try {
       await onSave(values as UserPreferences);
       showSuccess('Preferences updated successfully');
