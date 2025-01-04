@@ -1,5 +1,5 @@
 // @mui/material v5.14.0
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -85,16 +85,16 @@ const ResetPassword: React.FC = React.memo(() => {
   /**
    * Handles successful password reset
    */
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(() => {
     // Success is handled by the form component which redirects to login
-  };
+  }, []);
 
   /**
    * Handles password reset errors
    */
-  const handleError = (error: Error) => {
+  const handleError = useCallback((error: Error) => {
     setValidationError(error.message);
-  };
+  }, []);
 
   // Show loading state while validating token
   if (loading.validateToken || isValidating) {
@@ -121,13 +121,13 @@ const ResetPassword: React.FC = React.memo(() => {
       maxWidth="sm"
       aria-label="Reset password page"
     >
-      {(validationError || error) && (
+      {(validationError || (error && typeof error === 'string')) && (
         <StyledAlert 
           severity="error"
           role="alert"
           aria-live="assertive"
         >
-          {typeof error === 'object' && error !== null ? error.message : validationError || error}
+          {validationError || (error && typeof error === 'string' ? error : 'An error occurred')}
         </StyledAlert>
       )}
 
