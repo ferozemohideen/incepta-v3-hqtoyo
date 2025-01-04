@@ -12,14 +12,15 @@
  */
 
 import { AxiosResponse } from 'axios'; // ^1.4.0
-import { LRUCache, Options } from 'lru-cache'; // ^9.1.1
+import { LRUCache } from 'lru-cache'; // ^9.1.1
 import { v4 as uuidv4 } from 'uuid'; // ^9.0.0
 
 import { 
   Technology, 
   TechnologySearchParams, 
   PatentStatus,
-  isTechnology 
+  isTechnology,
+  TechnologyPermissions 
 } from '../interfaces/technology.interface';
 import { apiService } from './api.service';
 import { API_ENDPOINTS } from '../constants/api.constants';
@@ -55,15 +56,45 @@ class TechnologyService {
     this.baseUrl = API_ENDPOINTS.TECHNOLOGIES.BASE;
     
     // Initialize LRU cache with configuration
-    const options: Options<string, any> = {
+    this.cache = new LRUCache<string, any>({
       max: 500, // Maximum number of items
       ttl: 1000 * 60 * 5, // 5 minutes TTL
       updateAgeOnGet: true,
       allowStale: false
-    };
-    this.cache = new LRUCache(options);
+    });
 
     this.requestQueue = new Set();
+  }
+
+  /**
+   * Check permissions for a given technology ID
+   * @param technologyId - Technology UUID
+   * @returns Promise resolving to technology permissions
+   */
+  async checkPermissions(technologyId: string): Promise<TechnologyPermissions> {
+    if (!technologyId) {
+      throw new Error('Technology ID is required');
+    }
+
+    const cacheKey = `permissions:${technologyId}`;
+    const cachedPermissions = this.cache.get(cacheKey);
+    if (cachedPermissions) {
+      return cachedPermissions as TechnologyPermissions;
+    }
+
+    try {
+      const permissions = await apiService.get<TechnologyPermissions>(
+        `${this.baseUrl}/${technologyId}/permissions`,
+        undefined,
+        { cache: true }
+      );
+
+      this.cache.set(cacheKey, permissions, { ttl: 1000 * 60 * 15 }); // 15 minutes TTL
+      return permissions;
+    } catch (error) {
+      console.error(`Failed to fetch permissions for technology ${technologyId}:`, error);
+      throw error;
+    }
   }
 
   /**
