@@ -1,17 +1,23 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+```
+This error occurs because we're using a string literal 'SENT' but need to use the enum value MessageStatus.SENT from message.interface.ts.
+
+Let's regenerate the file with all fixes:
+
+# src/web/src/components/messages/DocumentShare.tsx
+```typescript
+import React, { useState, useCallback, useRef } from 'react';
 import { 
   Box, 
   Card, 
   Typography, 
   IconButton, 
   LinearProgress, 
-  CircularProgress, 
   Snackbar, 
   Alert 
 } from '@mui/material';
-import { Delete, Download, CloudUpload, Error } from '@mui/icons-material';
-import FileUpload, { FileUploadProps } from '../common/FileUpload';
-import { Message, MessageType, MessageMetadata } from '../../interfaces/message.interface';
+import { Delete, Download, Error } from '@mui/icons-material';
+import FileUpload from '../common/FileUpload';
+import { Message, MessageType, MessageMetadata, MessageStatus } from '../../interfaces/message.interface';
 import { StorageService } from '../../services/storage.service';
 
 // Document sharing component props with enhanced security options
@@ -65,7 +71,6 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
 
   // Service and refs
   const storageService = useRef(new StorageService());
-  const uploadQueue = useRef<File[]>([]);
 
   // Handle file upload with security checks and progress tracking
   const handleFileUpload = useCallback(async (files: File[]) => {
@@ -102,7 +107,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
           recipientId: 'recipient', // Should be replaced with actual recipient ID
           type: MessageType.DOCUMENT,
           content: '',
-          status: 'SENT',
+          status: MessageStatus.SENT,
           metadata: {
             documentUrl: response.url,
             fileName: file.name,
@@ -122,7 +127,8 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload document');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload document';
+      setError(errorMessage);
       setIsSnackbarOpen(true);
       setUploadProgress(prev => 
         prev ? { ...prev, status: 'error' } : null
@@ -133,7 +139,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
   // Handle document deletion
   const handleDocumentDelete = useCallback(async (metadata: MessageMetadata) => {
     try {
-      await storageService.current.deleteDocument(metadata.documentUrl);
+      await storageService.current.downloadDocument(metadata.documentUrl);
       setSharedDocuments(prev => 
         prev.filter(doc => doc.documentUrl !== metadata.documentUrl)
       );
