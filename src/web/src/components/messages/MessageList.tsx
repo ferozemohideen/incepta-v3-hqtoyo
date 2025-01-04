@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import { Box, List, ListItem, CircularProgress, Typography } from '@mui/material';
-import { useIntersectionObserver } from 'react-intersection-observer';
-import { Message, MessageType } from '../../interfaces/message.interface';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { 
+  Message, 
+  MessageType, 
+  MessageDeliveryStatus 
+} from '../../interfaces/message.interface';
 import { messageService } from '../../services/message.service';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
@@ -34,17 +38,12 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   const lastMessageRef = useRef<string | null>(null);
   const isLoadingMore = useRef(false);
   const hasMoreMessages = useRef(true);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // WebSocket connection for real-time updates
   const { isConnected, sendMessage } = useWebSocket(
     import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
   );
-
-  // Intersection observer for infinite scroll
-  const { ref: loadMoreTriggerRef, inView } = useIntersectionObserver({
-    threshold: 0.5,
-    rootMargin: '100px',
-  });
 
   // State for messages with memoization
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -157,6 +156,14 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
       }
     };
 
+    const handleMessageStatus = (messageId: string, status: MessageDeliveryStatus) => {
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId ? { ...msg, status } : msg
+        )
+      );
+    };
+
     // WebSocket event subscriptions
     const unsubscribe = () => {
       // Cleanup WebSocket listeners
@@ -169,10 +176,21 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
    * Handles intersection observer for infinite scroll
    */
   useEffect(() => {
-    if (inView && !isLoading && hasMoreMessages.current) {
-      loadMoreMessages();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoading && hasMoreMessages.current) {
+          loadMoreMessages();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
     }
-  }, [inView, isLoading, loadMoreMessages]);
+
+    return () => observer.disconnect();
+  }, [isLoading, loadMoreMessages]);
 
   /**
    * Renders a message item with accessibility support
@@ -239,7 +257,7 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
         </Box>
       ) : (
         <>
-          <div ref={loadMoreTriggerRef} style={{ height: 1 }} />
+          <div ref={loadMoreRef} style={{ height: 1 }} />
           <List>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const date = Object.keys(groupedMessages)[virtualRow.index];
