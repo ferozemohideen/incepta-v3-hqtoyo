@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Box, CircularProgress, Alert, LinearProgress } from '@mui/material';
+import { debounce } from 'lodash';
 
 import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant';
 import { useNotification } from '../../hooks/useNotification';
@@ -69,31 +70,34 @@ const Writer: React.FC = () => {
   }, [grantId, showError]);
 
   /**
-   * Handle draft saving
+   * Handle draft saving with debounce
    */
-  const handleSaveDraft = useCallback(async (applicationData: IGrantApplication) => {
-    try {
-      if (!grantId) return;
+  const handleSaveDraft = useCallback(
+    debounce(async (applicationData: IGrantApplication) => {
+      try {
+        if (!grantId) return;
 
-      // Update progress before saving
-      const progress = calculateProgress(applicationData);
-      setState(prev => ({ ...prev, progress }));
+        // Update progress before saving
+        const progress = calculateProgress(applicationData);
+        setState(prev => ({ ...prev, progress }));
 
-      // Save draft
-      await grantService.saveGrantDraft(grantId, applicationData);
-      
-      setState(prev => ({
-        ...prev,
-        lastSaved: new Date(),
-        isDirty: false
-      }));
+        // Save draft
+        await grantService.saveDraft(grantId, applicationData);
+        
+        setState(prev => ({
+          ...prev,
+          lastSaved: new Date(),
+          isDirty: false
+        }));
 
-      showSuccess('Draft saved successfully');
-    } catch (error) {
-      showError('Failed to save draft');
-      setState(prev => ({ ...prev, isDirty: true }));
-    }
-  }, [grantId, showSuccess, showError]);
+        showSuccess('Draft saved successfully');
+      } catch (error) {
+        showError('Failed to save draft');
+        setState(prev => ({ ...prev, isDirty: true }));
+      }
+    }, 1000),
+    [grantId, showSuccess, showError]
+  );
 
   /**
    * Handle application submission
@@ -101,6 +105,13 @@ const Writer: React.FC = () => {
   const handleSubmitApplication = useCallback(async (applicationData: IGrantApplication) => {
     try {
       if (!grantId) return;
+
+      // Validate application before submission
+      const validationResult = await grantService.validateApplication(applicationData);
+      if (!validationResult.isValid) {
+        showWarning(validationResult.message || 'Please complete all required sections');
+        return;
+      }
 
       // Check progress threshold
       if (state.progress < 100) {
@@ -138,8 +149,8 @@ const Writer: React.FC = () => {
 
     const sections = state.grant.requirements.sections;
     const completedSections = sections.filter(section => {
-      const content = applicationData.sections && applicationData.sections[section.id]?.content;
-      return content && content.length > 0;
+      const sectionContent = applicationData.sections[section.id];
+      return sectionContent && sectionContent.content && sectionContent.content.length > 0;
     });
 
     return Math.round((completedSections.length / sections.length) * 100);
