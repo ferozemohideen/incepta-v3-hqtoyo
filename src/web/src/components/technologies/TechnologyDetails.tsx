@@ -21,21 +21,19 @@ import {
 import {
   Technology,
   PatentStatus,
-  DevelopmentStage,
   TechnologyPermissions,
 } from '../../interfaces/technology.interface';
 import CustomCard from '../common/Card';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { technologyService } from '../../services/technology.service';
 import { useNotification } from '../../hooks/useNotification';
-import { SPACING, ANIMATION } from '../../constants/ui.constants';
+import { SPACING } from '../../constants/ui.constants';
 
 // Props interface for the component
 interface TechnologyDetailsProps {
   id?: string;
   onSave?: (technology: Technology) => Promise<void>;
   onContact?: (technology: Technology) => void;
-  securityLevel?: string;
 }
 
 /**
@@ -46,7 +44,6 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
   id: propId,
   onSave,
   onContact,
-  securityLevel,
 }) => {
   // Hooks
   const { id: urlId } = useParams<{ id: string }>();
@@ -61,11 +58,10 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
     data: technology,
     isLoading,
     isError,
-    error,
     refetch,
   } = useQuery(
     ['technology', technologyId],
-    () => technologyService.getTechnologyById(technologyId),
+    () => technologyId ? technologyService.getTechnologyById(technologyId) : Promise.reject('No technology ID provided'),
     {
       enabled: !!technologyId,
       retry: 2,
