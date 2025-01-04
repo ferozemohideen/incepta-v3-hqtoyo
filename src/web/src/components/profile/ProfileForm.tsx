@@ -68,6 +68,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const { mode } = useTheme();
 
   // Initialize form with user data
   const initialValues: UserProfile = {
