@@ -100,3 +100,25 @@ export interface ResetPasswordCredentials {
   /** Password confirmation for validation */
   confirmPassword: string;
 }
+
+/**
+ * Interface for authentication error handling with detailed error information
+ * following standard error handling patterns.
+ */
+export interface AuthError {
+  /** Error code for programmatic handling */
+  code: string;
+  /** Human-readable error message */
+  message: string;
+  /** HTTP status code */
+  status: number;
+  /** Additional error details */
+  details?: {
+    /** Field causing the error */
+    field?: string;
+    /** Validation constraints that failed */
+    constraints?: string[];
+    /** Additional context about the error */
+    context?: Record<string, unknown>;
+  };
+}
