@@ -66,8 +66,8 @@ const initialValues: RegisterCredentials = {
   acceptedTerms: false,
 };
 
-// Password strength colors with type assertion
-const strengthColors: { [key: number]: string } = {
+// Password strength colors with proper typing
+const strengthColors: Record<number, string> = {
   0: '#ff4444',
   1: '#ffbb33',
   2: '#ffbb33',
@@ -160,7 +160,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       showError(error instanceof Error ? error.message : 'Registration failed');
     } finally {
       setIsSubmitting(false);
-      formActions?.setSubmitting(false);
     }
   };
 
