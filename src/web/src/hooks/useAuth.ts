@@ -40,6 +40,8 @@ interface UseAuthReturn {
     timestamp: Date;
   } | null;
   mfaRequired: boolean;
+  isAuthenticated: boolean;
+  permissions: string[];
   securityContext: {
     lastActivity: number;
     sessionExpiry: Date | null;
@@ -221,6 +223,8 @@ export const useAuth = (): UseAuthReturn => {
     loading: authState.loading,
     error: authState.error,
     mfaRequired: authState.requiresMFA,
+    isAuthenticated: authState.isAuthenticated,
+    permissions: authState.user?.permissions || [],
     securityContext,
     handleLogin,
     handleRegister,
