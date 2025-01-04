@@ -11,13 +11,15 @@
  * - Optimistic updates
  */
 
+import { AxiosResponse } from 'axios'; // ^1.4.0
 import LRUCache from 'lru-cache'; // ^9.1.1
+import { v4 as uuidv4 } from 'uuid'; // ^9.0.0
 
 import { 
   Technology, 
   TechnologySearchParams, 
-  isTechnology,
-  TechnologyPermissions 
+  PatentStatus,
+  isTechnology 
 } from '../interfaces/technology.interface';
 import { apiService } from './api.service';
 import { API_ENDPOINTS } from '../constants/api.constants';
@@ -47,7 +49,6 @@ interface TechnologyMatchResponse {
 class TechnologyService {
   private readonly baseUrl: string;
   private readonly cache: LRUCache<string, any>;
-  private readonly requestQueue: Set<Promise<any>>;
 
   constructor() {
     this.baseUrl = API_ENDPOINTS.TECHNOLOGIES.BASE;
@@ -59,8 +60,6 @@ class TechnologyService {
       updateAgeOnGet: true,
       allowStale: false
     });
-
-    this.requestQueue = new Set();
   }
 
   /**
@@ -165,37 +164,6 @@ class TechnologyService {
       throw new Error('Invalid match data received');
     } catch (error) {
       console.error('Technology matching failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Check user permissions for a specific technology
-   * @param technologyId - Technology UUID
-   * @returns Promise resolving to technology permissions
-   */
-  async checkPermissions(technologyId: string): Promise<TechnologyPermissions> {
-    if (!technologyId) {
-      throw new Error('Technology ID is required');
-    }
-
-    const cacheKey = `permissions:${technologyId}`;
-    const cachedPermissions = this.cache.get(cacheKey);
-    if (cachedPermissions) {
-      return cachedPermissions as TechnologyPermissions;
-    }
-
-    try {
-      const permissions = await apiService.get<TechnologyPermissions>(
-        `${this.baseUrl}/${technologyId}/permissions`,
-        undefined,
-        { cache: true }
-      );
-
-      this.cache.set(cacheKey, permissions);
-      return permissions;
-    } catch (error) {
-      console.error(`Failed to fetch permissions for technology ${technologyId}:`, error);
       throw error;
     }
   }
