@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Grid, Box, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { debounce } from 'lodash';
@@ -42,8 +42,8 @@ export interface TechnologyListProps {
   totalCount: number;
   onPageChange: (page: number) => void;
   onViewModeChange?: (mode: 'grid' | 'list') => void;
-  onSaveTechnology?: (id: string) => Promise<void>;
-  onShareTechnology?: (id: string) => Promise<void>;
+  onSaveTechnology?: (id: string) => void;
+  onShareTechnology?: (id: string) => void;
   onViewTechnology?: (id: string) => void;
   initialViewMode?: 'grid' | 'list';
   showMatchScores?: boolean;
@@ -126,7 +126,7 @@ export const TechnologyList: React.FC<TechnologyListProps> = ({
       onShare: onShareTechnology,
       onView: onViewTechnology,
       showActions: true,
-      matchScore: showMatchScores ? technology.metadata?.aiMatchScore : undefined,
+      matchScore: showMatchScores ? technology.metadata?.matchScore : undefined,
     };
 
     return (
