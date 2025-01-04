@@ -8,8 +8,9 @@ import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit'
 import { persistReducer } from 'redux-persist'; // ^6.0.0
 import { 
   IGrant, 
-  IGrantApplication,
-  IGrantSearchParams
+  IGrantApplication, 
+  IGrantSearchParams,
+  GrantStatus 
 } from '../interfaces/grant.interface';
 import { grantService } from '../services/grant.service';
 
