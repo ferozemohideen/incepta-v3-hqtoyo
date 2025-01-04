@@ -45,6 +45,8 @@ export interface GrantService {
   getGrantStats(): Promise<GrantStats>;
   saveGrantDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
   uploadApplicationDocument(applicationId: string, document: File): Promise<void>;
+  checkEligibility(grantId: string, userId: string): Promise<boolean>;
+  validateSection(applicationId: string, sectionName: string): Promise<{ valid: boolean; errors: string[] }>;
 }
 
 /**
@@ -232,6 +234,38 @@ class GrantServiceImpl implements GrantService {
       );
     } catch (error) {
       console.error('Document upload failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check eligibility for a grant
+   */
+  async checkEligibility(grantId: string, userId: string): Promise<boolean> {
+    try {
+      const response = await apiService.get<{ eligible: boolean }>(
+        `${API_ENDPOINTS.GRANTS.BASE}/${grantId}/eligibility/${userId}`
+      );
+      return response.eligible;
+    } catch (error) {
+      console.error('Eligibility check failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Validate a section of the grant application
+   */
+  async validateSection(
+    applicationId: string,
+    sectionName: string
+  ): Promise<{ valid: boolean; errors: string[] }> {
+    try {
+      return await apiService.get(
+        `${API_ENDPOINTS.GRANTS.BASE}/${applicationId}/validate/${sectionName}`
+      );
+    } catch (error) {
+      console.error('Section validation failed:', error);
       throw error;
     }
   }
