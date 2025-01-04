@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import { Box, List, ListItem, CircularProgress, Typography } from '@mui/material';
 import { useInView } from 'react-intersection-observer';
-import { useQueryClient } from 'react-query';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { 
   Message, 
   MessageType, 
@@ -45,6 +43,12 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   const { isConnected, sendMessage } = useWebSocket(
     import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
   );
+
+  // Intersection observer for infinite scroll
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0.5,
+    rootMargin: '100px',
+  });
 
   // State for messages with memoization
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -147,24 +151,6 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   useEffect(() => {
     if (!isConnected) return;
 
-    const handleNewMessage = (message: Message) => {
-      if (message.threadId === threadId) {
-        setMessages(prev => [message, ...prev]);
-        onMessageReceived?.(message);
-
-        // Mark message as delivered
-        messageService.markAsRead(message.id);
-      }
-    };
-
-    const handleMessageStatus = (messageId: string, status: MessageDeliveryStatus) => {
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId ? { ...msg, status } : msg
-        )
-      );
-    };
-
     // WebSocket event subscriptions
     const unsubscribe = () => {
       // Cleanup WebSocket listeners
@@ -172,15 +158,6 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
 
     return unsubscribe;
   }, [threadId, isConnected, onMessageReceived]);
-
-  /**
-   * Handles intersection observer for infinite scroll
-   */
-  useEffect(() => {
-    if (inView && !isLoading && hasMoreMessages.current) {
-      loadMoreMessages();
-    }
-  }, [inView, isLoading, loadMoreMessages]);
 
   /**
    * Renders a message item with accessibility support
