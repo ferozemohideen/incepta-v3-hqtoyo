@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // ^18.0.0
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -9,10 +9,10 @@ import {
   IconButton,
   InputAdornment,
   FormHelperText,
-} from '@mui/material'; // ^5.14.0
-import { Visibility, VisibilityOff } from '@mui/icons-material'; // ^5.14.0
-import DOMPurify from 'dompurify'; // ^3.0.0
-import FingerprintJS from '@fingerprintjs/fingerprintjs'; // ^3.4.0
+} from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import DOMPurify from 'dompurify';
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 import { useAuth } from '../../hooks/useAuth';
 import { useForm } from '../../hooks/useForm';
@@ -70,7 +70,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       }
 
       try {
-        const response = await handleLogin({
+        await handleLogin({
           ...formValues,
           deviceInfo: {
             userAgent: window.navigator.userAgent,
@@ -82,8 +82,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
         if (mfaRequired) {
           onMFARequired();
-        } else if (response) {
-          onSuccess(response);
+        } else {
+          onSuccess({ accessToken: '', refreshToken: '' }); // Tokens will be handled by auth state
         }
       } catch (err) {
         setAttempts(prev => prev + 1);
@@ -142,7 +142,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           aria-live="polite"
           sx={{ mb: 2 }}
         >
-          {error.message || 'An error occurred during login'}
+          {error.toString()}
         </Alert>
       )}
 
