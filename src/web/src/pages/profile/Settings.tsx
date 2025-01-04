@@ -8,13 +8,12 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material'; // v5.14.0
-import { useNavigate } from 'react-router-dom'; // v6.14.0
 
 // Internal imports
 import SecuritySettings from '../../components/profile/SecuritySettings';
 import PreferencesForm from '../../components/profile/PreferencesForm';
 import { useAuth } from '../../hooks/useAuth';
-import { UserPreferences, UserSecurity } from '../../interfaces/user.interface';
+import { UserSecurity, UserPreferences } from '../../interfaces/user.interface';
 
 /**
  * Interface for accessible tab panel props
@@ -91,7 +90,7 @@ const Settings: React.FC = () => {
       // Create security audit log entry
       const auditLog = {
         timestamp: new Date(),
-        userId: user?.id,
+        userId: user?.sub,
         action: 'security_update',
         changes: security,
         ipAddress: securityContext.ipAddress,
@@ -99,7 +98,7 @@ const Settings: React.FC = () => {
       };
 
       // Update security settings with audit log
-      await user?.security.update({ ...security, auditLog });
+      await onUpdate({ ...security, auditLog });
       setUpdateSuccess('Security settings updated successfully');
     } catch (error) {
       setUpdateError('Failed to update security settings. Please try again.');
@@ -118,7 +117,7 @@ const Settings: React.FC = () => {
     setUpdateSuccess(null);
 
     try {
-      await user?.preferences.update({ preferences });
+      await onUpdate({ preferences });
       setUpdateSuccess('Preferences updated successfully');
     } catch (error) {
       setUpdateError('Failed to update preferences. Please try again.');
@@ -126,7 +125,7 @@ const Settings: React.FC = () => {
     } finally {
       setIsUpdating(false);
     }
-  }, [user]);
+  }, []);
 
   // Render loading state if user data is not available
   if (!user) {
