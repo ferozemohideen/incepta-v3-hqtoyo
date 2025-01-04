@@ -185,8 +185,9 @@ const TechnologyGrid = memo(({
                   <TechnologyCard
                     technology={technology}
                     onView={() => onTechnologySelect(technology)}
-                    showActions
+                    onKeyDown={(e: React.KeyboardEvent) => handleKeyDown(e, technology)}
                     tabIndex={0}
+                    showActions
                   />
                 </Grid>
               );
