@@ -27,12 +27,6 @@ import {
 import { createStateSyncMiddleware, initMessageListener } from 'redux-state-sync'; // ^3.1.4
 import * as Sentry from '@sentry/react'; // ^7.0.0
 import storage from 'redux-persist/lib/storage';
-
-// Temporary type declaration until @types/redux-persist-transform-filter is installed
-declare module 'redux-persist-transform-filter' {
-  export default function createFilter(reducerName: string, inboundPaths?: string[], outboundPaths?: string[]): any;
-}
-
 import createFilter from 'redux-persist-transform-filter';
 
 // Import reducers
