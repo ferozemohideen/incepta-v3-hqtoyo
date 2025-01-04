@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   Container,
+  Grid,
   Typography,
   Tabs,
   Tab,
@@ -8,12 +9,13 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material'; // v5.14.0
+import { useNavigate } from 'react-router-dom'; // v6.14.0
 
 // Internal imports
 import SecuritySettings from '../../components/profile/SecuritySettings';
 import PreferencesForm from '../../components/profile/PreferencesForm';
 import { useAuth } from '../../hooks/useAuth';
-import { UserSecurity, UserPreferences } from '../../interfaces/user.interface';
+import { UserSecurity } from '../../interfaces/user.interface';
 
 /**
  * Interface for accessible tab panel props
@@ -60,6 +62,7 @@ const TabPanel: React.FC<TabPanelProps> = ({
  */
 const Settings: React.FC = () => {
   // Initialize hooks
+  const navigate = useNavigate();
   const { user, securityContext } = useAuth();
   
   // State management
@@ -71,7 +74,7 @@ const Settings: React.FC = () => {
   /**
    * Handle tab changes with accessibility focus management
    */
-  const handleTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = useCallback((event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
     // Reset status messages on tab change
     setUpdateError(null);
@@ -90,15 +93,15 @@ const Settings: React.FC = () => {
       // Create security audit log entry
       const auditLog = {
         timestamp: new Date(),
-        userId: user?.sub,
+        userId: user?.id,
         action: 'security_update',
         changes: security,
-        ipAddress: securityContext.ipAddress,
+        ipAddress: window.location.hostname,
         userAgent: navigator.userAgent,
       };
 
       // Update security settings with audit log
-      await onUpdate({ ...security, auditLog });
+      await updateUserSettings({ security, auditLog });
       setUpdateSuccess('Security settings updated successfully');
     } catch (error) {
       setUpdateError('Failed to update security settings. Please try again.');
@@ -106,7 +109,7 @@ const Settings: React.FC = () => {
     } finally {
       setIsUpdating(false);
     }
-  }, [user, securityContext]);
+  }, [user]);
 
   /**
    * Handle preferences updates with validation
@@ -117,7 +120,7 @@ const Settings: React.FC = () => {
     setUpdateSuccess(null);
 
     try {
-      await onUpdate({ preferences });
+      await updateUserSettings({ preferences });
       setUpdateSuccess('Preferences updated successfully');
     } catch (error) {
       setUpdateError('Failed to update preferences. Please try again.');
@@ -183,7 +186,7 @@ const Settings: React.FC = () => {
           ariaLabel="Security settings section"
         >
           <SecuritySettings
-            userSecurity={user.security}
+            userSecurity={user.security || {}}
             onUpdate={handleSecurityUpdate}
           />
         </TabPanel>
@@ -195,7 +198,7 @@ const Settings: React.FC = () => {
           ariaLabel="Preferences section"
         >
           <PreferencesForm
-            initialPreferences={user.preferences}
+            initialPreferences={user.preferences || {}}
             onSave={handlePreferencesUpdate}
             isLoading={isUpdating}
           />
