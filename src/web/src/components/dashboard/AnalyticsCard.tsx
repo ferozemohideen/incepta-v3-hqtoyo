@@ -133,6 +133,7 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
               title={title}
               description={description}
               loading={loading}
+              onExport={onExport}
             />
           </Box>
         </Box>
