@@ -1,5 +1,5 @@
 // @mui/material v5.14.0
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -43,7 +43,7 @@ const ResetPassword: React.FC = React.memo(() => {
   const [isTokenValid, setIsTokenValid] = useState(false);
 
   // Get auth hook functionality
-  const { loading, error } = useAuth();
+  const { validateResetToken, loading, error } = useAuth();
 
   /**
    * Validates reset token on component mount
@@ -59,9 +59,11 @@ const ResetPassword: React.FC = React.memo(() => {
       }
 
       try {
-        // Token validation is handled by the form component
-        setIsTokenValid(true);
-        setIsValidating(false);
+        const isValid = await validateResetToken(token);
+        if (isActive) {
+          setIsTokenValid(isValid);
+          setIsValidating(false);
+        }
       } catch (err) {
         if (isActive) {
           setValidationError(
@@ -78,10 +80,24 @@ const ResetPassword: React.FC = React.memo(() => {
     return () => {
       isActive = false;
     };
-  }, [token, email]);
+  }, [token, email, validateResetToken]);
+
+  /**
+   * Handles successful password reset
+   */
+  const handleSuccess = () => {
+    // Success is handled by the form component which redirects to login
+  };
+
+  /**
+   * Handles password reset errors
+   */
+  const handleError = (error: Error) => {
+    setValidationError(error.message);
+  };
 
   // Show loading state while validating token
-  if (loading['validateToken'] || isValidating) {
+  if (loading.validateToken || isValidating) {
     return (
       <AuthLayout 
         title="Reset Password" 
@@ -111,7 +127,7 @@ const ResetPassword: React.FC = React.memo(() => {
           role="alert"
           aria-live="assertive"
         >
-          {validationError || error}
+          {typeof error === 'object' && error !== null ? error.message : validationError || error}
         </StyledAlert>
       )}
 
@@ -119,6 +135,8 @@ const ResetPassword: React.FC = React.memo(() => {
         <ResetPasswordForm
           token={token}
           email={email}
+          onSuccess={handleSuccess}
+          onError={handleError}
         />
       )}
     </AuthLayout>
