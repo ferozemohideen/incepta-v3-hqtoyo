@@ -5,7 +5,7 @@ import {
   Slider,
   Typography,
   Paper,
-  useTheme,
+  FormGroup,
   Tooltip,
   Chip,
   IconButton,
@@ -57,11 +57,6 @@ const ActiveFiltersContainer = styled(Box)(({ theme }) => ({
 interface TechnologyFiltersProps {
   initialFilters: TechnologySearchParams;
   onFilterChange: (filters: TechnologySearchParams) => void;
-  presets?: Array<{
-    id: string;
-    name: string;
-    filters: Partial<TechnologySearchParams>;
-  }>;
   isLoading?: boolean;
 }
 
@@ -72,7 +67,6 @@ interface TechnologyFiltersProps {
 export const TechnologyFilters: React.FC<TechnologyFiltersProps> = ({
   initialFilters,
   onFilterChange,
-  presets = [],
   isLoading = false,
 }) => {
   const [filters, setFilters] = useState<TechnologySearchParams>(initialFilters);
