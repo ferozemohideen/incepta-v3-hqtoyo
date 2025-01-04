@@ -1,21 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
-  Grid, 
   Typography, 
   Button, 
   Stepper, 
   Step, 
   StepLabel,
-  CircularProgress,
-  Alert
-} from '@mui/material';
-import { useFormik, FormikHelpers } from 'formik';
-import { debounce } from 'lodash';
-import * as Yup from 'yup';
+  CircularProgress
+} from '@mui/material'; // v5.14.0
+import { useFormik, FormikHelpers } from 'formik'; // v2.4.2
+import { debounce } from 'lodash'; // v4.17.21
+import * as Yup from 'yup'; // v1.2.0
 
 import Form from '../common/Form';
-import FileUpload from '../common/FileUpload';
 import { useNotification } from '../../hooks/useNotification';
 
 // Form section interfaces
@@ -72,8 +69,8 @@ interface GrantApplicationFormProps {
   initialData?: Partial<IGrantApplication>;
 }
 
-// Form validation schemas
-const validationSchemas = {
+// Form validation schemas with type safety
+const validationSchemas: Record<keyof IGrantApplication, Yup.ObjectSchema<any>> = {
   projectDetails: Yup.object({
     projectTitle: Yup.string()
       .required('Project title is required')
@@ -140,10 +137,10 @@ const validationSchemas = {
 
 // Form steps configuration
 const formSteps = [
-  { label: 'Project Details', key: 'projectDetails' },
-  { label: 'Budget & Timeline', key: 'budgetTimeline' },
-  { label: 'Team Information', key: 'teamInformation' },
-  { label: 'Documents', key: 'documentAttachments' }
+  { label: 'Project Details', key: 'projectDetails' as keyof IGrantApplication },
+  { label: 'Budget & Timeline', key: 'budgetTimeline' as keyof IGrantApplication },
+  { label: 'Team Information', key: 'teamInformation' as keyof IGrantApplication },
+  { label: 'Documents', key: 'documentAttachments' as keyof IGrantApplication }
 ];
 
 /**
@@ -166,26 +163,26 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
   const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize form with Formik
-  const formik = useFormik({
-    initialValues: initialData || {
+  const formik = useFormik<IGrantApplication>({
+    initialValues: {
       projectDetails: {
-        projectTitle: '',
-        abstract: '',
-        keywords: [],
-        researchArea: ''
+        projectTitle: initialData?.projectDetails?.projectTitle || '',
+        abstract: initialData?.projectDetails?.abstract || '',
+        keywords: initialData?.projectDetails?.keywords || [],
+        researchArea: initialData?.projectDetails?.researchArea || ''
       },
       budgetTimeline: {
-        totalBudget: 0,
-        timeline: '',
-        startDate: '',
-        endDate: '',
-        milestones: []
+        totalBudget: initialData?.budgetTimeline?.totalBudget || 0,
+        timeline: initialData?.budgetTimeline?.timeline || '',
+        startDate: initialData?.budgetTimeline?.startDate || '',
+        endDate: initialData?.budgetTimeline?.endDate || '',
+        milestones: initialData?.budgetTimeline?.milestones || []
       },
       teamInformation: {
-        teamMembers: []
+        teamMembers: initialData?.teamInformation?.teamMembers || []
       },
       documentAttachments: {
-        files: []
+        files: initialData?.documentAttachments?.files || []
       }
     },
     validationSchema: validationSchemas[formSteps[activeStep].key],
@@ -227,7 +224,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
       // Validate all sections before final submission
       for (const step of formSteps) {
         const isValid = await validationSchemas[step.key].isValid(
-          values[step.key as keyof IGrantApplication]
+          values[step.key]
         );
         if (!isValid) {
           throw new Error(`Validation failed for ${step.label}`);
@@ -266,7 +263,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
     const currentSchema = validationSchemas[formSteps[activeStep].key];
     try {
       await currentSchema.validate(
-        formik.values[formSteps[activeStep].key as keyof IGrantApplication]
+        formik.values[formSteps[activeStep].key]
       );
       setActiveStep((prev) => Math.min(prev + 1, formSteps.length - 1));
     } catch (error) {
@@ -288,11 +285,6 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
     );
   };
 
-  // Wrapper function to adapt formik.handleSubmit to Form's onSubmit
-  const handleFormSubmit = (values: Record<string, any>, formActions: any) => {
-    formik.handleSubmit(values as any);
-  };
-
   return (
     <Box
       component="section"
@@ -305,7 +297,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
         sx={{ mb: 4 }}
         aria-label="Application Progress"
       >
-        {formSteps.map((step, index) => (
+        {formSteps.map((step) => (
           <Step key={step.key}>
             <StepLabel>{step.label}</StepLabel>
           </Step>
@@ -313,8 +305,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
       </Stepper>
 
       <Form
-        ref={formRef}
-        onSubmit={handleFormSubmit}
+        onSubmit={formik.handleSubmit}
         aria-label={`${formSteps[activeStep].label} Form`}
       >
         {renderStepContent(activeStep)}
