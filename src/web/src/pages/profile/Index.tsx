@@ -24,8 +24,8 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     dispatch(fetchUserProfile())
       .unwrap()
-      .catch((error: Error) => {
-        showError('Failed to load profile: ' + error.message);
+      .catch((error) => {
+        showError('Failed to load profile: ' + error);
       });
   }, [dispatch, showError]);
 
@@ -42,6 +42,7 @@ const ProfilePage: React.FC = () => {
       phoneNumber: currentUser.profile.phone || '',
       website: currentUser.socialProfiles?.linkedin || '',
       orcidId: currentUser.socialProfiles?.orcid || '',
+      researchInterests: currentUser.profile.interests || []
     };
   }, [currentUser]);
 
@@ -59,6 +60,7 @@ const ProfilePage: React.FC = () => {
           title: sanitize(formData.organizationType),
           bio: sanitize(formData.bio),
           phone: sanitize(formData.phoneNumber),
+          interests: formData.researchInterests,
           version: currentUser.profile.version + 1,
         },
         socialProfiles: {
@@ -135,7 +137,6 @@ const ProfilePage: React.FC = () => {
                 user={profileData}
                 onSubmit={handleProfileUpdate}
                 onError={(error) => showError(error.message)}
-                isSubmitting={isProfileUpdating}
               />
             </Paper>
           </Grid>
