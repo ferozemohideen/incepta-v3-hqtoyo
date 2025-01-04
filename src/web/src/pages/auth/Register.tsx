@@ -13,8 +13,7 @@ import { UserRole } from '../../constants/auth.constants';
  */
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { mfaRequired } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { handleRegister, mfaRequired } = useAuth();
 
   // Track registration performance metrics
   useEffect(() => {
@@ -34,72 +33,51 @@ const Register: React.FC = () => {
     tokens: AuthTokens,
     deviceId: string
   ) => {
-    try {
-      setIsLoading(true);
+    // Store registration completion status
+    localStorage.setItem('registration_complete', 'true');
 
-      // Store registration completion status
-      localStorage.setItem('registration_complete', 'true');
-
-      // Navigate based on MFA requirement
-      if (mfaRequired) {
-        navigate('/auth/mfa-setup', {
-          state: { 
-            deviceId,
-            registrationComplete: true 
-          }
-        });
-      } else {
-        // Navigate to role-specific onboarding
-        const userRole = tokens.scope.find(scope => 
-          Object.values(UserRole).includes(scope as UserRole)
-        );
-        
-        switch (userRole) {
-          case UserRole.TTO:
-            navigate('/onboarding/tto');
-            break;
-          case UserRole.ENTREPRENEUR:
-            navigate('/onboarding/entrepreneur');
-            break;
-          case UserRole.RESEARCHER:
-            navigate('/onboarding/researcher');
-            break;
-          default:
-            navigate('/dashboard');
-        }
-      }
-    } catch (error) {
-      console.error('Registration completion failed:', error);
-      // Handle navigation errors gracefully
-      navigate('/auth/error', {
+    // Navigate based on MFA requirement
+    if (mfaRequired) {
+      navigate('/auth/mfa-setup', {
         state: { 
-          error: 'Failed to complete registration',
-          retry: true
+          deviceId,
+          registrationComplete: true 
         }
       });
-    } finally {
-      setIsLoading(false);
+    } else {
+      // Navigate to role-specific onboarding
+      const userRole = tokens.scope.find(scope => 
+        Object.values(UserRole).includes(scope as UserRole)
+      );
+      
+      switch (userRole) {
+        case UserRole.TTO:
+          navigate('/onboarding/tto');
+          break;
+        case UserRole.ENTREPRENEUR:
+          navigate('/onboarding/entrepreneur');
+          break;
+        case UserRole.RESEARCHER:
+          navigate('/onboarding/researcher');
+          break;
+        default:
+          navigate('/dashboard');
+      }
     }
   }, [navigate, mfaRequired]);
 
   /**
-   * Handles device fingerprinting for enhanced security
+   * Handles registration validation errors with proper error display
    */
-  const handleDeviceFingerprint = useCallback((deviceId: string) => {
-    // Log device fingerprint for security monitoring
-    console.debug('Device fingerprint generated:', deviceId);
+  const handleValidationError = useCallback((error: Error) => {
+    console.error('Registration validation failed:', error);
+    // Error will be displayed by the RegisterForm component
   }, []);
 
   /**
    * Error boundary fallback component
    */
-  const ErrorFallback = useCallback(({ 
-    error,
-    resetErrorBoundary 
-  }: { 
-    error: Error; 
-    resetErrorBoundary: () => void;
-  }) => (
+  const ErrorFallback = useCallback(({ error, resetErrorBoundary }) => (
     <AuthLayout title="Registration Error">
       <div role="alert">
         <h2>Something went wrong</h2>
@@ -113,8 +91,7 @@ const Register: React.FC = () => {
     <ErrorBoundary
       FallbackComponent={ErrorFallback}
       onReset={() => {
-        // Reset any state that might have caused the error
-        setIsLoading(false);
+        // Reset form state
       }}
     >
       <AuthLayout 
@@ -123,7 +100,7 @@ const Register: React.FC = () => {
       >
         <RegisterForm
           onSuccess={handleRegistrationSuccess}
-          onDeviceFingerprint={handleDeviceFingerprint}
+          onValidationError={handleValidationError}
           allowedRoles={[
             UserRole.ENTREPRENEUR,
             UserRole.RESEARCHER,
