@@ -1,13 +1,12 @@
 // @mui/material v5.14.0
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Box, 
   Container, 
   Typography, 
   Skeleton, 
   Alert,
-  Grid,
-  useTheme
+  Grid
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -200,6 +199,7 @@ const TechnologyList: React.FC = () => {
               onPageChange={handlePageChange}
               onTechnologySelect={handleTechnologySelect}
               loading={loading}
+              error={error}
               aria-label="Technology listings"
             />
           </Box>
