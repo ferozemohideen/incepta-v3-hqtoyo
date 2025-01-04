@@ -1,3 +1,15 @@
+interface TechnologyDetailsProps {
+  id?: string;
+  onSave?: (technology: Technology) => Promise<void>;
+  onContact?: (technology: Technology) => void;
+  securityLevel?: string;
+}
+```
+
+Let me regenerate the file with the necessary fixes.
+
+# src/web/src/pages/technologies/Details.tsx
+```typescript
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Skeleton, Alert } from '@mui/material';
@@ -61,14 +73,14 @@ const TechnologyDetailsPage: React.FC = () => {
   /**
    * Handles saving technology to user's list
    */
-  const handleSaveTechnology = async (technology: Technology) => {
+  const handleSaveTechnology = async (technologyId: string) => {
     if (!user) {
       enqueueSnackbar('Please log in to save technologies', { variant: 'warning' });
       return;
     }
 
     try {
-      await technologyService.saveTechnology(technology.id);
+      await technologyService.saveTechnology(technologyId);
       enqueueSnackbar('Technology saved successfully', { variant: 'success' });
     } catch (err) {
       console.error('Failed to save technology:', err);
@@ -79,7 +91,7 @@ const TechnologyDetailsPage: React.FC = () => {
   /**
    * Handles initiating contact with TTO
    */
-  const handleContactTTO = (technology: Technology) => {
+  const handleContactTTO = (technologyId: string) => {
     if (!user) {
       enqueueSnackbar('Please log in to contact TTOs', { variant: 'warning' });
       return;
@@ -88,7 +100,7 @@ const TechnologyDetailsPage: React.FC = () => {
     // Navigate to messaging with context
     navigate(`/messages/new`, {
       state: {
-        technologyId: technology.id,
+        technologyId,
         recipientType: 'tto',
         subject: technology?.title
       }
@@ -137,7 +149,7 @@ const TechnologyDetailsPage: React.FC = () => {
             id={technology.id}
             onSave={handleSaveTechnology}
             onContact={handleContactTTO}
-            securityLevel={technology.patentStatus}
+            securityLevel={technology.metadata.securityLevel}
           />
         )}
       </Container>
