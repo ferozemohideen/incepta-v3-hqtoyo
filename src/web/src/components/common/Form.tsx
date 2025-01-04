@@ -5,7 +5,7 @@ import { useForm } from '../../hooks/useForm';
 import Input from './Input';
 
 // Enhanced form container with accessibility and theme support
-const StyledForm = styled(Box)(({ theme }) => ({
+const StyledForm = styled('form')(({ theme }) => ({
   width: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -168,7 +168,7 @@ export const Form: React.FC<FormProps> = ({
 
       if (child.type === Input) {
         const name = child.props.name;
-        return React.cloneElement(child, {
+        return React.cloneElement(child as React.ReactElement<any>, {
           value: values[name] || '',
           onChange: handleChange,
           error: touched[name] ? errors[name] : undefined,
@@ -179,7 +179,7 @@ export const Form: React.FC<FormProps> = ({
       }
 
       if (child.props.children) {
-        return React.cloneElement(child, {
+        return React.cloneElement(child as React.ReactElement<any>, {
           children: renderFormFields(child.props.children),
         });
       }
@@ -190,7 +190,6 @@ export const Form: React.FC<FormProps> = ({
 
   return (
     <StyledForm
-      component="form"
       ref={formRef}
       onSubmit={handleSubmit}
       className={className}
