@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useCallback, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   TextField, 
@@ -9,6 +9,7 @@ import {
   Alert 
 } from '@mui/material';
 import { object, string, ref } from 'yup';
+import { debounce } from 'lodash';
 
 import Form from '../common/Form';
 import { ResetPasswordCredentials } from '../../interfaces/auth.interface';
@@ -76,8 +77,22 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = memo(({ token
     verifyToken();
   }, [token]);
 
+  // Debounced validation to prevent rapid attempts
+  const debouncedValidation = useCallback(
+    debounce(async (values: Record<string, any>) => {
+      try {
+        await validationSchema.validate(values, { abortEarly: false });
+      } catch (error) {
+        if (error instanceof Error) {
+          showError(error.message);
+        }
+      }
+    }, 300),
+    []
+  );
+
   // Handle form submission with rate limiting
-  const handleResetPassword = async (values: ResetPasswordCredentials) => {
+  const handleResetPassword = async (values: Record<string, any>) => {
     // Check rate limiting
     if (state.attempts >= MAX_ATTEMPTS) {
       showError(`Too many attempts. Please try again in ${ATTEMPT_TIMEOUT / 60000} minutes.`);
