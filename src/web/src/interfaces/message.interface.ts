@@ -24,15 +24,6 @@ export enum MessageStatus {
 }
 
 /**
- * Enumeration of message delivery statuses (alias for backward compatibility)
- */
-export enum MessageDeliveryStatus {
-  SENT = 'SENT',
-  DELIVERED = 'DELIVERED',
-  READ = 'READ'
-}
-
-/**
  * Enumeration of WebSocket message event types for real-time updates
  */
 export enum MessageEventType {
@@ -42,40 +33,9 @@ export enum MessageEventType {
 }
 
 /**
- * Interface for document metadata including file details and tracking
+ * Interface for document message metadata including file details and tracking
  */
 export interface DocumentMetadata {
-  /**
-   * Secure URL for accessing the shared document
-   */
-  documentUrl: string;
-
-  /**
-   * Original filename of the shared document
-   */
-  fileName: string;
-
-  /**
-   * Size of the file in bytes
-   */
-  fileSize: number;
-
-  /**
-   * MIME type of the document
-   */
-  contentType: string;
-
-  /**
-   * Timestamp when the document was uploaded
-   */
-  uploadedAt: Date;
-}
-
-/**
- * Interface for document message metadata including file details and tracking
- * @deprecated Use DocumentMetadata instead
- */
-export interface MessageMetadata {
   /**
    * Secure URL for accessing the shared document
    */
@@ -144,8 +104,9 @@ export interface Message {
 
   /**
    * Additional metadata, required for DOCUMENT type messages
+   * Null for other message types
    */
-  metadata: MessageMetadata;
+  metadata: DocumentMetadata | null;
 
   /**
    * Timestamp when the message was created
