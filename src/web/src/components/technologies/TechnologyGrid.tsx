@@ -2,7 +2,7 @@
 import { Grid, Box, Pagination, Skeleton } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { memo, useRef, useEffect } from 'react';
 
 // Internal imports
@@ -48,7 +48,7 @@ const StyledGrid = styled(Grid)(({ theme }) => ({
 /**
  * Error Fallback component for error boundary
  */
-const ErrorFallback = ({ error, resetErrorBoundary }: any) => (
+const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
   <Box
     role="alert"
     sx={{
