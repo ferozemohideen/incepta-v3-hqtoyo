@@ -199,14 +199,14 @@ const Home: React.FC = () => {
           {/* Welcome Message */}
           <Grid item xs={12}>
             <Typography variant="h4" component="h1" gutterBottom>
-              Welcome back, {user?.name}
+              Welcome back, {user?.displayName}
             </Typography>
           </Grid>
 
           {/* Quick Actions Section */}
           <Grid item xs={12}>
             <ErrorBoundary>
-              <QuickActions user={user!} />
+              <QuickActions user={user} />
             </ErrorBoundary>
           </Grid>
 
@@ -229,12 +229,8 @@ const Home: React.FC = () => {
                 savedGrants={state.savedGrants}
                 onRemoveTechnology={handleRemoveTechnology}
                 onRemoveGrant={handleRemoveGrant}
-                onViewTechnology={async (id: string) => {
-                  // Navigate to technology
-                }}
-                onViewGrant={async (id: string) => {
-                  // Navigate to grant
-                }}
+                onViewTechnology={async (id) => {/* Navigate to technology */}}
+                onViewGrant={async (id) => {/* Navigate to grant */}}
                 isLoading={state.loading.saved}
               />
             </ErrorBoundary>
