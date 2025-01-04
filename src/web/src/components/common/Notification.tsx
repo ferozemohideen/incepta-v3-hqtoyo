@@ -54,7 +54,7 @@ export const Notification: React.FC<NotificationProps> = ({
   const { showNotification, hideNotification } = useNotification();
 
   // Handle notification close event
-  const handleClose = useCallback((_?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleClose = useCallback((event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return;
     }
@@ -70,9 +70,9 @@ export const Notification: React.FC<NotificationProps> = ({
         handleClose();
       }, duration);
 
+      // Cleanup timer on unmount
       return () => clearTimeout(timer);
     }
-    return undefined;
   }, [duration, handleClose]);
 
   // Show notification when component mounts
@@ -81,7 +81,7 @@ export const Notification: React.FC<NotificationProps> = ({
       message,
       type,
       duration,
-      anchorOrigin,
+      anchorOrigin
     });
   }, [showNotification, message, type, duration, anchorOrigin]);
 
@@ -93,9 +93,7 @@ export const Notification: React.FC<NotificationProps> = ({
       onClose={handleClose}
       TransitionComponent={SlideTransition}
       sx={{
-        // Ensure proper z-index stacking
         zIndex: 1400,
-        // Responsive positioning
         '@media (max-width: 600px)': {
           width: '100%',
           bottom: 0,
@@ -112,13 +110,10 @@ export const Notification: React.FC<NotificationProps> = ({
         aria-live={ariaLive}
         sx={{
           width: '100%',
-          // Ensure proper contrast for accessibility
           '& .MuiAlert-message': {
             color: 'common.white',
           },
-          // Add box shadow for elevation
           boxShadow: 2,
-          // Responsive styling
           '@media (max-width: 600px)': {
             borderRadius: 0,
           },
@@ -130,5 +125,4 @@ export const Notification: React.FC<NotificationProps> = ({
   );
 };
 
-// Default export for convenient importing
 export default Notification;
