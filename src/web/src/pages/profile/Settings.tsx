@@ -8,8 +8,8 @@ import {
   Box,
   CircularProgress,
   Alert,
-} from '@mui/material'; // v5.14.0
-import { useNavigate } from 'react-router-dom'; // v6.14.0
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 // Internal imports
 import SecuritySettings from '../../components/profile/SecuritySettings';
