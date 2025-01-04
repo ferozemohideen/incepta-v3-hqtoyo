@@ -126,7 +126,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   disableCache = false
 }) => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { hasPermission } = useAuth();
 
   // Generate breadcrumbs with caching
   const breadcrumbs = useMemo(
@@ -137,7 +137,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   // Filter breadcrumbs based on user roles and permissions
   const visibleBreadcrumbs = breadcrumbs.filter(item => {
     if (!item.requiredRoles) return true;
-    return item.requiredRoles.some(role => user?.permissions?.includes(role));
+    return item.requiredRoles.some(role => hasPermission(role));
   });
 
   // Don't render if only home breadcrumb is visible
