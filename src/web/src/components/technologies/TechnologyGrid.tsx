@@ -1,12 +1,12 @@
 // @mui/material v5.14.0
 import { Grid, Box, Pagination, Skeleton } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ErrorBoundary } from 'react-error-boundary';
-import { memo, useCallback, useRef, useEffect } from 'react';
+import { memo, useRef, useEffect } from 'react';
 
 // Internal imports
-import TechnologyCard, { TechnologyCardProps } from './TechnologyCard';
+import TechnologyCard from './TechnologyCard';
 import { Technology } from '../../interfaces/technology.interface';
 import { usePagination, PaginationConfig } from '../../hooks/usePagination';
 
@@ -19,7 +19,6 @@ export interface TechnologyGridProps {
   onPageChange: (page: number) => void;
   onTechnologySelect: (technology: Technology) => void;
   loading?: boolean;
-  error?: Error | null;
   'aria-label'?: string;
 }
 
@@ -67,7 +66,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: any) => (
 /**
  * Calculate responsive grid columns based on breakpoint
  */
-const getGridColumns = () => ({
+const getGridColumns = (theme: any) => ({
   xs: 12, // 1 column
   sm: 6,  // 2 columns
   md: 4,  // 3 columns
@@ -84,13 +83,13 @@ const TechnologyGrid = memo(({
   onPageChange,
   onTechnologySelect,
   loading = false,
-  error = null,
   'aria-label': ariaLabel = 'Technology listings grid',
 }: TechnologyGridProps) => {
+  const theme = useTheme();
   const parentRef = useRef<HTMLDivElement>(null);
 
   // Configure pagination
-  const paginationConfig: PaginationConfig = {
+  const paginationConfig: Required<Pick<PaginationConfig, 'totalItems' | 'initialPageSize' | 'showFirstLast' | 'onPageChange' | 'ariaLabels'>> = {
     totalItems: totalCount,
     initialPageSize: 12,
     showFirstLast: true,
@@ -113,6 +112,14 @@ const TechnologyGrid = memo(({
     overscan: 5,
   });
 
+  // Handle keyboard navigation
+  const handleKeyDown = (event: React.KeyboardEvent, technology: Technology) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onTechnologySelect(technology);
+    }
+  };
+
   // Update ARIA live region for screen readers
   useEffect(() => {
     const announcement = loading
@@ -130,7 +137,7 @@ const TechnologyGrid = memo(({
     return (
       <StyledGrid container spacing={3} role="grid" aria-busy="true" aria-label={ariaLabel}>
         {Array.from({ length: 12 }).map((_, index) => (
-          <Grid item key={index} {...getGridColumns()}>
+          <Grid item key={index} {...getGridColumns(theme)}>
             <Skeleton
               variant="rectangular"
               height={350}
@@ -169,13 +176,15 @@ const TechnologyGrid = memo(({
                 <Grid
                   item
                   key={technology.id.toString()}
-                  {...getGridColumns()}
+                  {...getGridColumns(theme)}
                   role="gridcell"
                   aria-rowindex={virtualRow.index + 1}
                 >
                   <TechnologyCard
                     technology={technology}
                     onView={() => onTechnologySelect(technology)}
+                    onKeyDown={(e) => handleKeyDown(e, technology)}
+                    tabIndex={0}
                     showActions
                   />
                 </Grid>
