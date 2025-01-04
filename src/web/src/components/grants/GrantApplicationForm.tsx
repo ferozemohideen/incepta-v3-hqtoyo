@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
+  Grid, 
   Typography, 
   Button, 
   Stepper, 
   Step, 
   StepLabel,
-  CircularProgress
-} from '@mui/material'; // v5.14.0
-import { useFormik, FormikHelpers } from 'formik'; // v2.4.2
-import { debounce } from 'lodash'; // v4.17.21
-import * as Yup from 'yup'; // v1.2.0
+  CircularProgress,
+  Alert
+} from '@mui/material';
+import { useFormik, FormikHelpers } from 'formik';
+import { debounce } from 'lodash';
+import * as Yup from 'yup';
 
 import Form from '../common/Form';
+import FileUpload from '../common/FileUpload';
 import { useNotification } from '../../hooks/useNotification';
 
 // Form section interfaces
@@ -70,7 +73,7 @@ interface GrantApplicationFormProps {
 }
 
 // Form validation schemas
-const validationSchemas: Record<string, Yup.ObjectSchema<any>> = {
+const validationSchemas = {
   projectDetails: Yup.object({
     projectTitle: Yup.string()
       .required('Project title is required')
@@ -163,8 +166,8 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
   const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize form with Formik
-  const formik = useFormik<IGrantApplication>({
-    initialValues: initialData as IGrantApplication || {
+  const formik = useFormik({
+    initialValues: initialData || {
       projectDetails: {
         projectTitle: '',
         abstract: '',
@@ -231,8 +234,22 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
         }
       }
 
+      // Process file uploads
+      const processedFiles = await Promise.all(
+        values.documentAttachments.files.map(async (file) => {
+          // File processing logic here
+          return file;
+        })
+      );
+
       // Submit application
-      await onSuccess(values);
+      await onSuccess({
+        ...values,
+        documentAttachments: {
+          files: processedFiles
+        }
+      });
+
       showSuccess('Grant application submitted successfully');
       helpers.resetForm();
       setActiveStep(0);
@@ -271,6 +288,11 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
     );
   };
 
+  // Custom form submit handler to adapt Formik's handleSubmit to Form's expected signature
+  const handleFormSubmit = (values: Record<string, any>, formActions: any) => {
+    formik.handleSubmit(values as any);
+  };
+
   return (
     <Box
       component="section"
@@ -283,7 +305,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
         sx={{ mb: 4 }}
         aria-label="Application Progress"
       >
-        {formSteps.map((step) => (
+        {formSteps.map((step, index) => (
           <Step key={step.key}>
             <StepLabel>{step.label}</StepLabel>
           </Step>
@@ -292,10 +314,8 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
 
       <Form
         ref={formRef}
-        onSubmit={formik.handleSubmit}
+        onSubmit={handleFormSubmit}
         aria-label={`${formSteps[activeStep].label} Form`}
-        initialValues={formik.values}
-        validationSchema={validationSchemas[formSteps[activeStep].key]}
       >
         {renderStepContent(activeStep)}
 
