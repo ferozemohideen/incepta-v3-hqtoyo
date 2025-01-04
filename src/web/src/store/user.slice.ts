@@ -52,18 +52,15 @@ const SECURITY_AUDIT_LEVELS = {
 } as const;
 
 /**
- * Maximum retry attempts for operations
- */
-const MAX_RETRY_ATTEMPTS = 3;
-
-/**
  * Async thunk for fetching user profile with enhanced security validation
  */
 export const fetchUserProfile = createAsyncThunk(
   'user/fetchProfile',
   async (deviceId: string, { rejectWithValue }) => {
     try {
-      // First validate security context with device ID
+      const response = await userService.getProfile();
+      
+      // Validate security context
       const securityContext = await userService.validateSecurityContext({
         deviceId,
         timestamp: new Date().toISOString(),
@@ -74,8 +71,6 @@ export const fetchUserProfile = createAsyncThunk(
         throw new Error('Invalid security context');
       }
 
-      // Then fetch profile with validated device ID
-      const response = await userService.getProfile(deviceId);
       return response;
     } catch (error) {
       return rejectWithValue((error as Error).message);
