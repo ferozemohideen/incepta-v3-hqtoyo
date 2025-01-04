@@ -104,15 +104,7 @@ export const submitApplication = createAsyncThunk(
   async ({ grantId, applicationData }: { grantId: string; applicationData: Partial<IGrantApplication> }, 
     { rejectWithValue }) => {
     try {
-      const optimisticApplication: IGrantApplication = {
-        ...applicationData as IGrantApplication,
-        status: GrantStatus.SUBMITTED,
-        submittedAt: new Date(),
-        lastModifiedAt: new Date()
-      };
-
-      const response = await grantService.submitApplication(grantId, applicationData);
-      return response;
+      return await grantService.submitApplication(grantId, applicationData);
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -151,14 +143,14 @@ const grantSlice = createSlice({
       })
       .addCase(searchGrants.fulfilled, (state, action) => {
         const { data, fromCache } = action.payload;
-        state.grants = data.data;
-        state.totalResults = data.total;
-        state.currentPage = data.page;
-        state.pageSize = data.limit;
+        state.grants = data.data || data;
+        state.totalResults = data.total || data.length;
+        state.currentPage = data.page || 1;
+        state.pageSize = data.limit || 10;
         
         if (!fromCache) {
           state.searchCache[JSON.stringify(action.meta.arg)] = {
-            data: data.data,
+            data: data.data || data,
             timestamp: Date.now()
           };
         }
