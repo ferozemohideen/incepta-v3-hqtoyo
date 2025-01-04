@@ -1,23 +1,19 @@
 import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import { Box, List, ListItem, CircularProgress, Typography } from '@mui/material';
-import { useInView } from 'react-intersection-observer';
-import { 
-  Message, 
-  MessageType, 
-  MessageDeliveryStatus 
-} from '../../interfaces/message.interface';
+import { useIntersectionObserver } from 'react-intersection-observer';
+import { Message, MessageType, MessageDeliveryStatus } from '../../interfaces/message.interface';
 import { messageService } from '../../services/message.service';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
-// Message grouping threshold in minutes
-const MESSAGE_GROUP_THRESHOLD = 5;
+// Message batch size constant
 const MESSAGE_BATCH_SIZE = 50;
-const SCROLL_THRESHOLD = 100;
 
 interface MessageListProps {
   threadId: string;
   currentUserId: string;
   onMessageReceived?: (message: Message) => void;
+  onTypingStatusChange?: (isTyping: boolean) => void;
+  initialScrollPosition?: number;
   messageLimit?: number;
 }
 
@@ -31,6 +27,8 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   threadId,
   currentUserId,
   onMessageReceived,
+  onTypingStatusChange,
+  initialScrollPosition = 0,
   messageLimit = MESSAGE_BATCH_SIZE
 }) => {
   // Refs for DOM elements and state management
@@ -41,14 +39,8 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
 
   // WebSocket connection for real-time updates
   const { isConnected, sendMessage } = useWebSocket(
-    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
+    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
-
-  // Intersection observer for infinite scroll
-  const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0.5,
-    rootMargin: '100px',
-  });
 
   // State for messages with memoization
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -103,20 +95,36 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
     // Subscribe to thread-specific WebSocket events
     if (isConnected) {
       sendMessage({
-        type: 'SUBSCRIBE_THREAD',
-        payload: { threadId }
+        id: `subscribe_${threadId}`,
+        threadId,
+        type: MessageType.SYSTEM,
+        content: 'SUBSCRIBE_THREAD',
+        senderId: currentUserId,
+        recipientId: '',
+        status: MessageStatus.SENT,
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
     }
 
     return () => {
       if (isConnected) {
         sendMessage({
-          type: 'UNSUBSCRIBE_THREAD',
-          payload: { threadId }
+          id: `unsubscribe_${threadId}`,
+          threadId,
+          type: MessageType.SYSTEM,
+          content: 'UNSUBSCRIBE_THREAD',
+          senderId: currentUserId,
+          recipientId: '',
+          status: MessageStatus.SENT,
+          metadata: {},
+          createdAt: new Date(),
+          updatedAt: new Date()
         });
       }
     };
-  }, [threadId, messageLimit, isConnected, sendMessage]);
+  }, [threadId, messageLimit, isConnected, sendMessage, currentUserId]);
 
   /**
    * Handles loading more messages when scrolling up
@@ -126,7 +134,6 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
 
     try {
       isLoadingMore.current = true;
-      const lastMessage = messages[messages.length - 1];
       const response = await messageService.getMessageThread(
         threadId,
         Math.ceil(messages.length / messageLimit) + 1,
@@ -151,6 +158,21 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   useEffect(() => {
     if (!isConnected) return;
 
+    const handleNewMessage = (message: Message) => {
+      if (message.threadId === threadId) {
+        setMessages(prev => [message, ...prev]);
+        onMessageReceived?.(message);
+      }
+    };
+
+    const handleMessageStatus = (messageId: string, status: MessageDeliveryStatus) => {
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId ? { ...msg, status } : msg
+        )
+      );
+    };
+
     // WebSocket event subscriptions
     const unsubscribe = () => {
       // Cleanup WebSocket listeners
@@ -158,6 +180,20 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
 
     return unsubscribe;
   }, [threadId, isConnected, onMessageReceived]);
+
+  /**
+   * Handles intersection observer for infinite scroll
+   */
+  const { ref: loadMoreRef, inView } = useIntersectionObserver({
+    threshold: 0.5,
+    rootMargin: '100px',
+  });
+
+  useEffect(() => {
+    if (inView && !isLoading && hasMoreMessages.current) {
+      loadMoreMessages();
+    }
+  }, [inView, isLoading, loadMoreMessages]);
 
   /**
    * Renders a message item with accessibility support
