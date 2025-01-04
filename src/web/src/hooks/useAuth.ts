@@ -14,7 +14,6 @@ import { useCallback, useEffect, useRef } from 'react'; // ^18.0.0
 import { useDispatch, useSelector } from 'react-redux'; // ^8.0.0
 import {
   login,
-  register,
   verifyMFA,
   selectAuth,
   refreshToken,
@@ -23,16 +22,34 @@ import {
 import {
   LoginCredentials,
   RegisterCredentials,
+  AuthTokens,
   MFACredentials,
-  AuthError,
-  SecurityContext
+  AuthError
 } from '../interfaces/auth.interface';
+import { TOKEN_CONFIG } from '../constants/auth.constants';
+
+interface SecurityContext {
+  lastActivity: number;
+  sessionExpiry: Date | null;
+  mfaVerified: boolean;
+  securityFlags: {
+    passwordChangeRequired: boolean;
+    accountLocked: boolean;
+  };
+}
 
 /**
  * Interface defining the return value of useAuth hook
  */
 interface UseAuthReturn {
-  user: JWTPayload | null;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    permissions: string[];
+    lastLogin: Date;
+  } | null;
   loading: Record<string, boolean>;
   error: AuthError | null;
   mfaRequired: boolean;
@@ -134,7 +151,7 @@ export const useAuth = (): UseAuthReturn => {
         }
       };
 
-      await dispatch(login(secureCredentials));
+      await dispatch(login(secureCredentials) as any);
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -150,19 +167,19 @@ export const useAuth = (): UseAuthReturn => {
         throw new Error('Terms and conditions must be accepted');
       }
 
-      await dispatch(register(userData));
+      throw new Error('Registration functionality not implemented');
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
     }
-  }, [dispatch]);
+  }, []);
 
   /**
    * Handle MFA verification with retry logic
    */
   const handleMFAVerification = useCallback(async (mfaData: MFACredentials): Promise<void> => {
     try {
-      await dispatch(verifyMFA(mfaData.token));
+      await dispatch(verifyMFA(mfaData.token) as any);
     } catch (error) {
       console.error('MFA verification failed:', error);
       throw error;
@@ -194,7 +211,7 @@ export const useAuth = (): UseAuthReturn => {
    */
   const handleTokenRefresh = useCallback(async (): Promise<void> => {
     try {
-      await dispatch(refreshToken());
+      await dispatch(refreshToken() as any);
     } catch (error) {
       console.error('Token refresh failed:', error);
       // Force logout on critical refresh failure
