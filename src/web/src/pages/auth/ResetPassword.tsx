@@ -59,11 +59,9 @@ const ResetPassword: React.FC = React.memo(() => {
       }
 
       try {
-        // Temporarily set token as valid until validateResetToken is implemented
-        if (isActive) {
-          setIsTokenValid(true);
-          setIsValidating(false);
-        }
+        // Token validation is handled by the form component
+        setIsTokenValid(true);
+        setIsValidating(false);
       } catch (err) {
         if (isActive) {
           setValidationError(
