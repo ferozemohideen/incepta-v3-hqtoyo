@@ -81,15 +81,13 @@ const App: React.FC = () => {
             
             <Route path={PUBLIC_ROUTES.LOGIN} element={
               <AuthLayout title="Sign In">
-                {/* Login component will be rendered here */}
-                <div />
+                <div>{/* Login component will be rendered here */}</div>
               </AuthLayout>
             } />
 
             <Route path={PUBLIC_ROUTES.REGISTER} element={
               <AuthLayout title="Create Account">
-                {/* Register component will be rendered here */}
-                <div />
+                <div>{/* Register component will be rendered here */}</div>
               </AuthLayout>
             } />
 
@@ -97,8 +95,7 @@ const App: React.FC = () => {
             <Route path={PROTECTED_ROUTES.DASHBOARD} element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  {/* Dashboard component will be rendered here */}
-                  <div />
+                  <div>{/* Dashboard component will be rendered here */}</div>
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -106,8 +103,7 @@ const App: React.FC = () => {
             <Route path={PROTECTED_ROUTES.TECHNOLOGIES} element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  {/* Technologies component will be rendered here */}
-                  <div />
+                  <div>{/* Technologies component will be rendered here */}</div>
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -115,8 +111,7 @@ const App: React.FC = () => {
             <Route path={PROTECTED_ROUTES.GRANTS} element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  {/* Grants component will be rendered here */}
-                  <div />
+                  <div>{/* Grants component will be rendered here */}</div>
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -125,8 +120,7 @@ const App: React.FC = () => {
             <Route path={ADMIN_ROUTES.ADMIN_DASHBOARD} element={
               <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
                 <DashboardLayout>
-                  {/* Admin Dashboard component will be rendered here */}
-                  <div />
+                  <div>{/* Admin Dashboard component will be rendered here */}</div>
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -134,8 +128,7 @@ const App: React.FC = () => {
             {/* 404 Route */}
             <Route path="*" element={
               <MainLayout>
-                {/* 404 component will be rendered here */}
-                <div />
+                <div>{/* 404 component will be rendered here */}</div>
               </MainLayout>
             } />
           </Routes>
