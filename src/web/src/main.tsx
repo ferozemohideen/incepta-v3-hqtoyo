@@ -90,8 +90,8 @@ const renderApp = (): void => {
 
   root.render(
     <React.StrictMode>
-      <Sentry.ErrorBoundary
-        fallback={({ error }) => <ErrorFallback error={error} />}
+      <ErrorBoundary
+        fallback={(error: Error) => <ErrorFallback error={error} />}
         onError={(error) => {
           console.error('Application error:', error);
           if (process.env.NODE_ENV === 'production') {
@@ -106,7 +106,7 @@ const renderApp = (): void => {
             </ThemeProvider>
           </PersistGate>
         </Provider>
-      </Sentry.ErrorBoundary>
+      </ErrorBoundary>
     </React.StrictMode>
   );
 };
