@@ -76,7 +76,7 @@ export const handleApiError = (error: AxiosError): ApiError => {
   const responseData = error.response?.data as Record<string, any>;
 
   // Map status code to detailed error message
-  let message = responseData?.['message'] || error.message;
+  let message = responseData?.message || error.message;
   switch (status) {
     case API_STATUS_CODES.BAD_REQUEST:
       message = 'Invalid request parameters';
@@ -101,7 +101,7 @@ export const handleApiError = (error: AxiosError): ApiError => {
     timestamp: new Date().toISOString(),
     path: error.config?.url,
     method: error.config?.method?.toUpperCase(),
-    ...(responseData?.['details'] || {})
+    ...responseData?.details
   };
 
   // Log error for monitoring
