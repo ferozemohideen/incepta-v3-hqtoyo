@@ -88,6 +88,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
             originalName: file.name,
             size: file.size.toString(),
             type: file.type,
+            virusScan: enableVirusScan ? 'enabled' : 'disabled'
           },
           cacheControl: 'private, max-age=3600',
         });
@@ -127,13 +128,12 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
         prev ? { ...prev, status: 'error' } : null
       );
     }
-  }, [threadId, enableEncryption, onDocumentShare]);
+  }, [threadId, enableEncryption, enableVirusScan, onDocumentShare]);
 
   // Handle document deletion
   const handleDocumentDelete = useCallback(async (metadata: MessageMetadata) => {
     try {
-      const documentId = metadata.documentUrl.split('/').pop() || '';
-      await storageService.current.deleteDocument(documentId);
+      await storageService.current.deleteDocument(metadata.documentUrl);
       setSharedDocuments(prev => 
         prev.filter(doc => doc.documentUrl !== metadata.documentUrl)
       );
