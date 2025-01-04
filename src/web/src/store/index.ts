@@ -12,7 +12,7 @@
  * - Type-safe operations
  */
 
-import { configureStore, combineReducers, Middleware } from '@reduxjs/toolkit'; // ^1.9.5
+import { configureStore, combineReducers, Middleware, AnyAction } from '@reduxjs/toolkit'; // ^1.9.5
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux'; // ^8.1.0
 import { 
   persistStore, 
@@ -48,7 +48,7 @@ const persistConfig = {
   ],
   timeout: 2000, // 2 seconds timeout for storage operations
   serialize: true,
-  debug: process.env.NODE_ENV !== 'production'
+  debug: process.env['NODE_ENV'] !== 'production'
 };
 
 /**
@@ -58,22 +58,22 @@ const stateSyncConfig = {
   blacklist: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
   channel: 'incepta_state_sync',
   broadcastChannelOption: {
-    type: 'localstorage'
+    type: 'localstorage' as const
   }
 };
 
 /**
  * Performance monitoring middleware
  */
-const monitoringMiddleware: Middleware = store => next => action => {
+const monitoringMiddleware: Middleware = () => next => action => {
   const start = performance.now();
   const result = next(action);
   const end = performance.now();
   const duration = end - start;
 
   // Log slow actions in production
-  if (duration > 16 && process.env.NODE_ENV === 'production') {
-    Sentry.captureMessage(`Slow action: ${action.type} took ${duration}ms`, {
+  if (duration > 16 && process.env['NODE_ENV'] === 'production') {
+    Sentry.captureMessage(`Slow action: ${(action as AnyAction).type} took ${duration}ms`, {
       level: 'warning',
       extra: {
         action,
@@ -118,7 +118,7 @@ export const store = configureStore({
       createStateSyncMiddleware(stateSyncConfig),
       monitoringMiddleware
     ),
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: process.env['NODE_ENV'] !== 'production',
   enhancers: []
 });
 
@@ -143,8 +143,8 @@ export const useAppDispatch = () => {
     const duration = performance.now() - start;
 
     // Track dispatch performance
-    if (duration > 16) {
-      console.warn(`Slow dispatch: ${action.type} took ${duration}ms`);
+    if (duration > 16 && (action as AnyAction).type) {
+      console.warn(`Slow dispatch: ${(action as AnyAction).type} took ${duration}ms`);
     }
 
     return result;
@@ -179,12 +179,12 @@ export const resetStore = () => {
 /**
  * Initialize store monitoring
  */
-if (process.env.NODE_ENV === 'production') {
+if (process.env['NODE_ENV'] === 'production') {
   Sentry.init({
-    dsn: process.env.REACT_APP_SENTRY_DSN,
+    dsn: process.env['REACT_APP_SENTRY_DSN'],
     integrations: [
       new Sentry.BrowserTracing({
-        tracingOrigins: ['localhost', process.env.REACT_APP_API_URL],
+        tracingOrigins: ['localhost', process.env['REACT_APP_API_URL'] || ''],
       }),
     ],
     tracesSampleRate: 0.2,
