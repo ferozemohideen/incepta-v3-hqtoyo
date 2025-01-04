@@ -10,8 +10,6 @@ import {
   MessageThread,
   MessageType,
   MessageStatus,
-  MessageEvent,
-  MessageEventType,
   DocumentMetadata
 } from '../interfaces/message.interface';
 import { messageService } from '../services/message.service';
@@ -51,13 +49,12 @@ const initialState: MessageState = {
  */
 export const fetchThreads = createAsyncThunk(
   'messages/fetchThreads',
-  async ({ page, limit, forceRefresh = false }: { 
+  async ({ page, limit }: { 
     page: number; 
     limit: number; 
-    forceRefresh?: boolean;
   }) => {
     try {
-      const response = await messageService.getThreads(page.toString(), limit.toString());
+      const response = await messageService.getMessageThread(page.toString(), limit.toString());
       return response;
     } catch (error) {
       throw error;
@@ -76,8 +73,8 @@ export const fetchMessages = createAsyncThunk(
     limit: number; 
   }) => {
     try {
-      const response = await messageService.getMessages(threadId, page, limit);
-      return response;
+      const response = await messageService.getMessageThread(threadId, page, limit);
+      return response.messages;
     } catch (error) {
       throw error;
     }
@@ -200,7 +197,7 @@ const messageSlice = createSlice({
         .filter(m => m.threadId === threadId && m.status !== MessageStatus.READ)
         .forEach(m => {
           m.status = MessageStatus.READ;
-          messageService.markAsRead(m.id);
+          messageService.updateMessageStatus(m.id, MessageStatus.READ);
         });
     }
   },
@@ -213,9 +210,9 @@ const messageSlice = createSlice({
       })
       .addCase(fetchThreads.fulfilled, (state, action) => {
         state.loading = false;
-        state.threads = [...action.payload];
+        state.threads = action.payload;
         state.unreadCount = action.payload.reduce(
-          (count, thread) => count + thread.unreadCount, 
+          (count: number, thread: MessageThread) => count + thread.unreadCount, 
           0
         );
       })
