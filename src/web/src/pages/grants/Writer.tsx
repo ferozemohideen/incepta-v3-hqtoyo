@@ -73,7 +73,7 @@ const Writer: React.FC = () => {
    * Handle draft saving with debounce
    */
   const handleSaveDraft = useCallback(
-    debounce(async (applicationData: IGrantApplication) => {
+    debounce(async (applicationData: Partial<IGrantApplication>) => {
       try {
         if (!grantId) return;
 
@@ -102,7 +102,7 @@ const Writer: React.FC = () => {
   /**
    * Handle application submission
    */
-  const handleSubmitApplication = useCallback(async (applicationData: IGrantApplication) => {
+  const handleSubmitApplication = useCallback(async (applicationData: Partial<IGrantApplication>) => {
     try {
       if (!grantId) return;
 
@@ -137,17 +137,16 @@ const Writer: React.FC = () => {
   /**
    * Calculate application progress
    */
-  const calculateProgress = (applicationData: IGrantApplication): number => {
+  const calculateProgress = (applicationData: Partial<IGrantApplication>): number => {
     if (!state.grant) return 0;
 
-    const requiredDocs = state.grant.requirements.technicalVolume.required ? 1 : 0 +
-                        state.grant.requirements.businessPlan.required ? 1 : 0 +
-                        state.grant.requirements.budget.required ? 1 : 0 +
-                        state.grant.requirements.additionalDocuments.filter(doc => doc.required).length;
+    const sections = Object.keys(state.grant.requirements.technicalVolume || {}).length +
+                    Object.keys(state.grant.requirements.businessPlan || {}).length +
+                    Object.keys(state.grant.requirements.budget || {}).length;
+    
+    const completedSections = Object.keys(applicationData.documents || {}).length;
 
-    const completedDocs = applicationData.documents.length;
-
-    return Math.round((completedDocs / requiredDocs) * 100);
+    return sections > 0 ? Math.round((completedSections / sections) * 100) : 0;
   };
 
   // Loading state
