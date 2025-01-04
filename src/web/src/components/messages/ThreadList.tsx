@@ -5,12 +5,12 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { List, ListItem, ListItemText, Badge, Typography, CircularProgress } from '@mui/material'; // v5.14.0
+import { List, ListItem, ListItemText, Badge, Typography } from '@mui/material'; // v5.14.0
 import { format } from 'date-fns'; // v2.30.0
-import { useInfiniteScroll } from 'react-infinite-scroll-hook'; // v4.1.1
+import useInfiniteScroll from 'react-infinite-scroll-hook'; // v4.1.1
 import { useVirtualizer } from '@tanstack/react-virtual'; // v3.0.0
 
-import { MessageThread } from '../../interfaces/message.interface';
+import { MessageThread, MessageType } from '../../interfaces/message.interface';
 import { messageService } from '../../services/message.service';
 import Loading from '../common/Loading';
 
@@ -36,7 +36,6 @@ interface PendingOperation {
  */
 const THREAD_ITEM_HEIGHT = 72; // Height of each thread item in pixels
 const THREADS_PER_PAGE = 20; // Number of threads to load per page
-const SCROLL_THRESHOLD = 0.8; // Threshold for triggering infinite scroll
 
 /**
  * Formats thread preview text based on message type and content
@@ -45,9 +44,16 @@ const formatThreadPreview = (thread: MessageThread): string => {
   const lastMessage = thread.lastMessageId;
   if (!lastMessage) return '';
 
-  return thread.content.length > 50 
-    ? `${thread.content.substring(0, 50)}...` 
-    : thread.content;
+  switch (thread.type) {
+    case MessageType.DOCUMENT:
+      return 'Shared a document';
+    case MessageType.SYSTEM:
+      return thread.content;
+    default:
+      return thread.content.length > 50 
+        ? `${thread.content.substring(0, 50)}...` 
+        : thread.content;
+  }
 };
 
 /**
@@ -64,7 +70,6 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
-  const threadUpdateTimeoutRef = useRef<NodeJS.Timeout>();
 
   /**
    * Fetches threads with pagination
@@ -72,7 +77,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
   const fetchThreads = useCallback(async (pageNum: number) => {
     try {
       setLoading(true);
-      const response = await messageService.get(`/messages/threads`, {
+      const response = await messageService.getThreads({
         page: pageNum,
         limit: THREADS_PER_PAGE
       });
@@ -119,10 +124,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
    * Handles real-time thread updates
    */
   useEffect(() => {
-    const socket = messageService.socket;
-    if (!socket) return;
-
-    socket.on('thread:update', (event: { threadId: string; messageId: string }) => {
+    const subscription = messageService.subscribeToUpdates((event) => {
       setThreads(prevThreads => {
         const threadIndex = prevThreads.findIndex(t => t.id === event.threadId);
         if (threadIndex === -1) return prevThreads;
@@ -140,7 +142,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
     });
 
     return () => {
-      socket.off('thread:update');
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -151,7 +153,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
     onThreadSelect(threadId);
 
     try {
-      await messageService.put(`/messages/threads/${threadId}/read`);
+      await messageService.markAsRead(threadId);
       
       setThreads(prevThreads => 
         prevThreads.map(thread => 
@@ -183,7 +185,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
       for (const op of operations) {
         try {
           if (op.type === 'markAsRead') {
-            await messageService.put(`/messages/threads/${op.threadId}/read`);
+            await messageService.markAsRead(op.threadId);
           }
         } catch (err) {
           console.error('Failed to process offline operation:', err);
