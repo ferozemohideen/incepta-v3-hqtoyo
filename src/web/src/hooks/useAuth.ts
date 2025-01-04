@@ -14,10 +14,10 @@ import { useCallback, useEffect, useRef } from 'react'; // ^18.0.0
 import { useDispatch, useSelector } from 'react-redux'; // ^8.0.0
 import {
   login,
-  verifyMFA,
-  selectAuth,
   refreshToken,
   logout,
+  verifyMFA,
+  selectAuth,
   TOKEN_CONFIG
 } from '../store/auth.slice';
 import {
@@ -41,6 +41,7 @@ interface UseAuthReturn {
   } | null;
   mfaRequired: boolean;
   isAuthenticated: boolean;
+  permissions: string[];
   securityContext: {
     lastActivity: number;
     sessionExpiry: Date | null;
@@ -164,8 +165,7 @@ export const useAuth = (): UseAuthReturn => {
         throw new Error('Terms and conditions must be accepted');
       }
 
-      // Registration is handled by the parent component since register action is not available
-      throw new Error('Registration functionality not implemented');
+      throw new Error('Registration not implemented in auth slice');
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -177,12 +177,7 @@ export const useAuth = (): UseAuthReturn => {
    */
   const handleMFAVerification = useCallback(async (mfaData: MFACredentials): Promise<void> => {
     try {
-      const result = await dispatch(verifyMFA({
-        token: mfaData.token,
-        tempToken: mfaData.tempToken,
-        method: mfaData.method,
-        verificationId: mfaData.verificationId
-      }));
+      const result = await dispatch(verifyMFA(mfaData.token));
       await result.unwrap();
     } catch (error) {
       console.error('MFA verification failed:', error);
@@ -223,7 +218,7 @@ export const useAuth = (): UseAuthReturn => {
       await handleLogout();
       throw error;
     }
-  }, [dispatch]);
+  }, [dispatch, handleLogout]);
 
   return {
     user: authState.user,
@@ -231,6 +226,7 @@ export const useAuth = (): UseAuthReturn => {
     error: authState.error,
     mfaRequired: authState.requiresMFA,
     isAuthenticated: authState.isAuthenticated,
+    permissions: authState.user?.permissions || [],
     securityContext,
     handleLogin,
     handleRegister,
