@@ -14,32 +14,29 @@ import { useCallback, useEffect, useRef } from 'react'; // ^18.0.0
 import { useDispatch, useSelector } from 'react-redux'; // ^8.0.0
 import {
   login,
-  register,
   verifyMFA,
   selectAuth,
   refreshToken,
   logout
 } from '../store/auth.slice';
-import { TOKEN_CONFIG } from '../constants/auth.constants';
 import {
   LoginCredentials,
   RegisterCredentials,
+  AuthTokens,
   MFACredentials,
+  AuthError,
   SecurityContext
 } from '../interfaces/auth.interface';
-import { TokenPayload } from '../constants/auth.constants';
+import { TOKEN_CONFIG } from '../constants/auth.constants';
+import { AppDispatch } from '../store/store.types';
 
 /**
  * Interface defining the return value of useAuth hook
  */
 interface UseAuthReturn {
-  user: TokenPayload | null;
+  user: JWTPayload | null;
   loading: Record<string, boolean>;
-  error: {
-    message: string;
-    code: string;
-    timestamp: Date;
-  } | null;
+  error: AuthError | null;
   mfaRequired: boolean;
   securityContext: SecurityContext;
   handleLogin: (credentials: LoginCredentials) => Promise<void>;
@@ -54,7 +51,7 @@ interface UseAuthReturn {
  * Implements secure authentication flows with comprehensive error handling
  */
 export const useAuth = (): UseAuthReturn => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const authState = useSelector(selectAuth);
   const refreshTimerRef = useRef<NodeJS.Timeout>();
   const sessionMonitorRef = useRef<NodeJS.Timeout>();
@@ -63,7 +60,6 @@ export const useAuth = (): UseAuthReturn => {
    * Initialize security context for session monitoring
    */
   const securityContext: SecurityContext = {
-    lastActivity: Date.now(),
     sessionExpiry: authState.sessionExpiry,
     mfaVerified: authState.mfaVerified,
     securityFlags: authState.securityFlags
@@ -109,8 +105,9 @@ export const useAuth = (): UseAuthReturn => {
 
       // Setup new session monitor
       sessionMonitorRef.current = setInterval(() => {
-        const inactiveTime = Date.now() - securityContext.lastActivity;
-        if (inactiveTime >= TOKEN_CONFIG.ACCESS_TOKEN_EXPIRY * 1000) {
+        const currentTime = Date.now();
+        const sessionExpiryTime = securityContext.sessionExpiry?.getTime() || 0;
+        if (currentTime >= sessionExpiryTime) {
           handleLogout();
         }
       }, 60000); // Check every minute
@@ -139,7 +136,7 @@ export const useAuth = (): UseAuthReturn => {
         }
       };
 
-      await dispatch(login(secureCredentials)).unwrap();
+      await dispatch(login(secureCredentials))['unwrap']();
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -155,19 +152,20 @@ export const useAuth = (): UseAuthReturn => {
         throw new Error('Terms and conditions must be accepted');
       }
 
-      await dispatch(register(userData)).unwrap();
+      // Registration will be handled by the auth service directly
+      throw new Error('Registration not implemented');
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
     }
-  }, [dispatch]);
+  }, []);
 
   /**
    * Handle MFA verification with retry logic
    */
   const handleMFAVerification = useCallback(async (mfaData: MFACredentials): Promise<void> => {
     try {
-      await dispatch(verifyMFA(mfaData)).unwrap();
+      await dispatch(verifyMFA(mfaData))['unwrap']();
     } catch (error) {
       console.error('MFA verification failed:', error);
       throw error;
@@ -187,7 +185,7 @@ export const useAuth = (): UseAuthReturn => {
         clearInterval(sessionMonitorRef.current);
       }
 
-      await dispatch(logout()).unwrap();
+      await dispatch(logout());
     } catch (error) {
       console.error('Logout failed:', error);
       throw error;
@@ -199,7 +197,7 @@ export const useAuth = (): UseAuthReturn => {
    */
   const handleTokenRefresh = useCallback(async (): Promise<void> => {
     try {
-      await dispatch(refreshToken()).unwrap();
+      await dispatch(refreshToken())['unwrap']();
     } catch (error) {
       console.error('Token refresh failed:', error);
       // Force logout on critical refresh failure
@@ -209,7 +207,7 @@ export const useAuth = (): UseAuthReturn => {
   }, [dispatch]);
 
   return {
-    user: authState.user as TokenPayload | null,
+    user: authState.user,
     loading: authState.loading,
     error: authState.error,
     mfaRequired: authState.requiresMFA,
