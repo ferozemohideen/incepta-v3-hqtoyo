@@ -47,10 +47,10 @@ const useChartData = (data: ChartDataPoint[]) => {
       ...point,
       timestamp: new Date(point.timestamp).toLocaleString(),
       // Handle multiple series data
-      ...(Array.isArray(point.value) && point.series 
-        ? point.series.reduce((acc, series, idx) => ({
+      ...(Array.isArray(point.value) 
+        ? point.series?.reduce((acc, series, idx) => ({
             ...acc,
-            [series]: Array.isArray(point.value) ? point.value[idx] : point.value
+            [series]: point.value[idx]
           }), {})
         : { value: point.value })
     }));
@@ -58,11 +58,11 @@ const useChartData = (data: ChartDataPoint[]) => {
 
   const seriesConfig = useMemo(() => {
     const firstPoint = data[0];
-    if (Array.isArray(firstPoint?.value) && firstPoint?.series) {
-      return firstPoint.series.map((series) => ({
+    if (Array.isArray(firstPoint?.value) && firstPoint?.series?.length > 0) {
+      return firstPoint.series.map((series, index) => ({
         name: series,
         dataKey: series,
-        stroke: useTheme().palette.primary[series === firstPoint.series[0] ? 'main' : 'light']
+        stroke: useTheme().palette.primary[index === 0 ? 'main' : 'light']
       }));
     }
     return [{
@@ -86,7 +86,7 @@ export const StatisticsChart: React.FC<StatisticsChartProps> = ({
   loading = false,
   height = 'auto',
   showGrid = true,
-  updateInterval = 5000,
+  updateInterval: _updateInterval = 5000,
   accessibilityLabel,
 }) => {
   const theme = useTheme();
@@ -121,11 +121,8 @@ export const StatisticsChart: React.FC<StatisticsChartProps> = ({
     const chart = chartRef.current;
     if (chart) {
       chart.addEventListener('keydown', handleKeyboardNavigation);
-      return () => {
-        chart.removeEventListener('keydown', handleKeyboardNavigation);
-      };
+      return () => chart.removeEventListener('keydown', handleKeyboardNavigation);
     }
-    return undefined;
   }, [handleKeyboardNavigation]);
 
   // Calculate responsive dimensions
@@ -203,7 +200,7 @@ export const StatisticsChart: React.FC<StatisticsChartProps> = ({
                     paddingTop: theme.spacing(2),
                   }}
                 />
-                {seriesConfig.map((config) => (
+                {seriesConfig.map((config, index) => (
                   <Line
                     key={config.name}
                     type="monotone"
