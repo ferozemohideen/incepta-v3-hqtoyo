@@ -35,7 +35,8 @@ const MessagesPage: React.FC = () => {
   const { 
     isConnected, 
     connectionState, 
-    connect
+    connect, 
+    disconnect 
   } = useWebSocket(
     import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
@@ -62,8 +63,13 @@ const MessagesPage: React.FC = () => {
       }));
 
       // Update selected contact based on thread
-      const threadInfo = await messageService.getThreadInfo(threadId);
-      const contactId = threadInfo.participantIds.find((id: string) => id !== user?.id);
+      const threadInfo = await messageService.getThreads({
+        threadId,
+        page: '1',
+        limit: '1'
+      });
+      
+      const contactId = threadInfo.threads[0]?.participantIds.find(id => id !== user?.id);
 
       setState(prev => ({
         ...prev,
@@ -94,11 +100,17 @@ const MessagesPage: React.FC = () => {
       }));
 
       // Find or create thread for contact
-      const thread = await messageService.findOrCreateThread(contact.id);
+      const response = await messageService.getThreads({
+        participantId: contact.id,
+        page: '1',
+        limit: '1'
+      });
       
+      const thread = response.threads[0];
+
       setState(prev => ({
         ...prev,
-        selectedThreadId: thread.id,
+        selectedThreadId: thread?.id || null,
         isLoading: false
       }));
 
@@ -133,9 +145,9 @@ const MessagesPage: React.FC = () => {
     connect();
 
     return () => {
-      // Cleanup WebSocket connection
+      disconnect();
     };
-  }, [connect]);
+  }, [connect, disconnect]);
 
   return (
     <Box
