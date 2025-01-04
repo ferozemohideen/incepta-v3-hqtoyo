@@ -11,14 +11,11 @@
  * - Optimistic updates
  */
 
-import { AxiosResponse } from 'axios'; // ^1.4.0
 import LRUCache from 'lru-cache'; // ^9.1.1
-import { v4 as uuidv4 } from 'uuid'; // ^9.0.0
 
 import { 
   Technology, 
   TechnologySearchParams, 
-  PatentStatus,
   isTechnology 
 } from '../interfaces/technology.interface';
 import { apiService } from './api.service';
@@ -49,6 +46,7 @@ interface TechnologyMatchResponse {
 class TechnologyService {
   private readonly baseUrl: string;
   private readonly cache: LRUCache<string, any>;
+  private readonly requestQueue: Set<Promise<any>>;
 
   constructor() {
     this.baseUrl = API_ENDPOINTS.TECHNOLOGIES.BASE;
@@ -60,6 +58,8 @@ class TechnologyService {
       updateAgeOnGet: true,
       allowStale: false
     });
+
+    this.requestQueue = new Set();
   }
 
   /**
