@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ErrorBoundary } from 'react-error-boundary';
+import { useNavigate } from 'react-router-dom'; // v6.14.0
+import { ErrorBoundary } from 'react-error-boundary'; // v4.0.11
 import RegisterForm from '../../components/auth/RegisterForm';
 import AuthLayout from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
