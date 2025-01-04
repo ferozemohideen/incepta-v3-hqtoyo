@@ -24,15 +24,12 @@ export enum MessageStatus {
 }
 
 /**
- * Enumeration of message delivery statuses for granular tracking
+ * Enumeration of message delivery statuses (alias for backward compatibility)
  */
 export enum MessageDeliveryStatus {
-  PENDING = 'PENDING',
-  SENDING = 'SENDING',
   SENT = 'SENT',
   DELIVERED = 'DELIVERED',
-  READ = 'READ',
-  FAILED = 'FAILED'
+  READ = 'READ'
 }
 
 /**
@@ -76,6 +73,7 @@ export interface DocumentMetadata {
 
 /**
  * Interface for document message metadata including file details and tracking
+ * @deprecated Use DocumentMetadata instead
  */
 export interface MessageMetadata {
   /**
