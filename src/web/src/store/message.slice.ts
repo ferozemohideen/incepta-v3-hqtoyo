@@ -51,11 +51,11 @@ export const fetchThreads = createAsyncThunk(
   'messages/fetchThreads',
   async ({ page, limit }: { 
     page: number; 
-    limit: number;
+    limit: number; 
   }) => {
     try {
-      const response = await messageService.getThreads(page, limit);
-      return response;
+      const response = await messageService.getMessageThread(page, limit);
+      return response.thread;
     } catch (error) {
       throw error;
     }
@@ -73,8 +73,8 @@ export const fetchMessages = createAsyncThunk(
     limit: number; 
   }) => {
     try {
-      const response = await messageService.getMessages(threadId, page, limit);
-      return response;
+      const response = await messageService.getMessageThread(threadId, page, limit);
+      return response.messages;
     } catch (error) {
       throw error;
     }
@@ -197,7 +197,7 @@ const messageSlice = createSlice({
         .filter(m => m.threadId === threadId && m.status !== MessageStatus.READ)
         .forEach(m => {
           m.status = MessageStatus.READ;
-          messageService.markAsRead(m.id);
+          messageService.updateMessageStatus(m.id, MessageStatus.READ);
         });
     }
   },
