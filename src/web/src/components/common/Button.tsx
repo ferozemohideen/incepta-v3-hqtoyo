@@ -25,8 +25,7 @@ const StyledButton = styled(Button, {
   isLoading?: boolean;
   hasStartIcon?: boolean;
   hasEndIcon?: boolean;
-  $isTTOVariant?: boolean;
-}>(({ theme, variant, color, size, isLoading, hasStartIcon, hasEndIcon, $isTTOVariant }) => ({
+}>(({ theme, variant: variantProp, color, size, isLoading, hasStartIcon, hasEndIcon }) => ({
   // Base styles following Material Design 3.0
   position: 'relative',
   minWidth: '64px',
@@ -54,8 +53,8 @@ const StyledButton = styled(Button, {
     minHeight: '48px',
   }),
 
-  // TTO variant styles
-  ...($isTTOVariant && {
+  // Custom TTO variant styles
+  ...((variantProp as string) === 'tto' && {
     backgroundColor: COLORS.light.tto.license.available,
     color: '#fff',
     '&:hover': {
@@ -136,17 +135,14 @@ export const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProp
       }
     };
 
-    const isTTOVariant = variant === 'tto';
-    const baseVariant = isTTOVariant ? 'contained' : variant;
-
     // Render button with proper accessibility attributes
     const button = (
       <StyledButton
         ref={ref}
         disabled={disabled || loading}
         size={size}
-        variant={baseVariant}
-        color={color === 'tto' ? 'primary' : color}
+        variant={variant}
+        color={color}
         fullWidth={fullWidth}
         startIcon={!loading && startIcon}
         endIcon={!loading && endIcon}
@@ -158,7 +154,6 @@ export const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProp
         isLoading={loading}
         hasStartIcon={!!startIcon}
         hasEndIcon={!!endIcon}
-        $isTTOVariant={isTTOVariant}
         {...props}
       >
         {children}
