@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -16,7 +16,8 @@ import GrantApplicationForm from '../../components/grants/GrantApplicationForm';
 import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant';
 import { grantService } from '../../services/grant.service';
 import { useNotification } from '../../hooks/useNotification';
-import { IGrant } from '../../interfaces/grant.interface';
+import { ANIMATION } from '../../constants/ui.constants';
+import { IDocumentRequirement } from '../../interfaces/grant.interface';
 
 // Types
 interface ValidationError {
@@ -41,6 +42,7 @@ const Application: React.FC = () => {
   // Hooks
   const { grantId } = useParams<{ grantId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess, showError, showWarning } = useNotification();
 
   // State
@@ -80,7 +82,7 @@ const Application: React.FC = () => {
       // Validate all sections
       const validationErrors = await Promise.all(
         Object.entries(applicationData.sections).map(async ([sectionId, content]) => {
-          const isValid = await grantService.validateSection(sectionId, content);
+          const isValid = await grantService.validateSection(sectionId.toString(), content);
           return isValid ? null : {
             section: sectionId,
             message: 'Section validation failed'
@@ -118,12 +120,19 @@ const Application: React.FC = () => {
     }
   }, [grantId, showSuccess, showError]);
 
-  // Memoized progress calculation
-  const totalProgress = useMemo(() => {
-    if (!state.progress || Object.keys(state.progress).length === 0) return 0;
-    const values = Object.values(state.progress);
-    return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
-  }, [state.progress]);
+  /**
+   * Handles step navigation with validation
+   */
+  const handleStepChange = useCallback((newStep: number) => {
+    // Validate current step before proceeding
+    if (state.validationErrors.length > 0) {
+      showWarning('Please correct validation errors before proceeding');
+      return;
+    }
+
+    setState(prev => ({ ...prev, activeStep: newStep }));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [state.validationErrors, showWarning]);
 
   if (state.loading) {
     return (
@@ -142,6 +151,13 @@ const Application: React.FC = () => {
     );
   }
 
+  const documentRequirements = [
+    state.grant.requirements.technicalVolume,
+    state.grant.requirements.businessPlan,
+    state.grant.requirements.budget,
+    ...state.grant.requirements.additionalDocuments
+  ];
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box mb={4}>
@@ -155,9 +171,9 @@ const Application: React.FC = () => {
 
       <Box mb={4}>
         <Stepper activeStep={state.activeStep} alternativeLabel>
-          {state.grant.requirements.sections.map((section) => (
-            <Step key={section.id}>
-              <StepLabel>{section.title}</StepLabel>
+          {documentRequirements.map((requirement: IDocumentRequirement) => (
+            <Step key={requirement.name}>
+              <StepLabel>{requirement.name}</StepLabel>
             </Step>
           ))}
         </Stepper>
@@ -169,13 +185,15 @@ const Application: React.FC = () => {
             grantId={grantId!}
             onSuccess={handleApplicationSubmit}
             onError={(error) => showError(error.message)}
-            onAutoSave={handleDraftSave}
           />
         </Box>
 
         <Box width={400}>
           <GrantWritingAssistant
-            grant={state.grant}
+            grant={{
+              ...state.grant,
+              deadline: new Date(state.grant.deadline).toISOString()
+            }}
             onSave={handleDraftSave}
             onSubmit={handleApplicationSubmit}
           />
