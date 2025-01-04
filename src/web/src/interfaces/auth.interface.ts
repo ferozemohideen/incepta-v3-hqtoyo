@@ -102,18 +102,16 @@ export interface ResetPasswordCredentials {
 }
 
 /**
- * Interface defining authentication error structure for consistent
- * error handling across the authentication system.
+ * Interface for authentication error handling with detailed error information
+ * for proper error handling and user feedback.
  */
 export interface AuthError {
-  /** Error code for programmatic error handling */
+  /** Error code for identifying specific error types */
   code: string;
   /** Human-readable error message */
   message: string;
-  /** HTTP status code associated with the error */
-  status: number;
   /** Additional error details for debugging */
   details?: Record<string, unknown>;
-  /** Timestamp when the error occurred */
-  timestamp: number;
+  /** HTTP status code associated with the error */
+  statusCode?: number;
 }
