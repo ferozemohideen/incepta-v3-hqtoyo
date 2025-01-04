@@ -138,6 +138,16 @@ export interface MessageThread {
   lastMessageId: string;
 
   /**
+   * Type of the last message in the thread
+   */
+  type: MessageType;
+
+  /**
+   * Content of the last message in the thread
+   */
+  content: string;
+
+  /**
    * Count of unread messages in the thread
    */
   unreadCount: number;
