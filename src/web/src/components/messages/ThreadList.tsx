@@ -45,9 +45,9 @@ const formatThreadPreview = (thread: MessageThread): string => {
   const lastMessage = thread.lastMessageId;
   if (!lastMessage) return '';
 
-  return thread.content && thread.content.length > 50 
+  return thread.content.length > 50 
     ? `${thread.content.substring(0, 50)}...` 
-    : (thread.content || '');
+    : thread.content;
 };
 
 /**
@@ -72,7 +72,10 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
   const fetchThreads = useCallback(async (pageNum: number) => {
     try {
       setLoading(true);
-      const response = await messageService.getThreads(pageNum, THREADS_PER_PAGE);
+      const response = await messageService.get(`/messages/threads`, {
+        page: pageNum,
+        limit: THREADS_PER_PAGE
+      });
 
       setThreads(prevThreads => 
         pageNum === 1 ? response.threads : [...prevThreads, ...response.threads]
@@ -116,15 +119,18 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
    * Handles real-time thread updates
    */
   useEffect(() => {
-    const subscription = messageService.subscribeToThreadUpdates((threadId: string, messageId: string) => {
+    const socket = messageService.socket;
+    if (!socket) return;
+
+    socket.on('thread:update', (event: { threadId: string; messageId: string }) => {
       setThreads(prevThreads => {
-        const threadIndex = prevThreads.findIndex(t => t.id === threadId);
+        const threadIndex = prevThreads.findIndex(t => t.id === event.threadId);
         if (threadIndex === -1) return prevThreads;
 
         const updatedThreads = [...prevThreads];
         updatedThreads[threadIndex] = {
           ...updatedThreads[threadIndex],
-          lastMessageId: messageId,
+          lastMessageId: event.messageId,
           updatedAt: new Date(),
           unreadCount: updatedThreads[threadIndex].unreadCount + 1
         };
@@ -134,7 +140,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
     });
 
     return () => {
-      subscription.unsubscribe();
+      socket.off('thread:update');
     };
   }, []);
 
@@ -145,7 +151,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
     onThreadSelect(threadId);
 
     try {
-      await messageService.markAsRead([threadId]);
+      await messageService.put(`/messages/threads/${threadId}/read`);
       
       setThreads(prevThreads => 
         prevThreads.map(thread => 
@@ -177,7 +183,7 @@ const ThreadList = React.memo(({ onThreadSelect, selectedThreadId }: ThreadListP
       for (const op of operations) {
         try {
           if (op.type === 'markAsRead') {
-            await messageService.markAsRead([op.threadId]);
+            await messageService.put(`/messages/threads/${op.threadId}/read`);
           }
         } catch (err) {
           console.error('Failed to process offline operation:', err);
