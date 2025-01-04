@@ -10,7 +10,9 @@ import {
   MessageThread,
   MessageType,
   MessageStatus,
-  MessageMetadata
+  MessageEvent,
+  MessageEventType,
+  DocumentMetadata
 } from '../interfaces/message.interface';
 import { messageService } from '../services/message.service';
 
@@ -26,7 +28,7 @@ interface MessageState {
   unreadCount: number;
   drafts: Map<string, Message>;
   offlineQueue: Message[];
-  documentUploads: Map<string, MessageMetadata>;
+  documentUploads: Map<string, DocumentMetadata>;
 }
 
 /**
@@ -49,13 +51,14 @@ const initialState: MessageState = {
  */
 export const fetchThreads = createAsyncThunk(
   'messages/fetchThreads',
-  async ({ page, limit }: { 
+  async ({ page, limit, forceRefresh = false }: { 
     page: number; 
-    limit: number;
+    limit: number; 
+    forceRefresh?: boolean;
   }) => {
     try {
-      const response = await messageService.getMessageThread(page, limit);
-      return response.thread;
+      const response = await messageService.getThreads(page.toString(), limit.toString());
+      return response;
     } catch (error) {
       throw error;
     }
@@ -73,8 +76,8 @@ export const fetchMessages = createAsyncThunk(
     limit: number; 
   }) => {
     try {
-      const response = await messageService.getMessageThread(threadId, page, limit);
-      return response.messages;
+      const response = await messageService.getMessages(threadId, page, limit);
+      return response;
     } catch (error) {
       throw error;
     }
@@ -197,7 +200,7 @@ const messageSlice = createSlice({
         .filter(m => m.threadId === threadId && m.status !== MessageStatus.READ)
         .forEach(m => {
           m.status = MessageStatus.READ;
-          messageService.updateMessageStatus(m.id, MessageStatus.READ);
+          messageService.markAsRead(m.id);
         });
     }
   },
@@ -210,9 +213,9 @@ const messageSlice = createSlice({
       })
       .addCase(fetchThreads.fulfilled, (state, action) => {
         state.loading = false;
-        state.threads = action.payload;
-        state.unreadCount = action.payload.reduce<number>(
-          (count: number, thread: MessageThread) => count + thread.unreadCount, 
+        state.threads = [...action.payload];
+        state.unreadCount = action.payload.reduce(
+          (count, thread) => count + thread.unreadCount, 
           0
         );
       })
