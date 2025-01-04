@@ -11,16 +11,17 @@
  * - Retry logic for failed requests
  */
 
-import { apiService } from './api.service'; // ^1.0.0
+import { apiService } from './api.service';
 import { API_ENDPOINTS } from '../constants/api.constants';
-import retry from 'axios-retry'; // ^3.5.0
+import retry from 'axios-retry';
 import {
   IGrant,
   IGrantApplication,
   IGrantSearchParams,
   GrantStatus,
   GrantMatchScore,
-  GrantStats
+  GrantStats,
+  IDocumentRequirement
 } from '../interfaces/grant.interface';
 
 /**
@@ -45,9 +46,7 @@ export interface GrantService {
   getGrantStats(): Promise<GrantStats>;
   saveGrantDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
   uploadApplicationDocument(applicationId: string, document: File): Promise<void>;
-  validateApplication(applicationData: Partial<IGrantApplication>): Promise<boolean>;
-  validateSection(sectionId: string, content: any): Promise<boolean>;
-  saveDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
+  validateSection(applicationId: string, sectionName: string, data: any): Promise<boolean>;
 }
 
 /**
@@ -239,45 +238,23 @@ class GrantServiceImpl implements GrantService {
   }
 
   /**
-   * Validate grant application before submission
+   * Validate individual sections of a grant application
    */
-  async validateApplication(applicationData: Partial<IGrantApplication>): Promise<boolean> {
+  async validateSection(
+    applicationId: string,
+    sectionName: string,
+    data: any
+  ): Promise<boolean> {
     try {
-      const response = await apiService.post<{ isValid: boolean }>(
-        `${API_ENDPOINTS.GRANTS.BASE}/validate`,
-        applicationData
+      const response = await apiService.post<{ valid: boolean }>(
+        `${API_ENDPOINTS.GRANTS.BASE}/${applicationId}/validate/${sectionName}`,
+        { data }
       );
-      return response.isValid;
-    } catch (error) {
-      console.error('Application validation failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Validate individual grant application section
-   */
-  async validateSection(sectionId: string, content: any): Promise<boolean> {
-    try {
-      const response = await apiService.post<{ isValid: boolean }>(
-        `${API_ENDPOINTS.GRANTS.BASE}/validate-section/${sectionId}`,
-        { content }
-      );
-      return response.isValid;
+      return response.valid;
     } catch (error) {
       console.error('Section validation failed:', error);
       throw error;
     }
-  }
-
-  /**
-   * Save draft (alias for saveGrantDraft for backward compatibility)
-   */
-  async saveDraft(
-    grantId: string,
-    draftData: Partial<IGrantApplication>
-  ): Promise<IGrantApplication> {
-    return this.saveGrantDraft(grantId, draftData);
   }
 
   /**
