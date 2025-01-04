@@ -220,7 +220,6 @@ export const CustomTable = React.memo<TableProps>(({
 
   return (
     <StyledTableContainer
-      component={Paper}
       role="region"
       aria-label={ariaLabel}
       tabIndex={0}
