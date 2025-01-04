@@ -14,43 +14,31 @@ import { useCallback, useEffect, useRef } from 'react'; // ^18.0.0
 import { useDispatch, useSelector } from 'react-redux'; // ^8.0.0
 import {
   login,
+  register,
   verifyMFA,
   selectAuth,
   refreshToken,
-  logout,
-  TOKEN_CONFIG
+  logout
 } from '../store/auth.slice';
+import { TOKEN_CONFIG } from '../constants/auth.constants';
 import {
   LoginCredentials,
   RegisterCredentials,
-  AuthTokens,
-  MFACredentials
+  MFACredentials,
+  AuthError,
+  SecurityContext
 } from '../interfaces/auth.interface';
-import { TokenPayload } from '../constants/api.constants';
+import { JWTPayload } from '../constants/auth.constants';
 
 /**
  * Interface defining the return value of useAuth hook
  */
 interface UseAuthReturn {
-  user: TokenPayload | null;
+  user: JWTPayload | null;
   loading: Record<string, boolean>;
-  error: {
-    message: string;
-    code: string;
-    timestamp: Date;
-  } | null;
+  error: AuthError | null;
   mfaRequired: boolean;
-  isAuthenticated: boolean;
-  permissions: string[];
-  securityContext: {
-    lastActivity: number;
-    sessionExpiry: Date | null;
-    mfaVerified: boolean;
-    securityFlags: {
-      passwordChangeRequired: boolean;
-      accountLocked: boolean;
-    };
-  };
+  securityContext: SecurityContext;
   handleLogin: (credentials: LoginCredentials) => Promise<void>;
   handleRegister: (userData: RegisterCredentials) => Promise<void>;
   handleMFAVerification: (mfaData: MFACredentials) => Promise<void>;
@@ -71,7 +59,7 @@ export const useAuth = (): UseAuthReturn => {
   /**
    * Initialize security context for session monitoring
    */
-  const securityContext = {
+  const securityContext: SecurityContext = {
     lastActivity: Date.now(),
     sessionExpiry: authState.sessionExpiry,
     mfaVerified: authState.mfaVerified,
@@ -148,7 +136,7 @@ export const useAuth = (): UseAuthReturn => {
         }
       };
 
-      await dispatch(login(secureCredentials))['unwrap']();
+      await dispatch(login(secureCredentials)).unwrap();
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -164,20 +152,19 @@ export const useAuth = (): UseAuthReturn => {
         throw new Error('Terms and conditions must be accepted');
       }
 
-      // Registration is handled by auth service directly
-      throw new Error('Registration not implemented');
+      await dispatch(register(userData)).unwrap();
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
     }
-  }, []);
+  }, [dispatch]);
 
   /**
    * Handle MFA verification with retry logic
    */
   const handleMFAVerification = useCallback(async (mfaData: MFACredentials): Promise<void> => {
     try {
-      await dispatch(verifyMFA(mfaData.token))['unwrap']();
+      await dispatch(verifyMFA(mfaData)).unwrap();
     } catch (error) {
       console.error('MFA verification failed:', error);
       throw error;
@@ -197,7 +184,7 @@ export const useAuth = (): UseAuthReturn => {
         clearInterval(sessionMonitorRef.current);
       }
 
-      await dispatch(logout());
+      await dispatch(logout()).unwrap();
     } catch (error) {
       console.error('Logout failed:', error);
       throw error;
@@ -209,7 +196,7 @@ export const useAuth = (): UseAuthReturn => {
    */
   const handleTokenRefresh = useCallback(async (): Promise<void> => {
     try {
-      await dispatch(refreshToken())['unwrap']();
+      await dispatch(refreshToken()).unwrap();
     } catch (error) {
       console.error('Token refresh failed:', error);
       // Force logout on critical refresh failure
@@ -223,8 +210,6 @@ export const useAuth = (): UseAuthReturn => {
     loading: authState.loading,
     error: authState.error,
     mfaRequired: authState.requiresMFA,
-    isAuthenticated: authState.isAuthenticated,
-    permissions: authState.user?.permissions || [],
     securityContext,
     handleLogin,
     handleRegister,
