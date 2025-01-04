@@ -1,13 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Skeleton } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 
 // Internal components and services
 import MainLayout from '../../layouts/MainLayout';
 import GrantList from '../../components/grants/GrantList';
 import { useNotification } from '../../hooks/useNotification';
+import { grantService } from '../../services/grant.service';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
-import { IGrant, IGrantSearchParams, GrantSortField, SortOrder } from '../../interfaces/grant.interface';
+import { IGrant, IGrantSearchParams } from '../../interfaces/grant.interface';
 
 /**
  * Interface for grant search state with URL synchronization
@@ -26,21 +27,31 @@ interface IGrantSearchState {
  */
 const GrantListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { showError } = useNotification();
-  const [isLoading, setIsLoading] = useState(true);
+  const { showError, showSuccess } = useNotification();
 
   // Initialize search state
   const [searchState, setSearchState] = useState<IGrantSearchState>({
     filters: {
       page: 1,
       limit: 10,
-      sortBy: GrantSortField.DEADLINE,
-      sortOrder: SortOrder.ASC
+      sortBy: 'deadline',
+      sortOrder: 'asc'
     },
-    sortBy: GrantSortField.DEADLINE,
-    sortOrder: SortOrder.ASC,
+    sortBy: 'deadline',
+    sortOrder: 'asc',
     page: 1
   });
+
+  // Subscribe to real-time grant updates
+  useEffect(() => {
+    const subscription = grantService.subscribeToGrantUpdates((update) => {
+      showSuccess(`Grant "${update.title}" has been updated`);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [showSuccess]);
 
   /**
    * Handle grant selection and navigation
@@ -103,27 +114,13 @@ const GrantListPage: React.FC = () => {
             Grant Opportunities
           </Typography>
 
-          {/* Loading State */}
-          {isLoading ? (
-            <Box sx={{ width: '100%' }}>
-              {[...Array(3)].map((_, index) => (
-                <Skeleton
-                  key={index}
-                  variant="rectangular"
-                  height={200}
-                  sx={{ mb: 2, borderRadius: 1 }}
-                />
-              ))}
-            </Box>
-          ) : (
-            /* Grant List Component */
-            <GrantList
-              initialFilters={searchState.filters}
-              onGrantSelect={handleGrantSelect}
-              onError={handleError}
-              onFilterChange={handleFilterChange}
-            />
-          )}
+          {/* Grant List Component */}
+          <GrantList
+            initialFilters={searchState.filters}
+            onGrantSelect={handleGrantSelect}
+            onError={handleError}
+            onFilterChange={handleFilterChange}
+          />
         </Box>
       </MainLayout>
     </ErrorBoundary>
