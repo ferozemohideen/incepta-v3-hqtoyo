@@ -13,14 +13,13 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Internal imports
-import TechnologyGrid, { TechnologyGridProps } from '../../components/technologies/TechnologyGrid';
+import TechnologyGrid from '../../components/technologies/TechnologyGrid';
 import TechnologyFilters from '../../components/technologies/TechnologyFilters';
 import { technologyService } from '../../services/technology.service';
 import { 
   Technology,
   TechnologySearchParams,
-  PatentStatus,
-  DevelopmentStage
+  PatentStatus
 } from '../../interfaces/technology.interface';
 
 // Default search parameters
@@ -46,7 +45,6 @@ const TechnologyList: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   // Component state
   const [technologies, setTechnologies] = useState<Technology[]>([]);
@@ -58,10 +56,10 @@ const TechnologyList: React.FC = () => {
     const urlParams = Object.fromEntries(searchParams.entries());
     return {
       ...DEFAULT_SEARCH_PARAMS,
-      query: urlParams.query || '',
-      patentStatus: urlParams.patentStatus ? 
-        (urlParams.patentStatus as string).split(',') as PatentStatus[] : [],
-      page: parseInt(urlParams.page || '1', 10)
+      query: urlParams['query'] || '',
+      patentStatus: urlParams['patentStatus'] ? 
+        (urlParams['patentStatus'] as string).split(',') as PatentStatus[] : [],
+      page: parseInt(urlParams['page'] || '1', 10)
     };
   });
 
@@ -204,7 +202,7 @@ const TechnologyList: React.FC = () => {
               onPageChange={handlePageChange}
               onTechnologySelect={handleTechnologySelect}
               loading={loading}
-              error={error}
+              error={error ? new Error(error) : null}
               aria-label="Technology listings"
             />
           </Box>

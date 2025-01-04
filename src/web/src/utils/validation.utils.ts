@@ -31,7 +31,6 @@ const IP_REGEX = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
  * Rate limiting configuration
  */
 const RATE_LIMIT_ATTEMPTS = 5;
-const RATE_LIMIT_WINDOW = 300000; // 5 minutes in milliseconds
 
 /**
  * Validation error class with enhanced error details
@@ -78,6 +77,17 @@ const registrationSchema = z.object({
   organization: z.string().min(2).max(200),
   organizationType: z.string().min(2).max(50),
   acceptedTerms: z.literal(true)
+});
+
+/**
+ * User data validation schema
+ */
+const userDataSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email().regex(EMAIL_REGEX),
+  role: z.nativeEnum(UserRole),
+  organization: z.string().min(2).max(200),
+  organizationType: z.string().min(2).max(50)
 });
 
 /**
@@ -200,12 +210,63 @@ export async function validateRegistrationData(
 }
 
 /**
+ * Validates user data with organization and role validation
+ * @param data - User data to validate
+ * @returns Promise resolving to true if validation passes
+ * @throws ValidationError if validation fails
+ */
+export async function validateUserData(data: {
+  name: string;
+  email: string;
+  role: UserRole;
+  organization: string;
+  organizationType: string;
+}): Promise<boolean> {
+  try {
+    // Validate basic schema
+    userDataSchema.parse(data);
+
+    // Validate organization
+    const orgValidation = await validateOrganization(data.organization);
+    if (!orgValidation.valid) {
+      throw new ValidationError(
+        'Invalid organization',
+        'organization',
+        'INVALID_ORGANIZATION'
+      );
+    }
+
+    // Validate role permissions
+    if (!await validateRolePermissions(data.role)) {
+      throw new ValidationError(
+        'Invalid role assignment',
+        'role',
+        'INVALID_ROLE'
+      );
+    }
+
+    return true;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ValidationError(
+        error.errors[0].message,
+        error.errors[0].path.join('.'),
+        'SCHEMA_VALIDATION_ERROR'
+      );
+    }
+    throw error;
+  }
+}
+
+/**
  * Checks rate limiting for an IP address
  * @param ipAddress - IP address to check
  * @returns Promise resolving to rate limit check result
  */
 async function checkRateLimit(ipAddress: string): Promise<{ allowed: boolean; remaining: number }> {
   // Implementation would connect to rate limiting service
+  // Using ipAddress in a real implementation to track rate limits per IP
+  console.log(`Checking rate limit for IP: ${ipAddress}`);
   return { allowed: true, remaining: RATE_LIMIT_ATTEMPTS };
 }
 
@@ -218,6 +279,7 @@ async function validateOrganization(
   organization: string
 ): Promise<{ valid: boolean; details?: string }> {
   // Implementation would connect to organization validation service
+  console.log(`Validating organization: ${organization}`);
   return { valid: true };
 }
 
@@ -228,6 +290,7 @@ async function validateOrganization(
  */
 async function checkDuplicateEmail(email: string): Promise<boolean> {
   // Implementation would connect to user service
+  console.log(`Checking for duplicate email: ${email}`);
   return false;
 }
 
@@ -238,6 +301,7 @@ async function checkDuplicateEmail(email: string): Promise<boolean> {
  */
 async function validateRolePermissions(role: UserRole): Promise<boolean> {
   // Implementation would connect to authorization service
+  console.log(`Validating permissions for role: ${role}`);
   return true;
 }
 

@@ -41,11 +41,10 @@ const DEFAULT_FORMATS = {
 
 /**
  * Formats a date object or ISO string into a standardized display format
- * with support for timezone and locale preferences
+ * with support for locale preferences
  * 
  * @param date - Date to format (Date object or ISO string)
  * @param formatString - Optional format string (defaults to full date)
- * @param timezone - Optional timezone (defaults to user's local timezone)
  * @param locale - Optional locale string (defaults to 'en-US')
  * @returns Formatted date string with ARIA attributes
  * @throws Error if date is invalid
@@ -53,7 +52,6 @@ const DEFAULT_FORMATS = {
 export const formatDate = (
   date: Date | string,
   formatString: string = DEFAULT_FORMATS.FULL_DATE,
-  timezone?: string,
   locale: string = 'en-US'
 ): string => {
   try {
@@ -112,7 +110,7 @@ export const formatDeadline = (
     }
 
     // Format dates
-    const formattedDate = formatDate(deadlineDate, DEFAULT_FORMATS.FULL_DATE, timezone);
+    const formattedDate = formatDate(deadlineDate, DEFAULT_FORMATS.FULL_DATE);
     const relativeDate = daysRemaining === 0 
       ? 'Due today'
       : daysRemaining < 0 
@@ -140,14 +138,12 @@ export const formatDeadline = (
  * 
  * @param timestamp - Message timestamp
  * @param use24Hour - Whether to use 24-hour format
- * @param timezone - Optional timezone
  * @returns Formatted time string with accessibility support
  * @throws Error if timestamp is invalid
  */
 export const formatMessageTime = (
   timestamp: Date | string,
-  use24Hour: boolean = false,
-  timezone?: string
+  use24Hour: boolean = false
 ): string => {
   try {
     // Convert and validate timestamp

@@ -28,8 +28,8 @@ import {
 
 import { PROTECTED_ROUTES } from '../../constants/routes.constants';
 import useAuth from '../../hooks/useAuth';
-import useNotification from '../../hooks/useNotification';
-import useTheme from '../../hooks/useTheme';
+import { useNotification } from '../../hooks/useNotification';
+import { useTheme } from '../../hooks/useTheme';
 
 // Styled components for enhanced AppBar features
 const Search = styled('div')(({ theme }) => ({
@@ -88,7 +88,7 @@ export const AppBarComponent: React.FC<AppBarProps> = ({
 }) => {
   // Hooks
   const navigate = useNavigate();
-  const { user, handleLogout } = useAuth();
+  const { handleLogout } = useAuth();
   const { showNotification } = useNotification();
   const { toggleTheme, isDarkMode } = useTheme();
   const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
@@ -185,18 +185,20 @@ export const AppBarComponent: React.FC<AppBarProps> = ({
           Incepta
         </Typography>
 
-        <Search component="form" onSubmit={handleSearchSubmit}>
-          <SearchIconWrapper>
-            <SearchIcon />
-          </SearchIconWrapper>
-          <StyledInputBase
-            id="search-input"
-            placeholder="Search technologies..."
-            inputProps={{ 'aria-label': 'search' }}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </Search>
+        <Box component="form" onSubmit={handleSearchSubmit}>
+          <Search>
+            <SearchIconWrapper>
+              <SearchIcon />
+            </SearchIconWrapper>
+            <StyledInputBase
+              id="search-input"
+              placeholder="Search technologies..."
+              inputProps={{ 'aria-label': 'search' }}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </Search>
+        </Box>
 
         <Box sx={{ flexGrow: 1 }} />
 

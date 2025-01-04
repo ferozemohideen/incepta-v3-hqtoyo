@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'; // ^6.0.0
 import { Box, Typography, Link, CircularProgress } from '@mui/material'; // ^5.14.0
 
 import { LoginForm } from '../../components/auth/LoginForm';
-import { AuthLayout } from '../../layouts/AuthLayout';
+import AuthLayout from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { AuthError } from '../../interfaces/auth.interface';
+import { AuthTokens } from '../../interfaces/auth.interface';
 
 /**
  * Login page component implementing secure authentication with:
@@ -31,18 +31,17 @@ const LoginPage: React.FC = () => {
   /**
    * Handles successful login with enhanced security
    * @param tokens - Authentication tokens from successful login
-   * @param fingerprint - Device fingerprint for security tracking
    */
-  const handleLoginSuccess = useCallback(async (tokens: AuthTokens, fingerprint: DeviceFingerprint) => {
+  const handleLoginSuccess = useCallback(async (tokens: AuthTokens) => {
     try {
       // Store authentication state securely
       await handleLogin({
         ...tokens,
         deviceInfo: {
-          fingerprint: fingerprint.visitorId,
           userAgent: window.navigator.userAgent,
           platform: window.navigator.platform,
-          version: window.navigator.appVersion
+          version: window.navigator.appVersion,
+          fingerprint: tokens.deviceInfo?.fingerprint || ''
         }
       });
 
@@ -66,7 +65,7 @@ const LoginPage: React.FC = () => {
    * Handles login errors with user feedback
    * @param error - Authentication error details
    */
-  const handleLoginError = useCallback((error: AuthError) => {
+  const handleLoginError = useCallback((error: { message: string }) => {
     setLoading(false);
     setError(error.message || 'Authentication failed. Please try again.');
   }, []);

@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Grid, Container, Typography, Box, useTheme } from '@mui/material';
 
 // Internal components
 import { QuickActions } from '../../components/dashboard/QuickActions';
 import { RecentActivity, Activity } from '../../components/dashboard/RecentActivity';
-import { SavedItems } from '../../components/dashboard/SavedItems';
+import SavedItems from '../../components/dashboard/SavedItems';
 import { AnalyticsCard, ChartDataPoint } from '../../components/dashboard/AnalyticsCard';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 
@@ -45,7 +45,7 @@ const Home: React.FC = () => {
   
   // Initialize WebSocket connection for real-time updates
   const { isConnected, sendMessage } = useWebSocket(
-    process.env.REACT_APP_WS_URL || 'ws://localhost:8080',
+    window.env?.REACT_APP_WS_URL || 'ws://localhost:8080',
     { autoConnect: true }
   );
 
@@ -175,13 +175,13 @@ const Home: React.FC = () => {
         }));
       };
 
-      // Subscribe to activity updates
-      sendMessage('subscribe', { channel: 'activities' });
+      sendMessage('subscribe');
 
       return () => {
-        sendMessage('unsubscribe', { channel: 'activities' });
+        sendMessage('unsubscribe');
       };
     }
+    return () => {}; // Empty cleanup when not connected
   }, [isConnected, sendMessage]);
 
   return (
@@ -214,7 +214,6 @@ const Home: React.FC = () => {
             <ErrorBoundary>
               <RecentActivity
                 initialActivities={state.activities}
-                loading={state.loading.activities}
                 onLoadMore={fetchDashboardData}
               />
             </ErrorBoundary>
@@ -228,8 +227,8 @@ const Home: React.FC = () => {
                 savedGrants={state.savedGrants}
                 onRemoveTechnology={handleRemoveTechnology}
                 onRemoveGrant={handleRemoveGrant}
-                onViewTechnology={(id) => {/* Navigate to technology */}}
-                onViewGrant={(id) => {/* Navigate to grant */}}
+                onViewTechnology={(id: string) => {/* Navigate to technology */}}
+                onViewGrant={(id: string) => {/* Navigate to grant */}}
                 isLoading={state.loading.saved}
               />
             </ErrorBoundary>

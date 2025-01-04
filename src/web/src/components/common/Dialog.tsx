@@ -9,7 +9,6 @@ import {
   PaperProps
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { CustomButton, CustomButtonProps } from './Button';
 
 // Interface for dialog props with comprehensive options
 export interface CustomDialogProps {
@@ -109,7 +108,7 @@ const useDialogHandlers = (
   // Track touch/click events to prevent duplicate triggers
   const touchedRef = React.useRef(false);
 
-  const handleBackdropClick = useCallback((event: React.MouseEvent) => {
+  const handleBackdropClick = useCallback(() => {
     if (disableBackdropClick || touchedRef.current) {
       touchedRef.current = false;
       return;

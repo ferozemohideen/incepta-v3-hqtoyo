@@ -54,7 +54,7 @@ import {
 /**
  * Navigation-related icon components for consistent navigation patterns
  */
-export const NavigationIcons = {
+const NavigationIcons = {
   Menu,
   Dashboard,
   ArrowBack,
@@ -66,7 +66,7 @@ export const NavigationIcons = {
 /**
  * Action-related icon components for user interactions and operations
  */
-export const ActionIcons = {
+const ActionIcons = {
   Add,
   Edit,
   Delete,
@@ -81,7 +81,7 @@ export const ActionIcons = {
 /**
  * User-related icon components for profile and authentication features
  */
-export const UserIcons = {
+const UserIcons = {
   AccountCircle,
   Person,
   ExitToApp,
@@ -90,7 +90,7 @@ export const UserIcons = {
 /**
  * Feature-specific icon components for core application features
  */
-export const FeatureIcons = {
+const FeatureIcons = {
   Search,
   Notifications,
   Settings,
@@ -103,7 +103,7 @@ export const FeatureIcons = {
 /**
  * Status and feedback icon components for user notifications and system states
  */
-export const StatusIcons = {
+const StatusIcons = {
   CheckCircle,
   Error,
   Warning,
@@ -113,7 +113,7 @@ export const StatusIcons = {
 /**
  * Data visualization and manipulation icon components for analytics and data presentation
  */
-export const DataIcons = {
+const DataIcons = {
   TrendingUp,
   FilterList,
   Sort,
@@ -127,7 +127,7 @@ export type FeatureIconType = keyof typeof FeatureIcons;
 export type StatusIconType = keyof typeof StatusIcons;
 export type DataIconType = keyof typeof DataIcons;
 
-// Re-export all icon groups for convenient access
+// Export all icon groups
 export {
   NavigationIcons,
   ActionIcons,

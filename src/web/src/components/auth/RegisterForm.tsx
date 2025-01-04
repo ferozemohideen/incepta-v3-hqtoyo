@@ -1,22 +1,19 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   TextField, 
   Select, 
   MenuItem, 
   Button, 
-  Tooltip, 
   CircularProgress,
   FormControl,
   InputLabel,
-  FormHelperText,
   Box,
   Typography,
   Checkbox,
-  FormControlLabel,
-  Alert
-} from '@mui/material'; // v5.14.0
-import { styled } from '@mui/material/styles'; // v5.14.0
-import zxcvbn from 'zxcvbn'; // v4.4.2
+  FormControlLabel
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import zxcvbn from 'zxcvbn';
 
 import { Form } from '../common/Form';
 import { useNotification } from '../../hooks/useNotification';
@@ -54,6 +51,8 @@ const PasswordStrengthMeter = styled(Box)(({ theme }) => ({
 // Props interface
 interface RegisterFormProps {
   onSuccess: (tokens: AuthTokens, deviceId: string) => void;
+  onValidationError: (error: Error) => void;
+  onDeviceFingerprint?: (deviceId: string) => void;
   allowedRoles: UserRole[];
   organizationTypes: string[];
 }
@@ -70,7 +69,7 @@ const initialValues: RegisterCredentials = {
 };
 
 // Password strength colors
-const strengthColors = {
+const strengthColors: Record<number, string> = {
   0: '#ff4444',
   1: '#ffbb33',
   2: '#ffbb33',
@@ -83,6 +82,8 @@ const strengthColors = {
  */
 export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSuccess,
+  onValidationError,
+  onDeviceFingerprint,
   allowedRoles,
   organizationTypes,
 }) => {
@@ -96,7 +97,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     email: {
       required: true,
       pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-      validate: async (value: string) => {
+      validate: async () => {
         // Add domain validation for organization emails if needed
         return true;
       },
@@ -139,16 +140,19 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   }, []);
 
   // Handle form submission
-  const handleSubmit = async (values: RegisterCredentials) => {
+  const handleSubmit = async (values: Record<string, any>) => {
     try {
       setIsSubmitting(true);
 
       // Generate device fingerprint for security
       const deviceId = await generateDeviceFingerprint();
+      if (onDeviceFingerprint) {
+        onDeviceFingerprint(deviceId);
+      }
 
       // Submit registration with enhanced security context
       const tokens = await registerUser({
-        ...values,
+        ...values as RegisterCredentials,
         deviceInfo: {
           fingerprint: deviceId,
           userAgent: navigator.userAgent,
@@ -160,7 +164,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       showSuccess('Registration successful! Setting up MFA...');
       onSuccess(tokens, deviceId);
     } catch (error) {
-      showError(error instanceof Error ? error.message : 'Registration failed');
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      showError(errorMessage);
+      onValidationError(error instanceof Error ? error : new Error(errorMessage));
     } finally {
       setIsSubmitting(false);
     }

@@ -8,7 +8,7 @@ import {
   styled
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
-import CustomButton, { CustomButtonProps } from './Button';
+import { CustomButtonProps } from './Button';
 
 // Enhanced styled Dialog component with Material Design 3.0 principles
 const StyledDialog = styled(Dialog)(({ theme }) => ({
@@ -124,12 +124,13 @@ export const Modal: React.FC<ModalProps> = ({
 
   // Set up keyboard event listeners
   useEffect(() => {
-    if (open) {
-      document.addEventListener('keydown', handleEscapeKey);
-      return () => {
-        document.removeEventListener('keydown', handleEscapeKey);
-      };
+    if (!open) {
+      return () => {};
     }
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
   }, [open, handleEscapeKey]);
 
   // Focus management
@@ -140,6 +141,7 @@ export const Modal: React.FC<ModalProps> = ({
         elementToFocus.focus();
       }
     }
+    return () => {};
   }, [open, focusFirst]);
 
   return (

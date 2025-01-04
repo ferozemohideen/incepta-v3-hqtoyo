@@ -10,7 +10,7 @@
 // @auth0/auth0-spa-js v2.1.0
 import { Auth0Client } from '@auth0/auth0-spa-js';
 import { AuthTokens } from '../interfaces/auth.interface';
-import { UserRole, PASSWORD_POLICY } from '../constants/auth.constants';
+import { UserRole } from '../constants/auth.constants';
 
 /**
  * Interface for comprehensive authentication configuration
@@ -74,9 +74,9 @@ interface AuthConfig {
 export const authConfig: AuthConfig = {
   // Auth0 Configuration
   auth0: {
-    domain: process.env.VITE_AUTH0_DOMAIN || '',
-    clientId: process.env.VITE_AUTH0_CLIENT_ID || '',
-    audience: process.env.VITE_AUTH0_AUDIENCE || '',
+    domain: process.env['VITE_AUTH0_DOMAIN'] || '',
+    clientId: process.env['VITE_AUTH0_CLIENT_ID'] || '',
+    audience: process.env['VITE_AUTH0_AUDIENCE'] || '',
     redirectUri: window.location.origin,
     scope: 'openid profile email',
     responseType: 'code',

@@ -6,7 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { memo, useCallback, useRef, useEffect } from 'react';
 
 // Internal imports
-import TechnologyCard, { TechnologyCardProps } from './TechnologyCard';
+import TechnologyCard from './TechnologyCard';
 import { Technology } from '../../interfaces/technology.interface';
 import { usePagination, PaginationConfig } from '../../hooks/usePagination';
 
@@ -67,7 +67,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: any) => (
 /**
  * Calculate responsive grid columns based on breakpoint
  */
-const getGridColumns = (theme: any) => ({
+const getGridColumns = () => ({
   xs: 12, // 1 column
   sm: 6,  // 2 columns
   md: 4,  // 3 columns
@@ -84,7 +84,6 @@ const TechnologyGrid = memo(({
   onPageChange,
   onTechnologySelect,
   loading = false,
-  error = null,
   'aria-label': ariaLabel = 'Technology listings grid',
 }: TechnologyGridProps) => {
   const theme = useTheme();
@@ -101,6 +100,9 @@ const TechnologyGrid = memo(({
       previousPage: 'Previous page of technologies',
       firstPage: 'First page of technologies',
       lastPage: 'Last page of technologies',
+      pageSize: 'Select page size',
+      pageNumber: 'Go to page',
+      currentPage: 'Current page',
     },
   };
 
@@ -139,7 +141,7 @@ const TechnologyGrid = memo(({
     return (
       <StyledGrid container spacing={3} role="grid" aria-busy="true" aria-label={ariaLabel}>
         {Array.from({ length: 12 }).map((_, index) => (
-          <Grid item key={index} {...getGridColumns(theme)}>
+          <Grid item key={index} {...getGridColumns()}>
             <Skeleton
               variant="rectangular"
               height={350}
@@ -178,14 +180,13 @@ const TechnologyGrid = memo(({
                 <Grid
                   item
                   key={technology.id.toString()}
-                  {...getGridColumns(theme)}
+                  {...getGridColumns()}
                   role="gridcell"
                   aria-rowindex={virtualRow.index + 1}
                 >
                   <TechnologyCard
                     technology={technology}
                     onView={() => onTechnologySelect(technology)}
-                    onKeyDown={(e) => handleKeyDown(e, technology)}
                     tabIndex={0}
                     showActions
                   />
@@ -196,7 +197,7 @@ const TechnologyGrid = memo(({
         </Box>
 
         {/* Pagination controls */}
-        {totalCount > paginationConfig.initialPageSize && (
+        {totalCount > paginationConfig.initialPageSize! && (
           <Box
             sx={{
               display: 'flex',
@@ -213,7 +214,7 @@ const TechnologyGrid = memo(({
               showLastButton={paginationConfig.showFirstLast}
               disabled={loading}
               aria-label="Technology pagination"
-              getItemAriaLabel={(type, page) => paginationConfig.ariaLabels[type] || `Go to page ${page}`}
+              getItemAriaLabel={(type, page) => paginationConfig.ariaLabels![type] || `Go to page ${page}`}
             />
           </Box>
         )}

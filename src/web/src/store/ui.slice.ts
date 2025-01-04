@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'; // v1.9.5
-import { LAYOUT, ANIMATION, Z_INDEX, RESPONSIVE } from '../constants/ui.constants';
+import { LAYOUT, ANIMATION, RESPONSIVE } from '../constants/ui.constants';
 
 // Type definitions
 type ThemeMode = 'light' | 'dark';
@@ -22,14 +22,6 @@ interface NotificationConfig {
   message: string;
   type: NotificationType;
   duration?: number;
-}
-
-interface ResponsiveState {
-  isMobile: boolean;
-  isTablet: boolean;
-  isDesktop: boolean;
-  breakpoint: ResponsiveBreakpoint;
-  lastViewportWidth: number;
 }
 
 // Main UI state interface

@@ -4,17 +4,13 @@
  * @version 1.0.0
  */
 
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { 
   Box, 
-  Paper, 
   Typography, 
-  CircularProgress, 
   Snackbar, 
   Alert 
 } from '@mui/material';
-import { useVirtualizer } from '@tanstack/react-virtual';
 
 import ChatBox from '../../components/messages/ChatBox';
 import DocumentShare from '../../components/messages/DocumentShare';
@@ -24,7 +20,6 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 // Constants for offline handling and performance
 const OFFLINE_QUEUE_LIMIT = 100;
 const RECONNECT_DELAY = 5000;
-const MESSAGE_BATCH_SIZE = 50;
 
 /**
  * Interface for thread component state
@@ -47,8 +42,6 @@ interface ThreadState {
 const Thread: React.FC = () => {
   // Router hooks
   const { threadId } = useParams<{ threadId: string }>();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   // State management
   const [state, setState] = useState<ThreadState>({
@@ -63,18 +56,12 @@ const Thread: React.FC = () => {
     readReceipts: new Map()
   });
 
-  // Refs for managing component lifecycle
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastMessageRef = useRef<string | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
-
   // WebSocket connection for real-time updates
   const { 
     isConnected, 
-    connectionState, 
     sendMessage: sendWebSocketMessage 
   } = useWebSocket(
-    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
+    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
 
   /**
@@ -165,39 +152,16 @@ const Thread: React.FC = () => {
       processOfflineQueue();
     } else {
       // Set reconnection timeout
-      reconnectTimeoutRef.current = setTimeout(() => {
+      const reconnectTimeout = setTimeout(() => {
         setState(prev => ({
           ...prev,
           error: 'Connection lost. Attempting to reconnect...'
         }));
       }, RECONNECT_DELAY);
-    }
 
-    return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
+      return () => clearTimeout(reconnectTimeout);
+    }
   }, [isConnected, processOfflineQueue]);
-
-  /**
-   * Handles scroll-based message loading
-   */
-  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    
-    if (
-      scrollTop + clientHeight >= scrollHeight - 100 && 
-      !state.loading && 
-      state.hasMore
-    ) {
-      setState(prev => ({
-        ...prev,
-        loading: true,
-        page: prev.page + 1
-      }));
-    }
-  }, [state.loading, state.hasMore]);
 
   return (
     <Box

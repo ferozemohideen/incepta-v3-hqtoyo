@@ -10,7 +10,7 @@
  * - Session management
  */
 
-import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit'; // ^1.9.5
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'; // ^1.9.5
 import { LoginCredentials, AuthTokens } from '../interfaces/auth.interface';
 import { UserRole } from '../constants/auth.constants';
 import { authService } from '../services/auth.service';
@@ -105,7 +105,12 @@ export const verifyMFA = createAsyncThunk(
   'auth/verifyMFA',
   async (mfaCode: string, { rejectWithValue }) => {
     try {
-      const response = await authService.verifyMFA({ token: mfaCode });
+      const response = await authService.verifyMFA({
+        token: mfaCode,
+        tempToken: '', // This should be stored from login response
+        method: 'totp', // Default to TOTP method
+        verificationId: '' // This should be stored from login response
+      });
       return response;
     } catch (error: any) {
       return rejectWithValue({

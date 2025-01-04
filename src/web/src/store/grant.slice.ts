@@ -104,15 +104,7 @@ export const submitApplication = createAsyncThunk(
   async ({ grantId, applicationData }: { grantId: string; applicationData: Partial<IGrantApplication> }, 
     { rejectWithValue }) => {
     try {
-      const optimisticApplication: IGrantApplication = {
-        ...applicationData as IGrantApplication,
-        status: GrantStatus.SUBMITTED,
-        submittedAt: new Date(),
-        lastModifiedAt: new Date()
-      };
-
-      const response = await grantService.submitApplication(grantId, applicationData);
-      return response;
+      return await grantService.submitApplication(grantId, applicationData);
     } catch (error: any) {
       return rejectWithValue(error.message);
     }

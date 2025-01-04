@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useEffect, useRef } from 'react';
 import { Select, MenuItem } from '@mui/material';
-import { usePagination, PaginationConfig, PaginationState } from '../../hooks/usePagination';
+import { usePagination, PaginationConfig } from '../../hooks/usePagination';
 import CustomButton from './Button';
 
 // Constants for pagination configuration

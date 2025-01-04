@@ -6,10 +6,10 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Box, Paper, CircularProgress, Alert } from '@mui/material';
-import { Message, MessageType, MessageStatus, MessageThread } from '../../interfaces/message.interface';
+import { Message, MessageStatus } from '../../interfaces/message.interface';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import useWebSocket from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 /**
  * Props interface for ChatBox component
@@ -29,9 +29,8 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
   recipientId 
 }) => {
   // State management
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [messageDeliveryStatus, setMessageDeliveryStatus] = useState<Record<string, MessageStatus>>({});
+  const [messageDeliveryStatus] = useState<Record<string, MessageStatus>>({});
 
   // Refs for managing component lifecycle
   const messageEndRef = useRef<HTMLDivElement>(null);
@@ -40,10 +39,9 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
   // WebSocket connection for real-time updates
   const { 
     isConnected, 
-    connectionState, 
     sendMessage: sendWebSocketMessage 
   } = useWebSocket(
-    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
+    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
 
   /**
@@ -51,12 +49,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
    */
   const handleMessageReceived = useCallback(async (message: Message) => {
     try {
-      // Update delivery status
-      setMessageDeliveryStatus(prev => ({
-        ...prev,
-        [message.id]: MessageStatus.DELIVERED
-      }));
-
       // Track unread messages
       if (message.senderId !== currentUserId) {
         unreadMessagesRef.current.add(message.id);
@@ -78,11 +70,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
    */
   const handleMessageSent = useCallback(async (message: Message) => {
     try {
-      setMessageDeliveryStatus(prev => ({
-        ...prev,
-        [message.id]: MessageStatus.SENT
-      }));
-
       if (isConnected) {
         await sendWebSocketMessage(message);
       }
@@ -112,29 +99,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
     };
   }, [handleKeyboardNavigation]);
 
-  /**
-   * Marks messages as read when they become visible
-   */
-  const handleMessagesViewed = useCallback((messageIds: string[]) => {
-    messageIds.forEach(id => {
-      if (unreadMessagesRef.current.has(id)) {
-        setMessageDeliveryStatus(prev => ({
-          ...prev,
-          [id]: MessageStatus.READ
-        }));
-        unreadMessagesRef.current.delete(id);
-      }
-    });
-  }, []);
-
-  /**
-   * Handles errors during message operations
-   */
-  const handleError = useCallback((error: Error) => {
-    console.error('Chat operation failed:', error);
-    setError(error.message);
-  }, []);
-
   return (
     <Box
       sx={styles.chatBox}
@@ -159,7 +123,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
             threadId={threadId}
             currentUserId={currentUserId}
             onMessageReceived={handleMessageReceived}
-            onMessagesViewed={handleMessagesViewed}
           />
           <div ref={messageEndRef} />
         </Box>
@@ -172,14 +135,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
             onError={handleError}
           />
         </Box>
-
-        {isLoading && (
-          <Box sx={styles.loadingOverlay}>
-            <CircularProgress 
-              aria-label="Loading messages"
-            />
-          </Box>
-        )}
 
         {error && (
           <Alert 
@@ -221,18 +176,6 @@ const styles = {
     borderTop: '1px solid',
     borderColor: 'divider',
     backgroundColor: 'background.paper'
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    zIndex: 1
   },
   connectionAlert: {
     position: 'absolute',

@@ -66,7 +66,7 @@ const MFASetup: React.FC<MFASetupProps> = ({
 
   // Hooks
   const navigate = useNavigate();
-  const { handleMFAVerification, mfaRequired, verificationAttempts } = useAuth();
+  const { handleMFAVerification } = useAuth();
 
   // Reset error when token changes
   useEffect(() => {
@@ -154,84 +154,86 @@ const MFASetup: React.FC<MFASetupProps> = ({
   }, [token, tempToken, attempts, isLocked, maxAttempts, handleMFAVerification, onSuccess, navigate, validateToken]);
 
   return (
-    <StyledPaper component="form" onSubmit={handleVerification}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
-        Set Up Two-Factor Authentication
-      </Typography>
-
-      <InstructionText variant="body1">
-        1. Install Google Authenticator on your mobile device
-      </InstructionText>
-
-      <InstructionText variant="body1">
-        2. Scan the QR code below with Google Authenticator
-      </InstructionText>
-
-      <QRCodeContainer>
-        <QRCode
-          value={qrCodeUrl}
-          size={200}
-          level="H"
-          includeMargin
-          aria-label="QR Code for Google Authenticator setup"
-        />
-      </QRCodeContainer>
-
-      <InstructionText variant="body1">
-        3. Enter the 6-digit code from Google Authenticator
-      </InstructionText>
-
-      <Input
-        name="token"
-        label="Verification Code"
-        value={token}
-        onChange={(e) => setToken(e.target.value)}
-        type="text"
-        required
-        disabled={isLocked || loading}
-        maxLength={6}
-        autoComplete="one-time-code"
-        validation={{
-          pattern: /^\d{6}$/,
-          custom: validateToken
-        }}
-        aria-describedby="mfa-error-text"
-      />
-
-      {error && (
-        <Alert 
-          severity="error" 
-          id="mfa-error-text"
-          sx={{ mb: 2 }}
-        >
-          <AlertTitle>Error</AlertTitle>
-          {error}
-        </Alert>
-      )}
-
-      <Button
-        type="submit"
-        variant="contained"
-        color="primary"
-        fullWidth
-        loading={loading}
-        disabled={isLocked || !token || loading}
-        aria-label="Verify MFA code"
-      >
-        Verify Code
-      </Button>
-
-      {attempts > 0 && (
-        <Typography 
-          variant="caption" 
-          color="textSecondary"
-          align="center"
-          sx={{ mt: 2, display: 'block' }}
-        >
-          Attempts remaining: {maxAttempts - attempts}
+    <Box component="form" onSubmit={handleVerification}>
+      <StyledPaper>
+        <Typography variant="h4" component="h1" gutterBottom align="center">
+          Set Up Two-Factor Authentication
         </Typography>
-      )}
-    </StyledPaper>
+
+        <InstructionText variant="body1">
+          1. Install Google Authenticator on your mobile device
+        </InstructionText>
+
+        <InstructionText variant="body1">
+          2. Scan the QR code below with Google Authenticator
+        </InstructionText>
+
+        <QRCodeContainer>
+          <QRCode
+            value={qrCodeUrl}
+            size={200}
+            level="H"
+            includeMargin
+            aria-label="QR Code for Google Authenticator setup"
+          />
+        </QRCodeContainer>
+
+        <InstructionText variant="body1">
+          3. Enter the 6-digit code from Google Authenticator
+        </InstructionText>
+
+        <Input
+          name="token"
+          label="Verification Code"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          type="text"
+          required
+          disabled={isLocked || loading}
+          maxLength={6}
+          autoComplete="one-time-code"
+          validation={{
+            pattern: /^\d{6}$/,
+            custom: validateToken
+          }}
+          aria-describedby="mfa-error-text"
+        />
+
+        {error && (
+          <Alert 
+            severity="error" 
+            id="mfa-error-text"
+            sx={{ mb: 2 }}
+          >
+            <AlertTitle>Error</AlertTitle>
+            {error}
+          </Alert>
+        )}
+
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          fullWidth
+          loading={loading}
+          disabled={isLocked || !token || loading}
+          aria-label="Verify MFA code"
+        >
+          Verify Code
+        </Button>
+
+        {attempts > 0 && (
+          <Typography 
+            variant="caption" 
+            color="textSecondary"
+            align="center"
+            sx={{ mt: 2, display: 'block' }}
+          >
+            Attempts remaining: {maxAttempts - attempts}
+          </Typography>
+        )}
+      </StyledPaper>
+    </Box>
   );
 };
 

@@ -1,7 +1,6 @@
 // @mui/material v5.14.0
 import { Card, CardProps } from '@mui/material';
-import { styled, useTheme } from '@mui/material/styles';
-import { lightTheme } from '../../styles/theme';
+import { styled } from '@mui/material/styles';
 
 /**
  * Extended props interface for enhanced card customization
@@ -18,6 +17,8 @@ export interface CustomCardProps extends CardProps {
   clickable?: boolean;
   /** Forces card to fill parent height for grid layouts */
   fullHeight?: boolean;
+  /** Disabled state for the card */
+  disabled?: boolean;
 }
 
 /**
@@ -107,12 +108,11 @@ export const CustomCard: React.FC<CustomCardProps> = ({
   onKeyDown,
   role,
   tabIndex,
+  disabled,
   ...props
 }) => {
-  const theme = useTheme();
-
   // Handle keyboard interaction for accessibility
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (clickable && (event.key === 'Enter' || event.key === 'Space')) {
       event.preventDefault();
       onClick?.(event as any);
@@ -131,7 +131,7 @@ export const CustomCard: React.FC<CustomCardProps> = ({
       onKeyDown={handleKeyDown}
       role={clickable ? 'button' : role}
       tabIndex={clickable ? 0 : tabIndex}
-      aria-disabled={props.disabled}
+      aria-disabled={disabled}
       {...props}
     >
       {children}

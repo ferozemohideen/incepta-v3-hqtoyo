@@ -1,21 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
-  Grid, 
   Typography, 
   Button, 
   Stepper, 
   Step, 
   StepLabel,
-  CircularProgress,
-  Alert
+  CircularProgress
 } from '@mui/material'; // v5.14.0
 import { useFormik, FormikHelpers } from 'formik'; // v2.4.2
 import { debounce } from 'lodash'; // v4.17.21
 import * as Yup from 'yup'; // v1.2.0
 
 import Form from '../common/Form';
-import FileUpload from '../common/FileUpload';
 import { useNotification } from '../../hooks/useNotification';
 
 // Form section interfaces
@@ -73,7 +70,7 @@ interface GrantApplicationFormProps {
 }
 
 // Form validation schemas
-const validationSchemas = {
+const validationSchemas: Record<string, Yup.ObjectSchema<any>> = {
   projectDetails: Yup.object({
     projectTitle: Yup.string()
       .required('Project title is required')
@@ -166,8 +163,8 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
   const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize form with Formik
-  const formik = useFormik({
-    initialValues: initialData || {
+  const formik = useFormik<IGrantApplication>({
+    initialValues: initialData as IGrantApplication || {
       projectDetails: {
         projectTitle: '',
         abstract: '',
@@ -234,22 +231,8 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
         }
       }
 
-      // Process file uploads
-      const processedFiles = await Promise.all(
-        values.documentAttachments.files.map(async (file) => {
-          // File processing logic here
-          return file;
-        })
-      );
-
       // Submit application
-      await onSuccess({
-        ...values,
-        documentAttachments: {
-          files: processedFiles
-        }
-      });
-
+      await onSuccess(values);
       showSuccess('Grant application submitted successfully');
       helpers.resetForm();
       setActiveStep(0);
@@ -300,7 +283,7 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
         sx={{ mb: 4 }}
         aria-label="Application Progress"
       >
-        {formSteps.map((step, index) => (
+        {formSteps.map((step) => (
           <Step key={step.key}>
             <StepLabel>{step.label}</StepLabel>
           </Step>
@@ -311,6 +294,8 @@ export const GrantApplicationForm: React.FC<GrantApplicationFormProps> = ({
         ref={formRef}
         onSubmit={formik.handleSubmit}
         aria-label={`${formSteps[activeStep].label} Form`}
+        initialValues={formik.values}
+        validationSchema={validationSchemas[formSteps[activeStep].key]}
       >
         {renderStepContent(activeStep)}
 

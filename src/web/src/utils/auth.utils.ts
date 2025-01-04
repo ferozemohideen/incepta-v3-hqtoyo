@@ -8,7 +8,7 @@
  */
 
 import jwtDecode from 'jwt-decode'; // v3.1.2
-import { LoginCredentials, AuthTokens } from '../interfaces/auth.interface';
+import { AuthTokens } from '../interfaces/auth.interface';
 import { UserRole, AUTH_STORAGE_KEYS, TokenPayload, isValidUserRole } from '../constants/auth.constants';
 import { getLocalStorageItem, setLocalStorageItem } from './storage.utils';
 
@@ -36,26 +36,19 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 export const isAuthenticated = (): boolean => {
   try {
     const accessToken = getLocalStorageItem<string>(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-    const deviceId = getLocalStorageItem<string>(AUTH_STORAGE_KEYS.DEVICE_ID);
-    const mfaVerified = getLocalStorageItem<boolean>(AUTH_STORAGE_KEYS.MFA_STATUS);
+    const mfaVerified = getLocalStorageItem<boolean>(AUTH_STORAGE_KEYS.MFA_ENABLED);
 
-    if (!accessToken || !deviceId) {
+    if (!accessToken) {
       return false;
     }
 
     // Validate token format and structure
-    if (!accessToken.split('.').length === 3) {
+    if (accessToken.split('.').length !== 3) {
       return false;
     }
 
     // Check token expiration with grace period
     if (isTokenExpired(accessToken)) {
-      return false;
-    }
-
-    // Verify device binding
-    const decodedToken = parseJwt<TokenPayload>(accessToken);
-    if (AUTH_CONFIG.DEVICE_BINDING && decodedToken.deviceId !== deviceId) {
       return false;
     }
 
@@ -180,22 +173,6 @@ export const isTokenExpired = (token: string): boolean => {
     console.error('Token expiration check failed:', error);
     return true;
   }
-};
-
-/**
- * Validates token claims and security requirements
- * @param {TokenPayload} payload - Decoded token payload
- * @returns {boolean} Validation status
- */
-const validateTokenClaims = (payload: TokenPayload): boolean => {
-  return !!(
-    payload.sub &&
-    payload.role &&
-    payload.version &&
-    typeof payload.mfa === 'boolean' &&
-    payload.exp &&
-    payload.iat
-  );
 };
 
 /**

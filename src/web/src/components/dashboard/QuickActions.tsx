@@ -5,7 +5,6 @@ import {
   Search as SearchIcon,
   Edit as EditIcon,
   Description as DescriptionIcon,
-  Person as PersonIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
   Science as ScienceIcon,
   BusinessCenter as BusinessCenterIcon,
@@ -13,7 +12,7 @@ import {
 } from '@mui/icons-material';
 
 import CustomButton from '../common/Button';
-import { PROTECTED_ROUTES } from '../../constants/routes.constants';
+import { PROTECTED_ROUTES, ADMIN_ROUTES } from '../../constants/routes.constants';
 import { UserRole } from '../../constants/auth.constants';
 import type { User } from '../../interfaces/user.interface';
 
@@ -26,7 +25,7 @@ export interface QuickActionsProps {
 interface QuickAction {
   icon: React.ComponentType;
   label: string;
-  route: keyof typeof PROTECTED_ROUTES;
+  route: keyof typeof PROTECTED_ROUTES | keyof typeof ADMIN_ROUTES;
   tooltip: string;
   color: 'primary' | 'secondary' | 'success' | 'info' | 'warning';
   roles: UserRole[];
@@ -68,8 +67,8 @@ const QUICK_ACTIONS: QuickAction[] = [
   },
   {
     icon: ScienceIcon,
-    label: 'Research Data',
-    route: 'RESEARCH_DATA',
+    label: 'Research Analytics',
+    route: 'ANALYTICS',
     tooltip: 'Access research data and analytics',
     color: 'secondary',
     roles: [UserRole.RESEARCHER],
@@ -97,11 +96,11 @@ export const QuickActions: React.FC<QuickActionsProps> = React.memo(({ user }) =
   const navigate = useNavigate();
 
   // Type-safe handler for quick action navigation with analytics
-  const handleActionClick = (route: keyof typeof PROTECTED_ROUTES) => {
+  const handleActionClick = (route: keyof typeof PROTECTED_ROUTES | keyof typeof ADMIN_ROUTES) => {
     // Track analytics event
     try {
       // Navigate to the selected route
-      navigate(PROTECTED_ROUTES[route]);
+      navigate(route === 'ADMIN_DASHBOARD' ? ADMIN_ROUTES[route] : PROTECTED_ROUTES[route]);
     } catch (error) {
       console.error('Navigation error:', error);
     }

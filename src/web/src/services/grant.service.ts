@@ -11,9 +11,9 @@
  * - Retry logic for failed requests
  */
 
-import { get, post, put } from './api.service'; // ^1.0.0
+import { apiService } from './api.service';
 import { API_ENDPOINTS } from '../constants/api.constants';
-import retry from 'axios-retry'; // ^3.5.0
+import retry from 'axios-retry';
 import {
   IGrant,
   IGrantApplication,
@@ -43,21 +43,22 @@ export interface GrantService {
   submitApplication(grantId: string, applicationData: Partial<IGrantApplication>): Promise<IGrantApplication>;
   getApplicationStatus(applicationId: string): Promise<IGrantApplication>;
   getGrantStats(): Promise<GrantStats>;
-  saveGrantDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
+  saveDraft(grantId: string, draftData: Partial<IGrantApplication>): Promise<IGrantApplication>;
   uploadApplicationDocument(applicationId: string, document: File): Promise<void>;
+  validateApplication(applicationData: Partial<IGrantApplication>): Promise<boolean>;
+  validateSection(sectionData: any, sectionType: string): Promise<boolean>;
 }
 
 /**
  * Enhanced implementation of the GrantService interface
  */
 class GrantServiceImpl implements GrantService {
-  private readonly cacheTimeout: number = 5 * 60 * 1000; // 5 minutes
+  private readonly cacheTimeout: number = 5 * 60 * 1000;
   private readonly maxRetries: number = 3;
   private readonly cache: Map<string, { data: any; timestamp: number }> = new Map();
 
   constructor() {
-    // Configure retry strategy
-    retry(get, {
+    retry(apiService.get, {
       retries: this.maxRetries,
       retryDelay: retry.exponentialDelay,
       retryCondition: (error) => {
@@ -67,20 +68,17 @@ class GrantServiceImpl implements GrantService {
     });
   }
 
-  /**
-   * Enhanced search for grants with caching and pagination
-   */
   async searchGrants(params: IGrantSearchParams): Promise<IGrantResponse> {
     const cacheKey = `grants_search_${JSON.stringify(params)}`;
-    const cached = this.getFromCache(cacheKey);
+    const cached = this.getFromCache<IGrantResponse>(cacheKey);
     
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await get<IGrantResponse>(
-        API_ENDPOINTS.GRANTS.SEARCH,
+      const response = await apiService.get<IGrantResponse>(
+        `${API_ENDPOINTS.GRANTS.BASE}/search`,
         params,
         { cache: true }
       );
@@ -93,19 +91,16 @@ class GrantServiceImpl implements GrantService {
     }
   }
 
-  /**
-   * Retrieve grant details by ID with caching
-   */
   async getGrantById(id: string): Promise<IGrant> {
     const cacheKey = `grant_${id}`;
-    const cached = this.getFromCache(cacheKey);
+    const cached = this.getFromCache<IGrant>(cacheKey);
 
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await get<IGrant>(
+      const response = await apiService.get<IGrant>(
         `${API_ENDPOINTS.GRANTS.BASE}/${id}`,
         undefined,
         { cache: true }
@@ -119,15 +114,12 @@ class GrantServiceImpl implements GrantService {
     }
   }
 
-  /**
-   * Submit grant application with progress tracking
-   */
   async submitApplication(
     grantId: string,
     applicationData: Partial<IGrantApplication>
   ): Promise<IGrantApplication> {
     try {
-      const response = await post<IGrantApplication>(
+      const response = await apiService.post<IGrantApplication>(
         `${API_ENDPOINTS.GRANTS.APPLY}/${grantId}`,
         {
           ...applicationData,
@@ -136,7 +128,6 @@ class GrantServiceImpl implements GrantService {
         }
       );
 
-      // Invalidate relevant caches
       this.invalidateCache(new RegExp(`^grants_.*${grantId}`));
       
       return response;
@@ -146,15 +137,12 @@ class GrantServiceImpl implements GrantService {
     }
   }
 
-  /**
-   * Track application status with real-time updates
-   */
   async getApplicationStatus(applicationId: string): Promise<IGrantApplication> {
     try {
-      return await get<IGrantApplication>(
+      return await apiService.get<IGrantApplication>(
         `${API_ENDPOINTS.GRANTS.STATUS}/${applicationId}`,
         undefined,
-        { cache: false } // Real-time status should not be cached
+        { cache: false }
       );
     } catch (error) {
       console.error('Status retrieval failed:', error);
@@ -162,19 +150,16 @@ class GrantServiceImpl implements GrantService {
     }
   }
 
-  /**
-   * Retrieve grant statistics with caching
-   */
   async getGrantStats(): Promise<GrantStats> {
     const cacheKey = 'grant_stats';
-    const cached = this.getFromCache(cacheKey);
+    const cached = this.getFromCache<GrantStats>(cacheKey);
 
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await get<GrantStats>(
+      const response = await apiService.get<GrantStats>(
         `${API_ENDPOINTS.GRANTS.BASE}/stats`,
         undefined,
         { cache: true }
@@ -188,15 +173,12 @@ class GrantServiceImpl implements GrantService {
     }
   }
 
-  /**
-   * Save grant application draft
-   */
-  async saveGrantDraft(
+  async saveDraft(
     grantId: string,
     draftData: Partial<IGrantApplication>
   ): Promise<IGrantApplication> {
     try {
-      return await put<IGrantApplication>(
+      return await apiService.put<IGrantApplication>(
         `${API_ENDPOINTS.GRANTS.DRAFTS}/${grantId}`,
         {
           ...draftData,
@@ -210,9 +192,6 @@ class GrantServiceImpl implements GrantService {
     }
   }
 
-  /**
-   * Upload application document with progress tracking
-   */
   async uploadApplicationDocument(
     applicationId: string,
     document: File
@@ -221,7 +200,7 @@ class GrantServiceImpl implements GrantService {
     formData.append('document', document);
 
     try {
-      await post(
+      await apiService.post(
         `${API_ENDPOINTS.GRANTS.BASE}/${applicationId}/documents`,
         formData,
         {
@@ -236,9 +215,32 @@ class GrantServiceImpl implements GrantService {
     }
   }
 
-  /**
-   * Cache management utilities
-   */
+  async validateApplication(applicationData: Partial<IGrantApplication>): Promise<boolean> {
+    try {
+      const response = await apiService.post<boolean>(
+        `${API_ENDPOINTS.GRANTS.BASE}/validate`,
+        applicationData
+      );
+      return response;
+    } catch (error) {
+      console.error('Application validation failed:', error);
+      throw error;
+    }
+  }
+
+  async validateSection(sectionData: any, sectionType: string): Promise<boolean> {
+    try {
+      const response = await apiService.post<boolean>(
+        `${API_ENDPOINTS.GRANTS.BASE}/validate-section/${sectionType}`,
+        sectionData
+      );
+      return response;
+    } catch (error) {
+      console.error('Section validation failed:', error);
+      throw error;
+    }
+  }
+
   private getFromCache<T>(key: string): T | null {
     const cached = this.cache.get(key);
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
@@ -263,5 +265,4 @@ class GrantServiceImpl implements GrantService {
   }
 }
 
-// Export singleton instance
 export const grantService = new GrantServiceImpl();
