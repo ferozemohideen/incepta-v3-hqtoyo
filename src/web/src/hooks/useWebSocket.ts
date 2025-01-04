@@ -177,6 +177,15 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}) {
   }, [socket]);
 
   /**
+   * Handles manual reconnection attempts
+   */
+  const reconnect = useCallback(async () => {
+    disconnect();
+    reconnectAttempts.current = 0;
+    await connect();
+  }, [disconnect, connect]);
+
+  /**
    * Sends a message with offline queuing support
    */
   const sendMessage = useCallback(async (message: Message): Promise<boolean> => {
@@ -240,6 +249,7 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}) {
     connectionState,
     connect,
     disconnect,
-    sendMessage
+    sendMessage,
+    reconnect
   };
 }
