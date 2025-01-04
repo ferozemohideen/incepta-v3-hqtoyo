@@ -35,8 +35,8 @@ interface IGrantApplication {
 
 interface GrantWritingAssistantProps {
   grant: IGrant;
-  onSave: (application: IGrantApplication) => Promise<void>;
-  onSubmit: (application: IGrantApplication) => Promise<void>;
+  onSave: (application: Partial<IGrantApplication>) => Promise<void>;
+  onSubmit: (application: Partial<IGrantApplication>) => Promise<void>;
   initialData?: IGrantApplication;
 }
 
