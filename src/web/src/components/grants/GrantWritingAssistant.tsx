@@ -1,10 +1,9 @@
 import React, { useEffect, useCallback, useMemo, useState } from 'react';
-import { TextField, Button, CircularProgress, Snackbar, Alert, Box, Paper, Typography, Grid, Divider } from '@mui/material';
+import { Button, CircularProgress, Alert, Box, Paper, Typography, Grid, Divider } from '@mui/material';
 import { Editor } from '@monaco-editor/react'; // v4.5.0
 import { debounce } from 'lodash'; // v4.17.21
 import { useForm } from '../../hooks/useForm';
 import { useNotification } from '../../hooks/useNotification';
-import { ANIMATION } from '../../constants/ui.constants';
 
 // Types and Interfaces
 interface IGrant {
@@ -56,11 +55,10 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
-  const [needsSaving, setNeedsSaving] = useState<boolean>(false);
 
   // Hooks
   const { showSuccess, showError, showInfo } = useNotification();
-  const { values, errors, handleChange, handleSubmit, touched } = useForm({
+  const { values, errors, handleChange, handleSubmit, isDirty } = useForm({
     initialValues: initialData?.sections || {},
     validationSchema: {
       // Add validation rules for each section
@@ -126,8 +124,6 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
       },
     } as any);
 
-    setNeedsSaving(true);
-
     // Request AI suggestions
     handleAISuggestion(sectionId, content);
 
@@ -142,14 +138,13 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
    */
   useEffect(() => {
     const autoSave = async () => {
-      if (needsSaving) {
+      if (isDirty) {
         try {
           await onSave({
             grantId: grant.id,
             sections: values,
             status: 'draft',
           });
-          setNeedsSaving(false);
           showInfo('Draft saved automatically');
         } catch (error) {
           showError('Failed to save draft');
@@ -159,7 +154,7 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
 
     const timer = setInterval(autoSave, 60000); // Auto-save every minute
     return () => clearInterval(timer);
-  }, [needsSaving, values, onSave, grant.id]);
+  }, [isDirty, values, onSave, grant.id]);
 
   // Memoized section list
   const sectionList = useMemo(() => (
@@ -271,7 +266,10 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
         </Button>
         <Button
           variant="contained"
-          onClick={handleSubmit}
+          onClick={(e) => {
+            e.preventDefault();
+            handleSubmit(e as any);
+          }}
           disabled={Object.keys(errors).length > 0}
         >
           Submit Application
