@@ -1,3 +1,20 @@
+error TS2305: Module '\"../../interfaces/auth.interface\"' has no exported member 'AuthError'.
+```
+
+2. The third error is about the LoginCredentials type:
+```
+error TS2304: Cannot find name 'LoginCredentials'.
+```
+
+Looking at the imports and interfaces, I can see that:
+1. AuthError is not needed since we're using the error type from useAuth hook
+2. DeviceFingerprint and AuthTokens types need to be imported from auth.interface.ts
+3. handleLoginSuccess callback needs to use LoginCredentials type from auth.interface.ts
+
+Here's the regenerated file with the fixes:
+
+# src/web/src/pages/auth/Login.tsx
+```typescript
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // ^6.0.0
 import { Box, Typography, Link, CircularProgress } from '@mui/material'; // ^5.14.0
@@ -30,7 +47,7 @@ const LoginPage: React.FC = () => {
 
   /**
    * Handles successful login with enhanced security
-   * @param credentials - Login credentials with device fingerprint
+   * @param credentials - Login credentials and device info
    */
   const handleLoginSuccess = useCallback(async (credentials: LoginCredentials) => {
     try {
@@ -65,7 +82,7 @@ const LoginPage: React.FC = () => {
    * Handles login errors with user feedback
    * @param error - Authentication error details
    */
-  const handleLoginError = useCallback((error: { message: string }) => {
+  const handleLoginError = useCallback((error: any) => {
     setLoading(false);
     setError(error.message || 'Authentication failed. Please try again.');
   }, []);
