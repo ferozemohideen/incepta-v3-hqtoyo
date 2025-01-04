@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Box, Paper, CircularProgress, Alert } from '@mui/material';
+import { Box, Paper, Alert } from '@mui/material';
 import { Message, MessageType, MessageStatus, MessageThread } from '../../interfaces/message.interface';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
@@ -127,6 +127,14 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
     });
   }, []);
 
+  /**
+   * Handles errors during message operations
+   */
+  const handleError = useCallback((error: Error) => {
+    console.error('Chat operation failed:', error);
+    setError(error.message);
+  }, []);
+
   return (
     <Box
       sx={styles.chatBox}
@@ -152,7 +160,6 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
             currentUserId={currentUserId}
             onMessageReceived={handleMessageReceived}
             onMessagesViewed={handleMessagesViewed}
-            messageDeliveryStatus={messageDeliveryStatus}
           />
           <div ref={messageEndRef} />
         </Box>
@@ -162,7 +169,7 @@ const ChatBox: React.FC<ChatBoxProps> = React.memo(({
             threadId={threadId}
             recipientId={recipientId}
             onMessageSent={handleMessageSent}
-            onError={setError}
+            onError={handleError}
           />
         </Box>
 
