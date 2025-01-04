@@ -31,6 +31,7 @@ const IP_REGEX = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
  * Rate limiting configuration
  */
 const RATE_LIMIT_ATTEMPTS = 5;
+const RATE_LIMIT_WINDOW = 300000; // 5 minutes in milliseconds
 
 /**
  * Validation error class with enhanced error details
@@ -82,12 +83,30 @@ const registrationSchema = z.object({
 /**
  * User data validation schema
  */
-const userDataSchema = z.object({
-  name: z.string().min(2).max(100),
+const userSchema = z.object({
+  id: z.string().uuid().optional(),
   email: z.string().email().regex(EMAIL_REGEX),
+  name: z.string().min(2).max(100),
   role: z.nativeEnum(UserRole),
   organization: z.string().min(2).max(200),
-  organizationType: z.string().min(2).max(50)
+  organizationType: z.string().min(2).max(50),
+  profile: z.object({
+    title: z.string().min(2).max(100).optional(),
+    department: z.string().min(2).max(100).optional(),
+    phone: z.string().min(10).max(20).optional(),
+    bio: z.string().max(1000).optional(),
+    expertise: z.array(z.string()).optional(),
+    interests: z.array(z.string()).optional()
+  }).optional(),
+  settings: z.object({
+    mfaEnabled: z.boolean().optional(),
+    emailNotifications: z.boolean().optional(),
+    theme: z.enum(['light', 'dark', 'system']).optional()
+  }).optional(),
+  status: z.enum(['active', 'inactive', 'pending']).optional(),
+  lastActive: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional()
 });
 
 /**
@@ -210,40 +229,44 @@ export async function validateRegistrationData(
 }
 
 /**
- * Validates user data with organization and role validation
+ * Validates user data against the user schema
  * @param data - User data to validate
  * @returns Promise resolving to true if validation passes
  * @throws ValidationError if validation fails
  */
-export async function validateUserData(data: {
-  name: string;
-  email: string;
-  role: UserRole;
-  organization: string;
-  organizationType: string;
-}): Promise<boolean> {
+export async function validateUserData(data: any): Promise<boolean> {
   try {
     // Validate basic schema
-    userDataSchema.parse(data);
+    userSchema.parse(data);
 
-    // Validate organization
-    const orgValidation = await validateOrganization(data.organization);
-    if (!orgValidation.valid) {
-      throw new ValidationError(
-        'Invalid organization',
-        'organization',
-        'INVALID_ORGANIZATION'
-      );
+    // Validate organization if present
+    if (data.organization) {
+      const orgValidation = await validateOrganization(data.organization);
+      if (!orgValidation.valid) {
+        throw new ValidationError(
+          'Invalid organization',
+          'organization',
+          'INVALID_ORGANIZATION'
+        );
+      }
     }
 
-    // Validate role permissions
-    if (!await validateRolePermissions(data.role)) {
+    // Validate role permissions if present
+    if (data.role && !await validateRolePermissions(data.role)) {
       throw new ValidationError(
         'Invalid role assignment',
         'role',
         'INVALID_ROLE'
       );
     }
+
+    // Log validation attempt
+    await logValidationAttempt({
+      type: 'user_update',
+      email: data.email,
+      organization: data.organization,
+      role: data.role
+    });
 
     return true;
   } catch (error) {
@@ -265,8 +288,6 @@ export async function validateUserData(data: {
  */
 async function checkRateLimit(ipAddress: string): Promise<{ allowed: boolean; remaining: number }> {
   // Implementation would connect to rate limiting service
-  // Using ipAddress in a real implementation to track rate limits per IP
-  console.log(`Checking rate limit for IP: ${ipAddress}`);
   return { allowed: true, remaining: RATE_LIMIT_ATTEMPTS };
 }
 
@@ -279,7 +300,6 @@ async function validateOrganization(
   organization: string
 ): Promise<{ valid: boolean; details?: string }> {
   // Implementation would connect to organization validation service
-  console.log(`Validating organization: ${organization}`);
   return { valid: true };
 }
 
@@ -290,7 +310,6 @@ async function validateOrganization(
  */
 async function checkDuplicateEmail(email: string): Promise<boolean> {
   // Implementation would connect to user service
-  console.log(`Checking for duplicate email: ${email}`);
   return false;
 }
 
@@ -301,7 +320,6 @@ async function checkDuplicateEmail(email: string): Promise<boolean> {
  */
 async function validateRolePermissions(role: UserRole): Promise<boolean> {
   // Implementation would connect to authorization service
-  console.log(`Validating permissions for role: ${role}`);
   return true;
 }
 
