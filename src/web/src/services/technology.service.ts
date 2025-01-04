@@ -16,8 +16,7 @@ import LRUCache from 'lru-cache'; // ^9.1.1
 import { 
   Technology, 
   TechnologySearchParams, 
-  isTechnology,
-  TechnologyPermissions 
+  isTechnology 
 } from '../interfaces/technology.interface';
 import { apiService } from './api.service';
 import { API_ENDPOINTS } from '../constants/api.constants';
@@ -58,37 +57,6 @@ class TechnologyService {
       updateAgeOnGet: true,
       allowStale: false
     });
-  }
-
-  /**
-   * Check user permissions for a technology
-   * @param technologyId - Technology UUID
-   * @returns Promise resolving to technology permissions
-   */
-  async checkPermissions(technologyId: string): Promise<TechnologyPermissions> {
-    if (!technologyId) {
-      throw new Error('Technology ID is required');
-    }
-
-    const cacheKey = `permissions:${technologyId}`;
-    const cachedPermissions = this.cache.get(cacheKey);
-    if (cachedPermissions) {
-      return cachedPermissions as TechnologyPermissions;
-    }
-
-    try {
-      const permissions = await apiService.get<TechnologyPermissions>(
-        `${this.baseUrl}/${technologyId}/permissions`,
-        undefined,
-        { cache: true }
-      );
-
-      this.cache.set(cacheKey, permissions, { ttl: 1000 * 60 * 15 }); // 15 minutes TTL
-      return permissions;
-    } catch (error) {
-      console.error(`Failed to fetch permissions for technology ${technologyId}:`, error);
-      throw error;
-    }
   }
 
   /**
