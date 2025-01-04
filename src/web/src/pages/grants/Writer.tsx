@@ -73,7 +73,7 @@ const Writer: React.FC = () => {
    * Handle draft saving with debounce
    */
   const handleSaveDraft = useCallback(
-    debounce(async (applicationData: Partial<IGrantApplication>) => {
+    async (applicationData: IGrantApplication) => {
       try {
         if (!grantId) return;
 
@@ -82,7 +82,7 @@ const Writer: React.FC = () => {
         setState(prev => ({ ...prev, progress }));
 
         // Save draft
-        await grantService.saveGrantDraft(grantId, applicationData);
+        await grantService.saveDraft(grantId, applicationData);
         
         setState(prev => ({
           ...prev,
@@ -95,16 +95,23 @@ const Writer: React.FC = () => {
         showError('Failed to save draft');
         setState(prev => ({ ...prev, isDirty: true }));
       }
-    }, 1000),
+    },
     [grantId, showSuccess, showError]
   );
 
   /**
    * Handle application submission
    */
-  const handleSubmitApplication = useCallback(async (applicationData: Partial<IGrantApplication>) => {
+  const handleSubmitApplication = useCallback(async (applicationData: IGrantApplication) => {
     try {
       if (!grantId) return;
+
+      // Validate application before submission
+      const validationResult = await grantService.validateApplication(applicationData);
+      if (!validationResult.isValid) {
+        showWarning(validationResult.message || 'Please complete all required sections');
+        return;
+      }
 
       // Check progress threshold
       if (state.progress < 100) {
@@ -137,16 +144,16 @@ const Writer: React.FC = () => {
   /**
    * Calculate application progress
    */
-  const calculateProgress = (applicationData: Partial<IGrantApplication>): number => {
+  const calculateProgress = (applicationData: IGrantApplication): number => {
     if (!state.grant) return 0;
 
-    const sections = Object.keys(state.grant.requirements.technicalVolume || {}).length +
-                    Object.keys(state.grant.requirements.businessPlan || {}).length +
-                    Object.keys(state.grant.requirements.budget || {}).length;
-    
-    const completedSections = Object.keys(applicationData.documents || {}).length;
+    const sections = state.grant.requirements.sections;
+    const completedSections = sections.filter(section => {
+      const content = applicationData.sections?.[section.id]?.content;
+      return content && content.length > 0;
+    });
 
-    return sections > 0 ? Math.round((completedSections / sections) * 100) : 0;
+    return Math.round((completedSections.length / sections.length) * 100);
   };
 
   // Loading state
