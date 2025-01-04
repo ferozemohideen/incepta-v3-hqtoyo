@@ -4,13 +4,17 @@
  * @version 1.0.0
  */
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Box, 
+  Paper, 
   Typography, 
+  CircularProgress, 
   Snackbar, 
   Alert 
 } from '@mui/material';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 import ChatBox from '../../components/messages/ChatBox';
 import DocumentShare from '../../components/messages/DocumentShare';
@@ -20,6 +24,7 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 // Constants for offline handling and performance
 const OFFLINE_QUEUE_LIMIT = 100;
 const RECONNECT_DELAY = 5000;
+const MESSAGE_BATCH_SIZE = 50;
 
 /**
  * Interface for thread component state
@@ -42,6 +47,8 @@ interface ThreadState {
 const Thread: React.FC = () => {
   // Router hooks
   const { threadId } = useParams<{ threadId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // State management
   const [state, setState] = useState<ThreadState>({
@@ -59,9 +66,10 @@ const Thread: React.FC = () => {
   // WebSocket connection for real-time updates
   const { 
     isConnected, 
+    connectionState, 
     sendMessage: sendWebSocketMessage 
   } = useWebSocket(
-    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
+    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
   );
 
   /**
@@ -148,19 +156,25 @@ const Thread: React.FC = () => {
    * Handles connection status changes
    */
   useEffect(() => {
+    let reconnectTimeout: NodeJS.Timeout;
+
     if (isConnected) {
       processOfflineQueue();
     } else {
       // Set reconnection timeout
-      const reconnectTimeout = setTimeout(() => {
+      reconnectTimeout = setTimeout(() => {
         setState(prev => ({
           ...prev,
           error: 'Connection lost. Attempting to reconnect...'
         }));
       }, RECONNECT_DELAY);
-
-      return () => clearTimeout(reconnectTimeout);
     }
+
+    return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
   }, [isConnected, processOfflineQueue]);
 
   return (
