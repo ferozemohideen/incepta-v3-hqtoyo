@@ -275,5 +275,12 @@ class ApiServiceImpl implements ApiService {
   }
 }
 
-// Export singleton instance
-export const apiService = new ApiServiceImpl();
+// Create singleton instance
+const apiServiceInstance = new ApiServiceImpl();
+
+// Export singleton instance and individual methods for destructured imports
+export const apiService = apiServiceInstance;
+export const get = apiServiceInstance.get.bind(apiServiceInstance);
+export const post = apiServiceInstance.post.bind(apiServiceInstance);
+export const put = apiServiceInstance.put.bind(apiServiceInstance);
+export const delete_ = apiServiceInstance.delete.bind(apiServiceInstance);
