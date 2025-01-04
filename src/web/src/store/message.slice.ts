@@ -10,7 +10,9 @@ import {
   MessageThread,
   MessageType,
   MessageStatus,
-  DocumentMetadata
+  MessageEvent,
+  MessageEventType,
+  MessageMetadata
 } from '../interfaces/message.interface';
 import { messageService } from '../services/message.service';
 
@@ -26,7 +28,7 @@ interface MessageState {
   unreadCount: number;
   drafts: Map<string, Message>;
   offlineQueue: Message[];
-  documentUploads: Map<string, DocumentMetadata>;
+  documentUploads: Map<string, MessageMetadata>;
 }
 
 /**
@@ -49,9 +51,10 @@ const initialState: MessageState = {
  */
 export const fetchThreads = createAsyncThunk(
   'messages/fetchThreads',
-  async ({ page, limit }: { 
+  async ({ page, limit, forceRefresh = false }: { 
     page: number; 
     limit: number; 
+    forceRefresh?: boolean;
   }) => {
     try {
       const response = await messageService.getThreads(page, limit);
@@ -197,7 +200,7 @@ const messageSlice = createSlice({
         .filter(m => m.threadId === threadId && m.status !== MessageStatus.READ)
         .forEach(m => {
           m.status = MessageStatus.READ;
-          messageService.markAsRead(m.id);
+          messageService.markAsRead([m.id]);
         });
     }
   },
@@ -210,9 +213,9 @@ const messageSlice = createSlice({
       })
       .addCase(fetchThreads.fulfilled, (state, action) => {
         state.loading = false;
-        state.threads = action.payload;
-        state.unreadCount = action.payload.reduce(
-          (count: number, thread: MessageThread) => count + thread.unreadCount, 
+        state.threads = action.payload.threads;
+        state.unreadCount = action.payload.threads.reduce(
+          (count, thread) => count + thread.unreadCount, 
           0
         );
       })
@@ -229,7 +232,7 @@ const messageSlice = createSlice({
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
         state.loading = false;
-        state.messages = action.payload;
+        state.messages = action.payload.messages;
       })
       .addCase(fetchMessages.rejected, (state, action) => {
         state.loading = false;
