@@ -8,9 +8,8 @@ import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit'
 import { persistReducer } from 'redux-persist'; // ^6.0.0
 import { 
   IGrant, 
-  IGrantApplication, 
-  IGrantSearchParams,
-  GrantStatus 
+  IGrantApplication,
+  IGrantSearchParams
 } from '../interfaces/grant.interface';
 import { grantService } from '../services/grant.service';
 
@@ -104,13 +103,6 @@ export const submitApplication = createAsyncThunk(
   async ({ grantId, applicationData }: { grantId: string; applicationData: Partial<IGrantApplication> }, 
     { rejectWithValue }) => {
     try {
-      const optimisticApplication: IGrantApplication = {
-        ...applicationData as IGrantApplication,
-        status: GrantStatus.SUBMITTED,
-        submittedAt: new Date(),
-        lastModifiedAt: new Date()
-      };
-
       const response = await grantService.submitApplication(grantId, applicationData);
       return response;
     } catch (error: any) {
