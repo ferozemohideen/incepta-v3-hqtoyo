@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'; // ^6.0.0
 import { Box, Typography, Link, CircularProgress } from '@mui/material'; // ^5.14.0
 
 import { LoginForm } from '../../components/auth/LoginForm';
-import { AuthLayout } from '../../layouts/AuthLayout';
+import AuthLayout from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { AuthError } from '../../interfaces/auth.interface';
 
@@ -30,13 +30,21 @@ const LoginPage: React.FC = () => {
 
   /**
    * Handles successful login with enhanced security
+   * @param tokens - Authentication tokens from successful login
+   * @param fingerprint - Device fingerprint for security tracking
    */
-  const handleLoginSuccess = useCallback(async (credentials: LoginCredentials) => {
+  const handleLoginSuccess = useCallback(async (tokens: AuthTokens, fingerprint: DeviceFingerprint) => {
     try {
-      setLoading(true);
-      
-      // Handle login with credentials
-      await handleLogin(credentials);
+      // Store authentication state securely
+      await handleLogin({
+        ...tokens,
+        deviceInfo: {
+          fingerprint: fingerprint.visitorId,
+          userAgent: window.navigator.userAgent,
+          platform: window.navigator.platform,
+          version: window.navigator.appVersion
+        }
+      });
 
       // Handle MFA requirement
       if (mfaRequired) {
@@ -56,6 +64,7 @@ const LoginPage: React.FC = () => {
 
   /**
    * Handles login errors with user feedback
+   * @param error - Authentication error details
    */
   const handleLoginError = useCallback((error: AuthError) => {
     setLoading(false);
@@ -102,7 +111,7 @@ const LoginPage: React.FC = () => {
             sx={{ mb: 2 }}
             role="alert"
           >
-            {error || (typeof authError === 'string' ? authError : authError?.message)}
+            {error || authError}
           </Typography>
         )}
 
