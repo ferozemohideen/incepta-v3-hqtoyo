@@ -4,7 +4,7 @@ import { styled } from '@mui/material/styles';
 import { COLORS } from '../../config/theme.config';
 
 // Extended button props interface with enhanced accessibility and customization options
-export interface CustomButtonProps extends Omit<ButtonProps, 'variant' | 'color'> {
+export interface CustomButtonProps extends ButtonProps {
   loading?: boolean;
   size?: 'small' | 'medium' | 'large';
   variant?: 'text' | 'outlined' | 'contained' | 'tto';
@@ -25,7 +25,8 @@ const StyledButton = styled(Button, {
   isLoading?: boolean;
   hasStartIcon?: boolean;
   hasEndIcon?: boolean;
-}>(({ theme, variant: variantProp, size, isLoading, hasStartIcon, hasEndIcon }) => ({
+  $isTTOVariant?: boolean;
+}>(({ theme, variant, color, size, isLoading, hasStartIcon, hasEndIcon, $isTTOVariant }) => ({
   // Base styles following Material Design 3.0
   position: 'relative',
   minWidth: '64px',
@@ -53,8 +54,8 @@ const StyledButton = styled(Button, {
     minHeight: '48px',
   }),
 
-  // Variant-specific styles
-  ...(variantProp === 'tto' && {
+  // TTO variant styles
+  ...($isTTOVariant && {
     backgroundColor: COLORS.light.tto.license.available,
     color: '#fff',
     '&:hover': {
@@ -135,8 +136,8 @@ export const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProp
       }
     };
 
-    const buttonVariant = variant === 'tto' ? 'contained' : variant;
-    const buttonColor = color === 'tto' ? 'primary' : color;
+    const isTTOVariant = variant === 'tto';
+    const baseVariant = isTTOVariant ? 'contained' : variant;
 
     // Render button with proper accessibility attributes
     const button = (
@@ -144,8 +145,8 @@ export const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProp
         ref={ref}
         disabled={disabled || loading}
         size={size}
-        variant={buttonVariant}
-        color={buttonColor}
+        variant={baseVariant}
+        color={color === 'tto' ? 'primary' : color}
         fullWidth={fullWidth}
         startIcon={!loading && startIcon}
         endIcon={!loading && endIcon}
@@ -157,6 +158,7 @@ export const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProp
         isLoading={loading}
         hasStartIcon={!!startIcon}
         hasEndIcon={!!endIcon}
+        $isTTOVariant={isTTOVariant}
         {...props}
       >
         {children}
