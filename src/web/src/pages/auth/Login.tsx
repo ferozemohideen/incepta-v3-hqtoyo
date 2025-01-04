@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'; // ^6.0.0
 import { Box, Typography, Link, CircularProgress } from '@mui/material'; // ^5.14.0
 
 import { LoginForm } from '../../components/auth/LoginForm';
-import AuthLayout from '../../layouts/AuthLayout';
+import { AuthLayout } from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { AuthTokens } from '../../interfaces/auth.interface';
+import { AuthError, AuthTokens } from '../../interfaces/auth.interface';
 
 /**
  * Login page component implementing secure authentication with:
@@ -34,14 +34,18 @@ const LoginPage: React.FC = () => {
    */
   const handleLoginSuccess = useCallback(async (tokens: AuthTokens) => {
     try {
+      setLoading(true);
+      
       // Store authentication state securely
       await handleLogin({
-        ...tokens,
+        email: '',
+        password: '',
+        ipAddress: '',
         deviceInfo: {
           userAgent: window.navigator.userAgent,
           platform: window.navigator.platform,
           version: window.navigator.appVersion,
-          fingerprint: tokens.deviceInfo?.fingerprint || ''
+          fingerprint: tokens.accessToken
         }
       });
 
@@ -65,7 +69,7 @@ const LoginPage: React.FC = () => {
    * Handles login errors with user feedback
    * @param error - Authentication error details
    */
-  const handleLoginError = useCallback((error: { message: string }) => {
+  const handleLoginError = useCallback((error: AuthError) => {
     setLoading(false);
     setError(error.message || 'Authentication failed. Please try again.');
   }, []);
@@ -102,7 +106,7 @@ const LoginPage: React.FC = () => {
         )}
 
         {/* Error message */}
-        {(error || authError) && (
+        {(error || (authError && typeof authError === 'string')) && (
           <Typography
             color="error"
             variant="body2"
@@ -110,7 +114,7 @@ const LoginPage: React.FC = () => {
             sx={{ mb: 2 }}
             role="alert"
           >
-            {error || authError}
+            {error || (typeof authError === 'string' ? authError : 'Authentication failed')}
           </Typography>
         )}
 
