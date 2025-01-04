@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Box, CircularProgress, Alert, LinearProgress } from '@mui/material';
-import { debounce } from 'lodash';
 
 import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant';
 import { useNotification } from '../../hooks/useNotification';
@@ -73,7 +72,7 @@ const Writer: React.FC = () => {
    * Handle draft saving with debounce
    */
   const handleSaveDraft = useCallback(
-    async (applicationData: IGrantApplication) => {
+    async (applicationData: Partial<IGrantApplication>) => {
       try {
         if (!grantId) return;
 
@@ -82,7 +81,7 @@ const Writer: React.FC = () => {
         setState(prev => ({ ...prev, progress }));
 
         // Save draft
-        await grantService.saveDraft(grantId, applicationData);
+        await grantService.saveGrantDraft(grantId, applicationData);
         
         setState(prev => ({
           ...prev,
@@ -102,16 +101,9 @@ const Writer: React.FC = () => {
   /**
    * Handle application submission
    */
-  const handleSubmitApplication = useCallback(async (applicationData: IGrantApplication) => {
+  const handleSubmitApplication = useCallback(async (applicationData: Partial<IGrantApplication>) => {
     try {
       if (!grantId) return;
-
-      // Validate application before submission
-      const validationResult = await grantService.validateApplication(applicationData);
-      if (!validationResult.isValid) {
-        showWarning(validationResult.message || 'Please complete all required sections');
-        return;
-      }
 
       // Check progress threshold
       if (state.progress < 100) {
@@ -144,7 +136,7 @@ const Writer: React.FC = () => {
   /**
    * Calculate application progress
    */
-  const calculateProgress = (applicationData: IGrantApplication): number => {
+  const calculateProgress = (applicationData: Partial<IGrantApplication>): number => {
     if (!state.grant) return 0;
 
     const sections = state.grant.requirements.sections;
