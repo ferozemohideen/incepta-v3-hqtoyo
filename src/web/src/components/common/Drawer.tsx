@@ -16,17 +16,16 @@ interface DrawerProps {
   className?: string;
   sx?: object;
   variant?: 'temporary' | 'persistent' | 'permanent';
-  disableBackdropTransition?: boolean;
 }
 
 /**
  * Styled drawer component with responsive width and enhanced transitions
  */
-const StyledDrawer = styled(Drawer)<{ drawerWidth?: number }>(({ theme, drawerWidth = 400 }) => ({
+const StyledDrawer = styled(Drawer)(({ theme, width = 400 }) => ({
   width: {
     xs: '100%',
-    sm: drawerWidth,
-    md: drawerWidth,
+    sm: width,
+    md: width,
   },
   flexShrink: 0,
   whiteSpace: 'nowrap',
@@ -34,8 +33,8 @@ const StyledDrawer = styled(Drawer)<{ drawerWidth?: number }>(({ theme, drawerWi
   '& .MuiDrawer-paper': {
     width: {
       xs: '100%',
-      sm: drawerWidth,
-      md: drawerWidth,
+      sm: width,
+      md: width,
     },
     boxSizing: 'border-box',
     backgroundColor: theme.palette.background.paper,
@@ -77,7 +76,6 @@ const CustomDrawer: React.FC<DrawerProps> = ({
   className,
   sx,
   variant = 'temporary',
-  disableBackdropTransition = false,
 }) => {
   const theme = useTheme();
   const isRTL = theme.direction === 'rtl';
@@ -91,7 +89,7 @@ const CustomDrawer: React.FC<DrawerProps> = ({
       anchor={anchor}
       open={open}
       onClose={onClose}
-      drawerWidth={width}
+      width={width}
       className={className}
       sx={sx}
       ModalProps={{
