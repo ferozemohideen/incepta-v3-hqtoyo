@@ -18,7 +18,7 @@ import {
   MFACredentials,
   ResetPasswordCredentials 
 } from '../interfaces/auth.interface';
-import { AUTH_ENDPOINTS, TOKEN_CONFIG, AUTH_STORAGE_KEYS } from '../constants/auth.constants';
+import { AUTH_ENDPOINTS, TOKEN_CONFIG, AUTH_STORAGE_KEYS, UserRole } from '../constants/auth.constants';
 import { 
   setLocalStorageItem, 
   getLocalStorageItem, 
@@ -44,6 +44,7 @@ export interface AuthService {
  */
 class AuthServiceImpl implements AuthService {
   private readonly tokenRefreshInterval: number = TOKEN_CONFIG.ROTATION_WINDOW * 1000;
+  private readonly maxRetryAttempts: number = 3;
   private refreshTimer?: NodeJS.Timeout;
 
   constructor() {
@@ -183,23 +184,23 @@ class AuthServiceImpl implements AuthService {
 
   /**
    * Verifies password reset token validity
-   * @param token - Reset token to verify
+   * @param token - Password reset token to verify
    * @returns Promise resolving to token validity status
    */
   async verifyResetToken(token: string): Promise<boolean> {
     try {
-      const response = await apiService.post<{ valid: boolean }>(
+      await apiService.post(
         AUTH_ENDPOINTS.RESET_PASSWORD,
         { token, verify: true }
       );
-      return response.valid;
+      return true;
     } catch (error) {
-      throw this.handleAuthError(error);
+      return false;
     }
   }
 
   /**
-   * Resets user password with verification
+   * Resets user password with verification token
    * @param credentials - Password reset credentials
    */
   async resetPassword(credentials: ResetPasswordCredentials): Promise<void> {
