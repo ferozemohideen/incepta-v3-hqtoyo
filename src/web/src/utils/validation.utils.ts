@@ -84,11 +84,29 @@ const registrationSchema = z.object({
  * User data validation schema
  */
 const userDataSchema = z.object({
-  name: z.string().min(2).max(100),
-  email: z.string().email().regex(EMAIL_REGEX),
-  role: z.nativeEnum(UserRole),
-  organization: z.string().min(2).max(200),
-  organizationType: z.string().min(2).max(50)
+  profile: z.object({
+    name: z.string().min(2).max(100),
+    title: z.string().min(2).max(100),
+    organization: z.string().min(2).max(200),
+    bio: z.string().max(1000).optional(),
+    avatar: z.string().url().optional(),
+    phone: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional()
+  }),
+  preferences: z.object({
+    emailNotifications: z.boolean(),
+    pushNotifications: z.boolean(),
+    newsletterSubscription: z.boolean(),
+    language: z.string().min(2).max(5),
+    timezone: z.string().min(1),
+    theme: z.enum(['light', 'dark', 'system'])
+  }),
+  security: z.object({
+    mfaEnabled: z.boolean(),
+    lastPasswordChange: z.string().datetime(),
+    loginAlerts: z.boolean(),
+    trustedDevices: z.array(deviceInfoSchema).max(5),
+    ipWhitelist: z.array(z.string().regex(IP_REGEX)).optional()
+  })
 });
 
 /**
@@ -211,50 +229,55 @@ export async function validateRegistrationData(
 }
 
 /**
- * Validates user data for updates and profile management
- * @param data - User data to validate
+ * Validates user data including profile, preferences, and security settings
+ * @param userData - User data to validate
  * @returns Promise resolving to true if validation passes
  * @throws ValidationError if validation fails
  */
-export async function validateUserData(data: Partial<RegisterCredentials>): Promise<boolean> {
+export async function validateUserData(
+  userData: z.infer<typeof userDataSchema>
+): Promise<boolean> {
   try {
     // Validate basic schema
-    userDataSchema.partial().parse(data);
+    userDataSchema.parse(userData);
 
-    if (data.organization) {
-      // Validate organization if provided
-      const orgValidation = await validateOrganization(data.organization);
+    // Validate organization if present in profile
+    if (userData.profile.organization) {
+      const orgValidation = await validateOrganization(userData.profile.organization);
       if (!orgValidation.valid) {
         throw new ValidationError(
           'Invalid organization',
-          'organization',
+          'profile.organization',
           'INVALID_ORGANIZATION'
         );
       }
     }
 
-    if (data.email) {
-      // Check for duplicate email if email is being updated
-      const emailExists = await checkDuplicateEmail(data.email);
-      if (emailExists) {
+    // Validate trusted devices
+    if (userData.security.trustedDevices.length > 0) {
+      const fp = await fpPromise;
+      const currentDevice = await fp.get();
+      const validDevices = userData.security.trustedDevices.some(
+        device => device.fingerprint === currentDevice.visitorId
+      );
+      if (!validDevices) {
         throw new ValidationError(
-          'Email already registered',
-          'email',
-          'DUPLICATE_EMAIL'
+          'Current device not in trusted devices list',
+          'security.trustedDevices',
+          'INVALID_TRUSTED_DEVICE'
         );
       }
     }
 
-    if (data.role) {
-      // Validate role permissions if role is being updated
-      if (!await validateRolePermissions(data.role)) {
-        throw new ValidationError(
-          'Invalid role assignment',
-          'role',
-          'INVALID_ROLE'
-        );
+    // Log validation attempt
+    await logValidationAttempt({
+      type: 'user_data_update',
+      profile: userData.profile,
+      security: {
+        mfaEnabled: userData.security.mfaEnabled,
+        loginAlerts: userData.security.loginAlerts
       }
-    }
+    });
 
     return true;
   } catch (error) {
