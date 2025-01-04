@@ -6,7 +6,7 @@ interface TechnologyDetailsProps {
 }
 ```
 
-Let me regenerate the file with the necessary fixes.
+Here's the regenerated file with the fix:
 
 # src/web/src/pages/technologies/Details.tsx
 ```typescript
