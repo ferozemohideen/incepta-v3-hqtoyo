@@ -42,7 +42,7 @@ const StyledForm = styled(Box)(({ theme }) => ({
     zIndex: theme.zIndex.modal - 1,
     borderRadius: 'inherit',
   },
-})) as typeof Box;
+}));
 
 // Form security options interface
 interface FormSecurityOptions {
