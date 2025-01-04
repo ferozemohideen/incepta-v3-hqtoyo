@@ -107,14 +107,17 @@ export type TokenPayload = {
   mfa: boolean;
   exp: number;
   iat: number;
-};
-
-/**
- * Type definition for JWT payload extending TokenPayload
- * Includes additional fields specific to JWT implementation
- */
-export type JWTPayload = TokenPayload & {
-  jti?: string;
-  iss?: string;
-  aud?: string;
+  security: {
+    mfaEnabled: boolean;
+    lastPasswordChange?: string;
+    loginAttempts?: number;
+  };
+  preferences: {
+    language?: string;
+    theme?: string;
+    notifications?: {
+      email: boolean;
+      push: boolean;
+    };
+  };
 };
