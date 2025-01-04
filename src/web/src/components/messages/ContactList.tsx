@@ -242,7 +242,7 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
         setOnlineStatus(prev => ({ ...prev, ...updates.online }));
         setTypingStatus(prev => ({ ...prev, ...updates.typing }));
       },
-      { initialFetch: true }
+      { interval: 30000 }
     );
 
     return () => {
@@ -257,7 +257,7 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
     const loadUnreadCounts = async () => {
       try {
         const counts = await messageService.getUnreadCount();
-        setUnreadCounts(prevCounts => ({ ...prevCounts, ...counts }));
+        setUnreadCounts(prev => ({ ...prev, ...counts }));
       } catch (err) {
         console.error('Error loading unread counts:', err);
       }
