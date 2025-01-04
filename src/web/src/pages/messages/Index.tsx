@@ -66,13 +66,13 @@ const MessagesPage: React.FC = () => {
       }));
 
       // Validate thread access permissions
-      if (!permissions?.includes('message:read')) {
+      if (!permissions.includes('message:read')) {
         throw new Error('Insufficient permissions to access thread');
       }
 
       // Update selected contact based on thread
-      const threadInfo = await messageService.getThreadInfo(threadId);
-      const contactId = threadInfo.participantIds.find(id => id !== user?.id);
+      const threadInfo = await messageService.getMessageThread(threadId);
+      const contactId = threadInfo.thread.participantIds.find((id: string) => id !== user?.id);
 
       setState(prev => ({
         ...prev,
