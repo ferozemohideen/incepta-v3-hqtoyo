@@ -208,7 +208,7 @@ export const ContactList: React.FC<ContactListProps> = React.memo(({
   const loadContacts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await messageService.getThreads(page, pageSize);
+      const response = await messageService.getMessageThread(page, pageSize);
       
       setContacts(prevContacts => [
         ...prevContacts,
