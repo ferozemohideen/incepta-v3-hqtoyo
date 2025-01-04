@@ -27,6 +27,12 @@ import {
 import { createStateSyncMiddleware, initMessageListener } from 'redux-state-sync'; // ^3.1.4
 import * as Sentry from '@sentry/react'; // ^7.0.0
 import storage from 'redux-persist/lib/storage';
+
+// Temporary type declaration until @types/redux-persist-transform-filter is installed
+declare module 'redux-persist-transform-filter' {
+  export default function createFilter(reducerName: string, inboundPaths?: string[], outboundPaths?: string[]): any;
+}
+
 import createFilter from 'redux-persist-transform-filter';
 
 // Import reducers
@@ -48,7 +54,7 @@ const persistConfig = {
   ],
   timeout: 2000, // 2 seconds timeout for storage operations
   serialize: true,
-  debug: process.env['NODE_ENV'] !== 'production'
+  debug: process.env.NODE_ENV !== 'production'
 };
 
 /**
@@ -58,22 +64,22 @@ const stateSyncConfig = {
   blacklist: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
   channel: 'incepta_state_sync',
   broadcastChannelOption: {
-    type: 'localstorage' as const
+    type: 'localstorage'
   }
 };
 
 /**
  * Performance monitoring middleware
  */
-const monitoringMiddleware: Middleware = (_store) => next => action => {
+const monitoringMiddleware: Middleware = store => next => action => {
   const start = performance.now();
   const result = next(action);
   const end = performance.now();
   const duration = end - start;
 
   // Log slow actions in production
-  if (duration > 16 && process.env['NODE_ENV'] === 'production') {
-    Sentry.captureMessage(`Slow action: ${typeof action === 'object' ? action.type : 'unknown'} took ${duration}ms`, {
+  if (duration > 16 && process.env.NODE_ENV === 'production') {
+    Sentry.captureMessage(`Slow action: ${action.type} took ${duration}ms`, {
       level: 'warning',
       extra: {
         action,
@@ -118,7 +124,7 @@ export const store = configureStore({
       createStateSyncMiddleware(stateSyncConfig),
       monitoringMiddleware
     ),
-  devTools: process.env['NODE_ENV'] !== 'production',
+  devTools: process.env.NODE_ENV !== 'production',
   enhancers: []
 });
 
@@ -144,7 +150,7 @@ export const useAppDispatch = () => {
 
     // Track dispatch performance
     if (duration > 16) {
-      console.warn(`Slow dispatch: ${typeof action === 'object' ? action.type : 'unknown'} took ${duration}ms`);
+      console.warn(`Slow dispatch: ${action.type} took ${duration}ms`);
     }
 
     return result;
@@ -179,12 +185,12 @@ export const resetStore = () => {
 /**
  * Initialize store monitoring
  */
-if (process.env['NODE_ENV'] === 'production') {
+if (process.env.NODE_ENV === 'production') {
   Sentry.init({
-    dsn: process.env['REACT_APP_SENTRY_DSN'],
+    dsn: process.env.REACT_APP_SENTRY_DSN,
     integrations: [
       new Sentry.BrowserTracing({
-        tracingOrigins: ['localhost', process.env['REACT_APP_API_URL'] || ''],
+        tracingOrigins: ['localhost', process.env.REACT_APP_API_URL],
       }),
     ],
     tracesSampleRate: 0.2,
