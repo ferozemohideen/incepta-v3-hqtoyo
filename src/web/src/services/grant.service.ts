@@ -11,9 +11,8 @@
  * - Retry logic for failed requests
  */
 
-import { apiService } from './api.service';
+import { get, post, put } from './api.service'; // ^1.0.0
 import { API_ENDPOINTS } from '../constants/api.constants';
-import retry from 'axios-retry';
 import {
   IGrant,
   IGrantApplication,
@@ -56,15 +55,7 @@ class GrantServiceImpl implements GrantService {
   private readonly cache: Map<string, { data: any; timestamp: number }> = new Map();
 
   constructor() {
-    // Configure retry strategy
-    retry(apiService, {
-      retries: this.maxRetries,
-      retryDelay: retry.exponentialDelay,
-      retryCondition: (error) => {
-        return retry.isNetworkOrIdempotentRequestError(error) ||
-          error.response?.status === 429;
-      }
-    });
+    // Retry configuration is handled by ApiServiceImpl
   }
 
   /**
@@ -72,15 +63,15 @@ class GrantServiceImpl implements GrantService {
    */
   async searchGrants(params: IGrantSearchParams): Promise<IGrantResponse> {
     const cacheKey = `grants_search_${JSON.stringify(params)}`;
-    const cached = this.getFromCache<IGrantResponse>(cacheKey);
+    const cached = this.getFromCache(cacheKey);
     
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await apiService.get<IGrantResponse>(
-        `${API_ENDPOINTS.GRANTS.BASE}/search`,
+      const response = await get<IGrantResponse>(
+        API_ENDPOINTS.GRANTS.SEARCH,
         params,
         { cache: true }
       );
@@ -98,14 +89,14 @@ class GrantServiceImpl implements GrantService {
    */
   async getGrantById(id: string): Promise<IGrant> {
     const cacheKey = `grant_${id}`;
-    const cached = this.getFromCache<IGrant>(cacheKey);
+    const cached = this.getFromCache(cacheKey);
 
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await apiService.get<IGrant>(
+      const response = await get<IGrant>(
         `${API_ENDPOINTS.GRANTS.BASE}/${id}`,
         undefined,
         { cache: true }
@@ -127,7 +118,7 @@ class GrantServiceImpl implements GrantService {
     applicationData: Partial<IGrantApplication>
   ): Promise<IGrantApplication> {
     try {
-      const response = await apiService.post<IGrantApplication>(
+      const response = await post<IGrantApplication>(
         `${API_ENDPOINTS.GRANTS.APPLY}/${grantId}`,
         {
           ...applicationData,
@@ -151,7 +142,7 @@ class GrantServiceImpl implements GrantService {
    */
   async getApplicationStatus(applicationId: string): Promise<IGrantApplication> {
     try {
-      return await apiService.get<IGrantApplication>(
+      return await get<IGrantApplication>(
         `${API_ENDPOINTS.GRANTS.STATUS}/${applicationId}`,
         undefined,
         { cache: false } // Real-time status should not be cached
@@ -167,14 +158,14 @@ class GrantServiceImpl implements GrantService {
    */
   async getGrantStats(): Promise<GrantStats> {
     const cacheKey = 'grant_stats';
-    const cached = this.getFromCache<GrantStats>(cacheKey);
+    const cached = this.getFromCache(cacheKey);
 
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await apiService.get<GrantStats>(
+      const response = await get<GrantStats>(
         `${API_ENDPOINTS.GRANTS.BASE}/stats`,
         undefined,
         { cache: true }
@@ -196,7 +187,7 @@ class GrantServiceImpl implements GrantService {
     draftData: Partial<IGrantApplication>
   ): Promise<IGrantApplication> {
     try {
-      return await apiService.put<IGrantApplication>(
+      return await put<IGrantApplication>(
         `${API_ENDPOINTS.GRANTS.DRAFTS}/${grantId}`,
         {
           ...draftData,
@@ -221,7 +212,7 @@ class GrantServiceImpl implements GrantService {
     formData.append('document', document);
 
     try {
-      await apiService.post(
+      await post(
         `${API_ENDPOINTS.GRANTS.BASE}/${applicationId}/documents`,
         formData,
         {
