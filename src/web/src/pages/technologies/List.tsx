@@ -1,5 +1,5 @@
 // @mui/material v5.14.0
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Box, 
   Container, 
@@ -7,18 +7,20 @@ import {
   Skeleton, 
   Alert,
   Grid,
+  useTheme,
   useMediaQuery
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Internal imports
-import TechnologyGrid from '../../components/technologies/TechnologyGrid';
+import TechnologyGrid, { TechnologyGridProps } from '../../components/technologies/TechnologyGrid';
 import TechnologyFilters from '../../components/technologies/TechnologyFilters';
 import { technologyService } from '../../services/technology.service';
 import { 
   Technology,
   TechnologySearchParams,
-  PatentStatus
+  PatentStatus,
+  DevelopmentStage
 } from '../../interfaces/technology.interface';
 
 // Default search parameters
@@ -41,26 +43,30 @@ const DEFAULT_SEARCH_PARAMS: TechnologySearchParams = {
  * Implements Material Design 3.0 principles with WCAG 2.1 Level AA compliance
  */
 const TechnologyList: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isSmallScreen = useMediaQuery('(max-width:960px)');
 
   // Component state
   const [technologies, setTechnologies] = useState<Technology[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [filters, setFilters] = useState<TechnologySearchParams>(() => {
     // Initialize filters from URL parameters
     const urlParams = Object.fromEntries(searchParams.entries());
     return {
       ...DEFAULT_SEARCH_PARAMS,
-      query: urlParams['query'] || '',
-      patentStatus: urlParams['patentStatus'] ? 
-        (urlParams['patentStatus'] as string).split(',') as PatentStatus[] : [],
-      page: parseInt(urlParams['page'] || '1', 10)
+      query: urlParams.query || '',
+      patentStatus: urlParams.patentStatus ? 
+        (urlParams.patentStatus as string).split(',') as PatentStatus[] : [],
+      page: parseInt(urlParams.page || '1', 10)
     };
   });
+
+  // Refs for virtualization and scroll restoration
+  const gridRef = useRef<HTMLDivElement>(null);
+  const lastScrollPos = useRef(0);
 
   // Memoized search parameters for URL updates
   const searchParamsString = useMemo(() => {
@@ -82,6 +88,7 @@ const TechnologyList: React.FC = () => {
   const fetchTechnologies = useCallback(async () => {
     setLoading(true);
     setError(null);
+    lastScrollPos.current = window.scrollY;
 
     try {
       const response = await technologyService.searchTechnologies(filters);
@@ -95,10 +102,12 @@ const TechnologyList: React.FC = () => {
         liveRegion.textContent = announcement;
       }
     } catch (err) {
-      setError('Failed to load technologies. Please try again.');
+      setError(new Error('Failed to load technologies. Please try again.'));
       console.error('Error fetching technologies:', err);
     } finally {
       setLoading(false);
+      // Restore scroll position
+      window.scrollTo(0, lastScrollPos.current);
     }
   }, [filters]);
 
@@ -171,7 +180,7 @@ const TechnologyList: React.FC = () => {
               sx={{ mb: 3 }}
               onClose={() => setError(null)}
             >
-              {error}
+              {error.message}
             </Alert>
           )}
 
@@ -186,16 +195,18 @@ const TechnologyList: React.FC = () => {
             </Typography>
           </Box>
 
-          {/* Technology grid */}
-          <TechnologyGrid
-            technologies={technologies}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-            onTechnologySelect={handleTechnologySelect}
-            loading={loading}
-            error={error}
-            aria-label="Technology listings"
-          />
+          {/* Technology grid with virtualization */}
+          <Box ref={gridRef}>
+            <TechnologyGrid
+              technologies={technologies}
+              totalCount={totalCount}
+              onPageChange={handlePageChange}
+              onTechnologySelect={handleTechnologySelect}
+              loading={loading}
+              error={error}
+              aria-label="Technology listings"
+            />
+          </Box>
         </Grid>
       </Grid>
     </Container>
