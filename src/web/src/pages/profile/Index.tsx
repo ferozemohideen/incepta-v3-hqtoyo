@@ -22,10 +22,11 @@ const ProfilePage: React.FC = () => {
 
   // Fetch user profile on mount
   useEffect(() => {
-    dispatch(fetchUserProfile())
+    const deviceId = window.navigator.userAgent;
+    dispatch(fetchUserProfile(deviceId))
       .unwrap()
-      .catch((error) => {
-        showError('Failed to load profile: ' + error);
+      .catch((error: Error) => {
+        showError('Failed to load profile: ' + error.message);
       });
   }, [dispatch, showError]);
 
@@ -137,6 +138,7 @@ const ProfilePage: React.FC = () => {
                 user={profileData}
                 onSubmit={handleProfileUpdate}
                 onError={(error) => showError(error.message)}
+                isLoading={isProfileUpdating}
               />
             </Paper>
           </Grid>
