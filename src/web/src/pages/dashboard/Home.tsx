@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Grid, Container, Typography, Box, useTheme } from '@mui/material';
 
 // Internal components
 import { QuickActions } from '../../components/dashboard/QuickActions';
+import SavedItems from '../../components/dashboard/SavedItems';
 import { RecentActivity, Activity } from '../../components/dashboard/RecentActivity';
-import { SavedItems } from '../../components/dashboard/SavedItems';
 import { AnalyticsCard, ChartDataPoint } from '../../components/dashboard/AnalyticsCard';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 
@@ -45,7 +45,7 @@ const Home: React.FC = () => {
   
   // Initialize WebSocket connection for real-time updates
   const { isConnected, sendMessage } = useWebSocket(
-    import.meta.env.VITE_WS_URL || 'ws://localhost:8080',
+    import.meta.env['VITE_WS_URL'] || 'ws://localhost:8080',
     { autoConnect: true }
   );
 
@@ -176,13 +176,12 @@ const Home: React.FC = () => {
       };
 
       // Subscribe to activity updates
-      sendMessage({ type: 'subscribe', channel: 'activities' });
+      sendMessage({ type: 'SUBSCRIBE', channel: 'activities' });
 
       return () => {
-        sendMessage({ type: 'unsubscribe', channel: 'activities' });
+        sendMessage({ type: 'UNSUBSCRIBE', channel: 'activities' });
       };
     }
-    return undefined;
   }, [isConnected, sendMessage]);
 
   return (
@@ -199,7 +198,7 @@ const Home: React.FC = () => {
           {/* Welcome Message */}
           <Grid item xs={12}>
             <Typography variant="h4" component="h1" gutterBottom>
-              Welcome back, {user?.displayName}
+              Welcome back, {user?.name}
             </Typography>
           </Grid>
 
@@ -215,7 +214,7 @@ const Home: React.FC = () => {
             <ErrorBoundary>
               <RecentActivity
                 initialActivities={state.activities}
-                loading={state.loading.activities}
+                isLoading={state.loading.activities}
                 onLoadMore={fetchDashboardData}
               />
             </ErrorBoundary>
@@ -229,8 +228,8 @@ const Home: React.FC = () => {
                 savedGrants={state.savedGrants}
                 onRemoveTechnology={handleRemoveTechnology}
                 onRemoveGrant={handleRemoveGrant}
-                onViewTechnology={async (id) => {/* Navigate to technology */}}
-                onViewGrant={async (id) => {/* Navigate to grant */}}
+                onViewTechnology={(id: string) => {/* Navigate to technology */}}
+                onViewGrant={(id: string) => {/* Navigate to grant */}}
                 isLoading={state.loading.saved}
               />
             </ErrorBoundary>
