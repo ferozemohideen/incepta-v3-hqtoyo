@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Box, 
@@ -62,6 +62,11 @@ const Thread: React.FC = () => {
     deliveryStatus: new Map(),
     readReceipts: new Map()
   });
+
+  // Refs for managing component lifecycle
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<string | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
   // WebSocket connection for real-time updates
   const { 
@@ -156,13 +161,11 @@ const Thread: React.FC = () => {
    * Handles connection status changes
    */
   useEffect(() => {
-    let reconnectTimeout: NodeJS.Timeout;
-
     if (isConnected) {
       processOfflineQueue();
     } else {
       // Set reconnection timeout
-      reconnectTimeout = setTimeout(() => {
+      reconnectTimeoutRef.current = setTimeout(() => {
         setState(prev => ({
           ...prev,
           error: 'Connection lost. Attempting to reconnect...'
@@ -171,11 +174,30 @@ const Thread: React.FC = () => {
     }
 
     return () => {
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
       }
     };
   }, [isConnected, processOfflineQueue]);
+
+  /**
+   * Handles scroll-based message loading
+   */
+  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    
+    if (
+      scrollTop + clientHeight >= scrollHeight - 100 && 
+      !state.loading && 
+      state.hasMore
+    ) {
+      setState(prev => ({
+        ...prev,
+        loading: true,
+        page: prev.page + 1
+      }));
+    }
+  }, [state.loading, state.hasMore]);
 
   return (
     <Box
