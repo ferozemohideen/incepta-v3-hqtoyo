@@ -1,20 +1,3 @@
-error TS2724: '"./Notification"' has no exported member named 'clearNotifications'. Did you mean 'Notification'?
-```
-
-2. Three errors about missing 'override' modifiers for component lifecycle methods:
-```
-error TS4114: This member must have an 'override' modifier because it overrides a member in the base class
-```
-
-3. One error about accessing a non-existent state property:
-```
-error TS2339: Property 'maxRetryAttempts' does not exist on type 'Readonly<ErrorBoundaryState>'
-```
-
-Here's the regenerated file with all fixes:
-
-# src/web/src/components/common/ErrorBoundary.tsx
-```typescript
 import React, { Component, ErrorInfo } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { ErrorOutline, RefreshRounded } from '@mui/icons-material';
