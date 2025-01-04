@@ -54,7 +54,7 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
   // Calculate responsive padding based on viewport
   const getPadding = useCallback(() => {
     return {
-      xs: SPACING.SCALE.md,
+      xs: SPACING.SCALE.sm,
       sm: SPACING.SCALE.md,
       md: SPACING.SCALE.md,
     }[theme.breakpoints.keys[0]] || SPACING.SCALE.md;
@@ -133,6 +133,7 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
               title={title}
               description={description}
               loading={loading}
+              onExport={onExport}
             />
           </Box>
         </Box>
