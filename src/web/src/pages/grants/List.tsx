@@ -28,7 +28,7 @@ interface IGrantSearchState {
 const GrantListPage: React.FC = () => {
   const navigate = useNavigate();
   const { showError, showSuccess } = useNotification();
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Initialize search state
   const [searchState, setSearchState] = useState<IGrantSearchState>({
@@ -49,6 +49,20 @@ const GrantListPage: React.FC = () => {
   const handleGrantSelect = useCallback((grant: IGrant) => {
     navigate(`/grants/${grant.id}`);
   }, [navigate]);
+
+  /**
+   * Handle search filter changes
+   */
+  const handleFilterChange = useCallback((newFilters: IGrantSearchParams) => {
+    setSearchState(prev => ({
+      ...prev,
+      filters: {
+        ...prev.filters,
+        ...newFilters
+      },
+      page: 1 // Reset to first page on filter change
+    }));
+  }, []);
 
   /**
    * Handle errors from child components
@@ -91,7 +105,7 @@ const GrantListPage: React.FC = () => {
           </Typography>
 
           {/* Loading State */}
-          {loading ? (
+          {isLoading ? (
             <Box sx={{ width: '100%' }}>
               {[...Array(3)].map((_, index) => (
                 <Skeleton
@@ -108,6 +122,7 @@ const GrantListPage: React.FC = () => {
               initialFilters={searchState.filters}
               onGrantSelect={handleGrantSelect}
               onError={handleError}
+              onFilterChange={handleFilterChange}
             />
           )}
         </Box>
