@@ -56,7 +56,7 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
-  const [needsSaving, setNeedsSaving] = useState<boolean>(false);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
 
   // Hooks
   const { showSuccess, showError, showInfo } = useNotification();
@@ -126,14 +126,15 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
       },
     } as any);
 
+    setHasChanges(true);
+
     // Request AI suggestions
     handleAISuggestion(sectionId, content);
 
-    // Update progress and mark as needing save
+    // Update progress
     const totalSections = grant.requirements.sections.length;
     const completedSections = Object.values(values).filter(v => v?.content?.length > 0).length;
     setProgress((completedSections / totalSections) * 100);
-    setNeedsSaving(true);
   }, [handleChange, handleAISuggestion, grant.requirements.sections.length, values]);
 
   /**
@@ -141,7 +142,7 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
    */
   useEffect(() => {
     const autoSave = async () => {
-      if (needsSaving) {
+      if (hasChanges) {
         try {
           await onSave({
             grantId: grant.id,
@@ -149,7 +150,7 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
             status: 'draft',
           });
           showInfo('Draft saved automatically');
-          setNeedsSaving(false);
+          setHasChanges(false);
         } catch (error) {
           showError('Failed to save draft');
         }
@@ -158,7 +159,7 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
 
     const timer = setInterval(autoSave, 60000); // Auto-save every minute
     return () => clearInterval(timer);
-  }, [needsSaving, values, onSave, grant.id]);
+  }, [hasChanges, values, onSave, grant.id]);
 
   // Memoized section list
   const sectionList = useMemo(() => (
