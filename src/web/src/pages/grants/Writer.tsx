@@ -102,16 +102,9 @@ const Writer: React.FC = () => {
   /**
    * Handle application submission
    */
-  const handleSubmitApplication = useCallback(async (applicationData: IGrantApplication) => {
+  const handleSubmitApplication = useCallback(async (applicationData: Partial<IGrantApplication>) => {
     try {
       if (!grantId) return;
-
-      // Validate application before submission
-      const validationResult = await grantService.validateApplication(applicationData);
-      if (!validationResult.isValid) {
-        showWarning(validationResult.message || 'Please complete all required sections');
-        return;
-      }
 
       // Check progress threshold
       if (state.progress < 100) {
@@ -145,15 +138,20 @@ const Writer: React.FC = () => {
    * Calculate application progress
    */
   const calculateProgress = (applicationData: Partial<IGrantApplication>): number => {
-    if (!state.grant) return 0;
+    if (!state.grant?.requirements?.technicalVolume) return 0;
 
-    const sections = state.grant.requirements.sections;
-    const completedSections = sections.filter(section => {
-      const content = applicationData.sections?.[section.id]?.content;
-      return content && content.length > 0;
-    });
+    const requiredDocs = [
+      state.grant.requirements.technicalVolume,
+      state.grant.requirements.businessPlan,
+      state.grant.requirements.budget,
+      ...(state.grant.requirements.additionalDocuments || [])
+    ].filter(doc => doc.required);
 
-    return Math.round((completedSections.length / sections.length) * 100);
+    const completedDocs = applicationData.documents?.filter(doc => 
+      doc.status === 'approved' || doc.status === 'pending'
+    ) || [];
+
+    return Math.round((completedDocs.length / requiredDocs.length) * 100);
   };
 
   // Loading state
