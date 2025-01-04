@@ -1,16 +1,4 @@
-```
 
-2. Error with Container component props:
-```
-error TS2322: Type '{ children: ReactNode; component: string; id: string; role: "main"; tabIndex: number; sx: { marginLeft: string | number; }; }' is not assignable to type...
-```
-
-These errors indicate issues with the styled component usage and Container component props. I'll fix them by properly typing the styled component and adjusting the Container usage.
-
-Here's the regenerated file:
-
-# src/web/src/layouts/MainLayout.tsx
-```typescript
 import React, { useState, useCallback } from 'react';
 import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/material/styles';
