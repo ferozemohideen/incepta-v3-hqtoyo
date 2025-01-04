@@ -6,19 +6,20 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { 
   Message, 
   MessageType, 
-  MessageStatus 
+  MessageDeliveryStatus 
 } from '../../interfaces/message.interface';
 import { messageService } from '../../services/message.service';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
+// Message grouping threshold in minutes
+const MESSAGE_GROUP_THRESHOLD = 5;
 const MESSAGE_BATCH_SIZE = 50;
+const SCROLL_THRESHOLD = 100;
 
 interface MessageListProps {
   threadId: string;
   currentUserId: string;
   onMessageReceived?: (message: Message) => void;
-  onTypingStatusChange?: (isTyping: boolean) => void;
-  initialScrollPosition?: number;
   messageLimit?: number;
 }
 
@@ -32,8 +33,6 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   threadId,
   currentUserId,
   onMessageReceived,
-  onTypingStatusChange,
-  initialScrollPosition = 0,
   messageLimit = MESSAGE_BATCH_SIZE
 }) => {
   // Refs for DOM elements and state management
@@ -44,17 +43,8 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
 
   // WebSocket connection for real-time updates
   const { isConnected, sendMessage } = useWebSocket(
-    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
+    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
   );
-
-  // React Query client for cache management
-  const queryClient = useQueryClient();
-
-  // Intersection observer for infinite scroll
-  const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0.5,
-    rootMargin: '100px',
-  });
 
   // State for messages with memoization
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -109,48 +99,20 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
     // Subscribe to thread-specific WebSocket events
     if (isConnected) {
       sendMessage({
-        id: '',
-        threadId,
-        senderId: currentUserId,
-        recipientId: '',
-        type: MessageType.SYSTEM,
-        content: 'SUBSCRIBE_THREAD',
-        status: MessageStatus.SENT,
-        metadata: {
-          documentUrl: '',
-          fileName: '',
-          fileSize: 0,
-          contentType: '',
-          uploadedAt: new Date()
-        },
-        createdAt: new Date(),
-        updatedAt: new Date()
+        type: 'SUBSCRIBE_THREAD',
+        payload: { threadId }
       });
     }
 
     return () => {
       if (isConnected) {
         sendMessage({
-          id: '',
-          threadId,
-          senderId: currentUserId,
-          recipientId: '',
-          type: MessageType.SYSTEM,
-          content: 'UNSUBSCRIBE_THREAD',
-          status: MessageStatus.SENT,
-          metadata: {
-            documentUrl: '',
-            fileName: '',
-            fileSize: 0,
-            contentType: '',
-            uploadedAt: new Date()
-          },
-          createdAt: new Date(),
-          updatedAt: new Date()
+          type: 'UNSUBSCRIBE_THREAD',
+          payload: { threadId }
         });
       }
     };
-  }, [threadId, messageLimit, isConnected, sendMessage, currentUserId]);
+  }, [threadId, messageLimit, isConnected, sendMessage]);
 
   /**
    * Handles loading more messages when scrolling up
@@ -160,6 +122,7 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
 
     try {
       isLoadingMore.current = true;
+      const lastMessage = messages[messages.length - 1];
       const response = await messageService.getMessageThread(
         threadId,
         Math.ceil(messages.length / messageLimit) + 1,
@@ -188,10 +151,13 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
       if (message.threadId === threadId) {
         setMessages(prev => [message, ...prev]);
         onMessageReceived?.(message);
+
+        // Mark message as delivered
+        messageService.markAsRead(message.id);
       }
     };
 
-    const handleMessageStatus = (messageId: string, status: MessageStatus) => {
+    const handleMessageStatus = (messageId: string, status: MessageDeliveryStatus) => {
       setMessages(prev => 
         prev.map(msg => 
           msg.id === messageId ? { ...msg, status } : msg
