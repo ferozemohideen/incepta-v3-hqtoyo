@@ -5,7 +5,7 @@ import {
   Slider,
   Typography,
   Paper,
-  FormGroup,
+  useTheme,
   Tooltip,
   Chip,
   IconButton,
@@ -57,6 +57,11 @@ const ActiveFiltersContainer = styled(Box)(({ theme }) => ({
 interface TechnologyFiltersProps {
   initialFilters: TechnologySearchParams;
   onFilterChange: (filters: TechnologySearchParams) => void;
+  presets?: Array<{
+    id: string;
+    name: string;
+    filters: Partial<TechnologySearchParams>;
+  }>;
   isLoading?: boolean;
 }
 
@@ -67,8 +72,10 @@ interface TechnologyFiltersProps {
 export const TechnologyFilters: React.FC<TechnologyFiltersProps> = ({
   initialFilters,
   onFilterChange,
+  presets = [],
   isLoading = false,
 }) => {
+  const theme = useTheme();
   const [filters, setFilters] = useState<TechnologySearchParams>(initialFilters);
   const isInitialMount = useRef(true);
 
@@ -146,6 +153,17 @@ export const TechnologyFilters: React.FC<TechnologyFiltersProps> = ({
       stage: (Array.isArray(value) ? value : [value]) as DevelopmentStage[],
     }));
   }, []);
+
+  // Handle preset selection
+  const handlePresetSelect = useCallback((presetId: string) => {
+    const preset = presets.find(p => p.id === presetId);
+    if (preset) {
+      setFilters(prev => ({
+        ...prev,
+        ...preset.filters,
+      }));
+    }
+  }, [presets]);
 
   // Handle filter reset
   const handleReset = useCallback(() => {
