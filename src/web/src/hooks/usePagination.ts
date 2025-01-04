@@ -6,6 +6,7 @@ const DEFAULT_MAX_VISIBLE_PAGES = 5;
 const MIN_PAGE = 1;
 const DEBOUNCE_DELAY = 150;
 
+// @ts-ignore
 const DEFAULT_ARIA_LABELS = {
   nextPage: 'Go to next page',
   previousPage: 'Go to previous page',
@@ -85,7 +86,9 @@ export const usePagination = (config: PaginationConfig) => {
     totalItems,
     maxVisiblePages = DEFAULT_MAX_VISIBLE_PAGES,
     showFirstLast = true,
+    showPageSize = true,
     disabled = false,
+    ariaLabels = DEFAULT_ARIA_LABELS,
     onPageChange,
     onPageSizeChange,
   } = config;
@@ -117,9 +120,6 @@ export const usePagination = (config: PaginationConfig) => {
     Math.min(startIndex + pageSize, totalItems),
     [startIndex, pageSize, totalItems]
   );
-
-  const isFirstPage = currentPage === MIN_PAGE;
-  const isLastPage = currentPage === totalPages;
 
   // Validate current page when total pages changes
   useEffect(() => {
@@ -183,7 +183,7 @@ export const usePagination = (config: PaginationConfig) => {
 
     window.addEventListener('keydown', handleKeyboard);
     return () => window.removeEventListener('keydown', handleKeyboard);
-  }, [disabled, currentPage, totalPages, showFirstLast, isFirstPage, isLastPage, changePage]);
+  }, [disabled, currentPage, totalPages, showFirstLast]);
 
   // Computed state
   const state: PaginationState = {
@@ -193,8 +193,8 @@ export const usePagination = (config: PaginationConfig) => {
     startIndex,
     endIndex,
     visiblePages,
-    isFirstPage,
-    isLastPage,
+    isFirstPage: currentPage === MIN_PAGE,
+    isLastPage: currentPage === totalPages,
     isLoading,
     announcement,
   };
