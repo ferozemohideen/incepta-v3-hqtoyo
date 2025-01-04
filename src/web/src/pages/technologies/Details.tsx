@@ -1,15 +1,3 @@
-interface TechnologyDetailsProps {
-  id?: string;
-  onSave?: (technology: Technology) => Promise<void>;
-  onContact?: (technology: Technology) => void;
-  securityLevel?: string;
-}
-```
-
-Here's the regenerated file with the fix:
-
-# src/web/src/pages/technologies/Details.tsx
-```typescript
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Skeleton, Alert } from '@mui/material';
