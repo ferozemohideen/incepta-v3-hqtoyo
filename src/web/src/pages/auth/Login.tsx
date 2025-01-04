@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'; // ^6.0.0
 import { Box, Typography, Link, CircularProgress } from '@mui/material'; // ^5.14.0
 
 import { LoginForm } from '../../components/auth/LoginForm';
-import AuthLayout from '../../layouts/AuthLayout';
+import { AuthLayout } from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { AuthError } from '../../interfaces/auth.interface';
+import { LoginCredentials } from '../../interfaces/auth.interface';
 
 /**
  * Login page component implementing secure authentication with:
@@ -30,11 +30,20 @@ const LoginPage: React.FC = () => {
 
   /**
    * Handles successful login with enhanced security
+   * @param credentials - Login credentials with device fingerprint
    */
   const handleLoginSuccess = useCallback(async (credentials: LoginCredentials) => {
     try {
       // Store authentication state securely
-      await handleLogin(credentials);
+      await handleLogin({
+        ...credentials,
+        deviceInfo: {
+          userAgent: window.navigator.userAgent,
+          platform: window.navigator.platform,
+          version: window.navigator.appVersion,
+          fingerprint: credentials.deviceInfo.fingerprint
+        }
+      });
 
       // Handle MFA requirement
       if (mfaRequired) {
@@ -54,6 +63,7 @@ const LoginPage: React.FC = () => {
 
   /**
    * Handles login errors with user feedback
+   * @param error - Authentication error details
    */
   const handleLoginError = useCallback((error: { message: string }) => {
     setLoading(false);
