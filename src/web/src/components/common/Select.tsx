@@ -87,7 +87,7 @@ const StyledSelect = styled(MuiSelect)(({ theme }) => ({
  * A reusable select component with enhanced accessibility and Material Design compliance
  * Implements WCAG 2.1 Level AA standards for keyboard navigation and visual feedback
  */
-const CustomSelect = forwardRef((
+export const CustomSelect = forwardRef((
   props: CustomSelectProps,
   ref: ForwardedRef<HTMLSelectElement>
 ) => {
