@@ -12,7 +12,7 @@
  * - Type-safe operations
  */
 
-import { configureStore, combineReducers, Middleware, AnyAction } from '@reduxjs/toolkit'; // ^1.9.5
+import { configureStore, combineReducers, Middleware } from '@reduxjs/toolkit'; // ^1.9.5
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux'; // ^8.1.0
 import { 
   persistStore, 
@@ -65,7 +65,7 @@ const stateSyncConfig = {
 /**
  * Performance monitoring middleware
  */
-const monitoringMiddleware: Middleware = () => next => action => {
+const monitoringMiddleware: Middleware = (_store) => next => action => {
   const start = performance.now();
   const result = next(action);
   const end = performance.now();
@@ -73,7 +73,7 @@ const monitoringMiddleware: Middleware = () => next => action => {
 
   // Log slow actions in production
   if (duration > 16 && process.env['NODE_ENV'] === 'production') {
-    Sentry.captureMessage(`Slow action: ${(action as AnyAction).type} took ${duration}ms`, {
+    Sentry.captureMessage(`Slow action: ${typeof action === 'object' ? action.type : 'unknown'} took ${duration}ms`, {
       level: 'warning',
       extra: {
         action,
@@ -143,8 +143,8 @@ export const useAppDispatch = () => {
     const duration = performance.now() - start;
 
     // Track dispatch performance
-    if (duration > 16 && (action as AnyAction).type) {
-      console.warn(`Slow dispatch: ${(action as AnyAction).type} took ${duration}ms`);
+    if (duration > 16) {
+      console.warn(`Slow dispatch: ${typeof action === 'object' ? action.type : 'unknown'} took ${duration}ms`);
     }
 
     return result;
