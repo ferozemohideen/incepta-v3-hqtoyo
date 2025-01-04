@@ -80,6 +80,17 @@ const registrationSchema = z.object({
 });
 
 /**
+ * User data validation schema
+ */
+const userDataSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email().regex(EMAIL_REGEX),
+  role: z.nativeEnum(UserRole),
+  organization: z.string().min(2).max(200),
+  organizationType: z.string().min(2).max(50)
+});
+
+/**
  * Validates login credentials with enhanced security checks
  * @param credentials - Login credentials to validate
  * @returns Promise resolving to true if validation passes
@@ -184,6 +195,55 @@ export async function validateRegistrationData(
       organization: data.organization,
       role: data.role
     });
+
+    return true;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ValidationError(
+        error.errors[0].message,
+        error.errors[0].path.join('.'),
+        'SCHEMA_VALIDATION_ERROR'
+      );
+    }
+    throw error;
+  }
+}
+
+/**
+ * Validates user data with organization and role validation
+ * @param data - User data to validate
+ * @returns Promise resolving to true if validation passes
+ * @throws ValidationError if validation fails
+ */
+export async function validateUserData(data: {
+  name: string;
+  email: string;
+  role: UserRole;
+  organization: string;
+  organizationType: string;
+}): Promise<boolean> {
+  try {
+    // Validate basic schema
+    userDataSchema.parse(data);
+
+    // Validate organization
+    const orgValidation = await validateOrganization(data.organization);
+    if (!orgValidation.valid) {
+      throw new ValidationError(
+        'Invalid organization',
+        'organization',
+        'INVALID_ORGANIZATION'
+      );
+    }
+
+    // Validate role permissions
+    if (!await validateRolePermissions(data.role)) {
+      throw new ValidationError(
+        'Invalid role assignment',
+        'role',
+        'INVALID_ROLE'
+      );
+    }
 
     return true;
   } catch (error) {
