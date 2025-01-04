@@ -7,8 +7,7 @@ import {
   FormHelperText 
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { forwardRef, ForwardedRef, memo } from 'react';
-import { lightTheme, darkTheme } from '../../styles/theme';
+import { forwardRef, ForwardedRef, memo } from 'react';
 
 // Interfaces
 interface SelectOption {
@@ -184,7 +183,9 @@ const CustomSelect = forwardRef((
 CustomSelect.displayName = 'CustomSelect';
 
 // Memoize component for performance
-export default memo(CustomSelect);
+const Select = memo(CustomSelect);
+
+export default Select;
 
 // Type exports for consumers
 export type { SelectOption, CustomSelectProps };
