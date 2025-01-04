@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { useNotification } from '../../hooks/useNotification';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import ProfileForm from '../../components/profile/ProfileForm';
-import { fetchUserProfile, updateUserProfile, selectCurrentUser, selectUserUpdateStatus } from '../../store/user.slice';
+import { fetchUserProfile, updateUserProfile, selectCurrentUser } from '../../store/user.slice';
 
 /**
  * Main profile page component implementing Material Design 3.0 principles
@@ -18,7 +18,6 @@ const ProfilePage: React.FC = () => {
 
   // Redux selectors
   const currentUser = useAppSelector(selectCurrentUser);
-  const { isProfileUpdating } = useAppSelector(selectUserUpdateStatus);
 
   // Fetch user profile on mount
   useEffect(() => {
@@ -43,7 +42,6 @@ const ProfilePage: React.FC = () => {
       phoneNumber: currentUser.profile.phone || '',
       website: currentUser.socialProfiles?.linkedin || '',
       orcidId: currentUser.socialProfiles?.orcid || '',
-      researchInterests: currentUser.profile.interests || []
     };
   }, [currentUser]);
 
@@ -61,7 +59,6 @@ const ProfilePage: React.FC = () => {
           title: sanitize(formData.organizationType),
           bio: sanitize(formData.bio),
           phone: sanitize(formData.phoneNumber),
-          interests: formData.researchInterests,
           version: currentUser.profile.version + 1,
         },
         socialProfiles: {
@@ -72,7 +69,7 @@ const ProfilePage: React.FC = () => {
 
       // Dispatch update action
       await dispatch(updateUserProfile({
-        profileData: sanitizedData.profile,
+        profileData: sanitizedData,
         version: currentUser.profile.version,
       })).unwrap();
 
@@ -138,7 +135,6 @@ const ProfilePage: React.FC = () => {
                 user={profileData}
                 onSubmit={handleProfileUpdate}
                 onError={(error) => showError(error.message)}
-                isLoading={isProfileUpdating}
               />
             </Paper>
           </Grid>
