@@ -24,7 +24,8 @@ import {
   LoginCredentials,
   RegisterCredentials,
   MFACredentials,
-  SecurityContext
+  AuthError,
+  ResetPasswordCredentials
 } from '../interfaces/auth.interface';
 import { TOKEN_CONFIG } from '../constants/auth.constants';
 
@@ -41,19 +42,23 @@ interface UseAuthReturn {
     lastLogin: Date;
   } | null;
   loading: Record<string, boolean>;
-  error: {
-    message: string;
-    code: string;
-    timestamp: Date;
-  } | null;
+  error: AuthError | null;
   mfaRequired: boolean;
-  securityContext: SecurityContext;
+  securityContext: {
+    lastActivity: number;
+    sessionExpiry: Date | null;
+    mfaVerified: boolean;
+    securityFlags: {
+      passwordChangeRequired: boolean;
+      accountLocked: boolean;
+    };
+  };
   handleLogin: (credentials: LoginCredentials) => Promise<void>;
   handleRegister: (userData: RegisterCredentials) => Promise<void>;
   handleMFAVerification: (mfaData: MFACredentials) => Promise<void>;
   handleLogout: () => Promise<void>;
   handleTokenRefresh: () => Promise<void>;
-  hasPermission: (permission: string) => boolean;
+  validateResetToken: (token: string) => Promise<boolean>;
 }
 
 /**
@@ -69,8 +74,9 @@ export const useAuth = (): UseAuthReturn => {
   /**
    * Initialize security context for session monitoring
    */
-  const securityContext: SecurityContext = {
+  const securityContext = {
     lastActivity: Date.now(),
+    sessionExpiry: authState.sessionExpiry,
     mfaVerified: authState.mfaVerified,
     securityFlags: authState.securityFlags
   };
@@ -215,11 +221,17 @@ export const useAuth = (): UseAuthReturn => {
   }, [dispatch]);
 
   /**
-   * Check if user has specific permission
+   * Validate password reset token
    */
-  const hasPermission = useCallback((permission: string): boolean => {
-    return authState.user?.permissions?.includes(permission) || false;
-  }, [authState.user]);
+  const validateResetToken = useCallback(async (token: string): Promise<boolean> => {
+    try {
+      const response = await authService.verifyResetToken(token);
+      return response;
+    } catch (error) {
+      console.error('Reset token validation failed:', error);
+      return false;
+    }
+  }, []);
 
   return {
     user: authState.user,
@@ -232,7 +244,7 @@ export const useAuth = (): UseAuthReturn => {
     handleMFAVerification,
     handleLogout,
     handleTokenRefresh,
-    hasPermission
+    validateResetToken
   };
 };
 
