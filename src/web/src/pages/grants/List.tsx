@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Skeleton } from '@mui/material';
 
 // Internal components and services
 import MainLayout from '../../layouts/MainLayout';
@@ -28,6 +28,7 @@ interface IGrantSearchState {
 const GrantListPage: React.FC = () => {
   const navigate = useNavigate();
   const { showError, showSuccess } = useNotification();
+  const [loading, setLoading] = useState(true);
 
   // Initialize search state
   const [searchState, setSearchState] = useState<IGrantSearchState>({
@@ -114,13 +115,26 @@ const GrantListPage: React.FC = () => {
             Grant Opportunities
           </Typography>
 
-          {/* Grant List Component */}
-          <GrantList
-            initialFilters={searchState.filters}
-            onGrantSelect={handleGrantSelect}
-            onError={handleError}
-            onFilterChange={handleFilterChange}
-          />
+          {/* Loading State */}
+          {loading ? (
+            <Box sx={{ width: '100%' }}>
+              {[...Array(3)].map((_, index) => (
+                <Skeleton
+                  key={index}
+                  variant="rectangular"
+                  height={200}
+                  sx={{ mb: 2, borderRadius: 1 }}
+                />
+              ))}
+            </Box>
+          ) : (
+            /* Grant List Component */
+            <GrantList
+              initialFilters={searchState.filters}
+              onGrantSelect={handleGrantSelect}
+              onError={handleError}
+            />
+          )}
         </Box>
       </MainLayout>
     </ErrorBoundary>
