@@ -30,21 +30,11 @@ const LoginPage: React.FC = () => {
 
   /**
    * Handles successful login with enhanced security
-   * @param tokens - Authentication tokens from successful login
-   * @param fingerprint - Device fingerprint for security tracking
    */
-  const handleLoginSuccess = useCallback(async (tokens: AuthTokens, fingerprint: DeviceFingerprint) => {
+  const handleLoginSuccess = useCallback(async (credentials: LoginCredentials) => {
     try {
       // Store authentication state securely
-      await handleLogin({
-        ...tokens,
-        deviceInfo: {
-          fingerprint: fingerprint.visitorId,
-          userAgent: window.navigator.userAgent,
-          platform: window.navigator.platform,
-          version: window.navigator.appVersion
-        }
-      });
+      await handleLogin(credentials);
 
       // Handle MFA requirement
       if (mfaRequired) {
@@ -64,9 +54,8 @@ const LoginPage: React.FC = () => {
 
   /**
    * Handles login errors with user feedback
-   * @param error - Authentication error details
    */
-  const handleLoginError = useCallback((error: AuthError) => {
+  const handleLoginError = useCallback((error: { message: string }) => {
     setLoading(false);
     setError(error.message || 'Authentication failed. Please try again.');
   }, []);
