@@ -74,17 +74,7 @@ const initialState: TechnologyState = {
     page: 1,
     pageSize: 20,
     sortBy: 'title',
-    sortOrder: 'asc',
-    trlRange: {
-      min: 1,
-      max: 9
-    },
-    domains: [],
-    stage: [],
-    dateRange: {
-      start: null,
-      end: null
-    }
+    sortOrder: 'asc'
   },
   selectedTechnologyId: null,
   loading: {
