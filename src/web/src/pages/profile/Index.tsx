@@ -25,8 +25,8 @@ const ProfilePage: React.FC = () => {
     const deviceId = window.navigator.userAgent;
     dispatch(fetchUserProfile(deviceId))
       .unwrap()
-      .catch((error) => {
-        showError('Failed to load profile: ' + error);
+      .catch((error: Error) => {
+        showError('Failed to load profile: ' + error.message);
       });
   }, [dispatch, showError]);
 
