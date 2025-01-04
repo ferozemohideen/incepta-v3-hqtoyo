@@ -245,7 +245,7 @@ export class MessageServiceImpl {
   /**
    * Updates message status and notifies participants
    */
-  private async updateMessageStatus(
+  public async updateMessageStatus(
     messageId: string,
     status: MessageStatus
   ): Promise<void> {
