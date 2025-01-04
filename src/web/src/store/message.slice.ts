@@ -200,7 +200,7 @@ const messageSlice = createSlice({
         .filter(m => m.threadId === threadId && m.status !== MessageStatus.READ)
         .forEach(m => {
           m.status = MessageStatus.READ;
-          messageService.markAsRead([m.id]);
+          messageService.markAsRead(m.id);
         });
     }
   },
@@ -213,8 +213,8 @@ const messageSlice = createSlice({
       })
       .addCase(fetchThreads.fulfilled, (state, action) => {
         state.loading = false;
-        state.threads = action.payload.threads;
-        state.unreadCount = action.payload.threads.reduce(
+        state.threads = action.payload;
+        state.unreadCount = action.payload.reduce(
           (count, thread) => count + thread.unreadCount, 
           0
         );
@@ -232,7 +232,7 @@ const messageSlice = createSlice({
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
         state.loading = false;
-        state.messages = action.payload.messages;
+        state.messages = action.payload;
       })
       .addCase(fetchMessages.rejected, (state, action) => {
         state.loading = false;
