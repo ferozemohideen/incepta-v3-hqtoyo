@@ -51,7 +51,6 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
   // Hooks
   const { id: urlId } = useParams<{ id: string }>();
   const { showSuccess, showError } = useNotification();
-  const [permissions, setPermissions] = useState<TechnologyPermissions | null>(null);
 
   // Get technology ID from props or URL
   const technologyId = propId || urlId;
@@ -77,26 +76,9 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
     }
   );
 
-  // Check permissions on mount and data change
-  useEffect(() => {
-    const checkUserPermissions = async () => {
-      if (technology) {
-        try {
-          // Temporarily use permissions from technology data until service is updated
-          setPermissions(technology.permissions);
-        } catch (err) {
-          console.error('Permission check failed:', err);
-          setPermissions(null);
-        }
-      }
-    };
-
-    checkUserPermissions();
-  }, [technology]);
-
   // Handle save action with optimistic update
   const handleSave = async () => {
-    if (!technology || !permissions?.canSave) return;
+    if (!technology || !technology.permissions?.canEdit) return;
 
     try {
       await technologyService.saveTechnology(technology.id);
@@ -110,7 +92,7 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
 
   // Handle contact action
   const handleContact = () => {
-    if (!technology || !permissions?.canContact) return;
+    if (!technology || !technology.permissions?.canContact) return;
     onContact?.(technology);
   };
 
@@ -254,7 +236,7 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
                   variant="contained"
                   startIcon={<SaveOutlined />}
                   onClick={handleSave}
-                  disabled={!permissions?.canSave}
+                  disabled={!technology.permissions?.canEdit}
                   fullWidth
                   sx={{ mb: 2 }}
                 >
@@ -265,7 +247,7 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
                   variant="outlined"
                   startIcon={<EmailOutlined />}
                   onClick={handleContact}
-                  disabled={!permissions?.canContact}
+                  disabled={!technology.permissions?.canContact}
                   fullWidth
                   sx={{ mb: 2 }}
                 >
@@ -283,7 +265,7 @@ const TechnologyDetails: React.FC<TechnologyDetailsProps> = ({
                         key={attachment.id}
                         variant="text"
                         startIcon={<DownloadOutlined />}
-                        disabled={!permissions?.canDownload}
+                        disabled={!technology.permissions?.canDownload}
                         fullWidth
                         sx={{ justifyContent: 'flex-start', mb: 1 }}
                       >
