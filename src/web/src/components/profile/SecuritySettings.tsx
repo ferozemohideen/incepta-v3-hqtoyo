@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -15,11 +15,13 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   Alert,
+  Divider,
   TextField,
-} from '@mui/material';
+} from '@mui/material'; // v5.14.0
 import { styled } from '@mui/material/styles';
-import QRCode from 'qrcode.react';
-import * as yup from 'yup';
+import { Theme } from '@mui/material/styles';
+import QRCode from 'qrcode.react'; // v3.1.0
+import * as yup from 'yup'; // v1.2.0
 
 import Form from '../common/Form';
 import { authService } from '../../services/auth.service';
@@ -47,11 +49,11 @@ interface SecuritySettingsProps {
 interface UserSecurity {
   mfaEnabled: boolean;
   lastPasswordChange: Date;
-  devices: DeviceInfo[];
+  devices: DeviceHistory[];
   loginHistory: LoginRecord[];
 }
 
-interface DeviceInfo {
+interface DeviceHistory {
   deviceId: string;
   deviceName: string;
   lastAccess: Date;
@@ -97,8 +99,244 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
   onUpdate,
   theme,
 }) => {
-  // Rest of the component implementation remains unchanged
-  // ... (keeping all the existing code)
+  // State management
+  const [activeTab, setActiveTab] = useState(0);
+  const [mfaDialogOpen, setMfaDialogOpen] = useState(false);
+  const [mfaSetupData, setMfaSetupData] = useState<{ qrCode: string; backupCodes: string[] } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { showSuccess, showError } = useNotification();
+
+  // Handle password change
+  const handlePasswordChange = async (values: PasswordFormValues) => {
+    setIsLoading(true);
+    try {
+      await authService.validatePassword(values.currentPassword);
+      await onUpdate({ lastPasswordChange: new Date() });
+      showSuccess('Password updated successfully');
+    } catch (error) {
+      showError('Failed to update password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle MFA toggle
+  const handleMFAToggle = async (enabled: boolean) => {
+    setIsLoading(true);
+    try {
+      if (enabled) {
+        const setupData = await authService.setupMFA();
+        setMfaSetupData(setupData);
+        setMfaDialogOpen(true);
+      } else {
+        await authService.verifyMFA({ token: '', method: 'disable' });
+        await onUpdate({ mfaEnabled: false });
+        showSuccess('MFA disabled successfully');
+      }
+    } catch (error) {
+      showError('Failed to update MFA settings');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle MFA verification
+  const handleMFAVerify = async (token: string) => {
+    try {
+      await authService.verifyMFA({ token, method: 'setup' });
+      await onUpdate({ mfaEnabled: true });
+      setMfaDialogOpen(false);
+      showSuccess('MFA enabled successfully');
+    } catch (error) {
+      showError('Invalid verification code');
+    }
+  };
+
+  // Handle device management
+  const handleDeviceAction = async (deviceId: string, action: 'remove' | 'trust') => {
+    try {
+      const updatedDevices = userSecurity.devices.map(device => {
+        if (device.deviceId === deviceId) {
+          return action === 'trust'
+            ? { ...device, trusted: true }
+            : null;
+        }
+        return device;
+      }).filter(Boolean) as DeviceHistory[];
+
+      await onUpdate({ devices: updatedDevices });
+      showSuccess(`Device ${action === 'trust' ? 'trusted' : 'removed'} successfully`);
+    } catch (error) {
+      showError(`Failed to ${action} device`);
+    }
+  };
+
+  return (
+    <Box role="region" aria-label="Security Settings">
+      <Typography variant="h4" gutterBottom>
+        Security Settings
+      </Typography>
+
+      <Tabs
+        value={activeTab}
+        onChange={(_, newValue) => setActiveTab(newValue)}
+        aria-label="Security settings tabs"
+      >
+        <Tab label="Password" id="security-tab-0" aria-controls="security-tabpanel-0" />
+        <Tab label="Two-Factor Authentication" id="security-tab-1" aria-controls="security-tabpanel-1" />
+        <Tab label="Devices & Sessions" id="security-tab-2" aria-controls="security-tabpanel-2" />
+      </Tabs>
+
+      {/* Password Tab */}
+      <TabPanel role="tabpanel" hidden={activeTab !== 0} id="security-tabpanel-0">
+        <StyledCard>
+          <CardContent>
+            <Form
+              initialValues={{
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: '',
+              }}
+              validationSchema={passwordSchema}
+              onSubmit={handlePasswordChange}
+            >
+              <TextField
+                name="currentPassword"
+                type="password"
+                label="Current Password"
+                required
+                fullWidth
+                margin="normal"
+              />
+              <TextField
+                name="newPassword"
+                type="password"
+                label="New Password"
+                required
+                fullWidth
+                margin="normal"
+              />
+              <TextField
+                name="confirmPassword"
+                type="password"
+                label="Confirm Password"
+                required
+                fullWidth
+                margin="normal"
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={isLoading}
+                sx={{ mt: 2 }}
+              >
+                {isLoading ? <CircularProgress size={24} /> : 'Update Password'}
+              </Button>
+            </Form>
+          </CardContent>
+        </StyledCard>
+      </TabPanel>
+
+      {/* MFA Tab */}
+      <TabPanel role="tabpanel" hidden={activeTab !== 1} id="security-tabpanel-1">
+        <StyledCard>
+          <CardContent>
+            <Box display="flex" alignItems="center" justifyContent="space-between">
+              <Typography variant="h6">Two-Factor Authentication</Typography>
+              <Switch
+                checked={userSecurity.mfaEnabled}
+                onChange={(e) => handleMFAToggle(e.target.checked)}
+                inputProps={{
+                  'aria-label': 'Toggle two-factor authentication',
+                }}
+              />
+            </Box>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              Add an extra layer of security to your account by requiring both your password and an authentication code.
+            </Typography>
+          </CardContent>
+        </StyledCard>
+      </TabPanel>
+
+      {/* Devices Tab */}
+      <TabPanel role="tabpanel" hidden={activeTab !== 2} id="security-tabpanel-2">
+        <StyledCard>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Active Devices
+            </Typography>
+            <List>
+              {userSecurity.devices.map((device) => (
+                <ListItem key={device.deviceId}>
+                  <ListItemText
+                    primary={device.deviceName}
+                    secondary={`Last access: ${new Date(device.lastAccess).toLocaleString()} from ${device.location}`}
+                  />
+                  <ListItemSecondaryAction>
+                    <Button
+                      onClick={() => handleDeviceAction(device.deviceId, 'trust')}
+                      disabled={device.trusted}
+                    >
+                      {device.trusted ? 'Trusted' : 'Trust Device'}
+                    </Button>
+                    <Button
+                      onClick={() => handleDeviceAction(device.deviceId, 'remove')}
+                      color="error"
+                    >
+                      Remove
+                    </Button>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))}
+            </List>
+          </CardContent>
+        </StyledCard>
+      </TabPanel>
+
+      {/* MFA Setup Dialog */}
+      <Dialog
+        open={mfaDialogOpen}
+        onClose={() => setMfaDialogOpen(false)}
+        aria-labelledby="mfa-setup-dialog"
+      >
+        <Box p={3}>
+          <Typography variant="h6" id="mfa-setup-dialog">
+            Set Up Two-Factor Authentication
+          </Typography>
+          {mfaSetupData && (
+            <>
+              <Box my={2} display="flex" justifyContent="center">
+                <QRCode value={mfaSetupData.qrCode} size={200} level="H" />
+              </Box>
+              <Typography variant="body2" gutterBottom>
+                Scan this QR code with your authenticator app and enter the verification code below.
+              </Typography>
+              <TextField
+                label="Verification Code"
+                fullWidth
+                margin="normal"
+                onChange={(e) => handleMFAVerify(e.target.value)}
+              />
+              <Typography variant="subtitle2" sx={{ mt: 2 }}>
+                Backup Codes
+              </Typography>
+              <Alert severity="warning" sx={{ mt: 1 }}>
+                Save these backup codes in a secure location. They can be used to access your account if you lose your authenticator device.
+              </Alert>
+              <Box mt={1}>
+                {mfaSetupData.backupCodes.map((code, index) => (
+                  <Typography key={index} variant="mono">
+                    {code}
+                  </Typography>
+                ))}
+              </Box>
+            </>
+          )}
+        </Box>
+      </Dialog>
+    </Box>
+  );
 };
 
 export default SecuritySettings;
