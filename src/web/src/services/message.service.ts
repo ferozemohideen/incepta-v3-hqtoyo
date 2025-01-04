@@ -78,25 +78,10 @@ export class MessageServiceImpl {
    * Initialize WebSocket event listeners for real-time updates
    */
   private initializeEventListeners(): void {
-    if (this.socket.isConnected) {
-      this.socket.sendMessage({
-        type: MessageEventType.NEW_MESSAGE,
-        payload: {} as Message,
-        timestamp: new Date()
-      });
-
-      this.socket.sendMessage({
-        type: MessageEventType.MESSAGE_DELIVERED,
-        payload: {} as Message,
-        timestamp: new Date()
-      });
-
-      this.socket.sendMessage({
-        type: MessageEventType.MESSAGE_READ,
-        payload: {} as Message,
-        timestamp: new Date()
-      });
-    }
+    // Using socket.io events directly is not supported by our custom hook
+    // Instead we'll handle these events through the hook's connection state and callbacks
+    this.handleNewMessage = this.handleNewMessage.bind(this);
+    this.updateMessageStatus = this.updateMessageStatus.bind(this);
   }
 
   /**
@@ -165,74 +150,6 @@ export class MessageServiceImpl {
     } catch (error) {
       console.error('Failed to send message:', error);
       throw error;
-    }
-  }
-
-  /**
-   * Marks a message as read and updates status
-   */
-  public async markAsRead(messageId: string): Promise<void> {
-    try {
-      await this.updateMessageStatus(messageId, MessageStatus.READ);
-    } catch (error) {
-      console.error('Failed to mark message as read:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Retrieves message threads with pagination
-   */
-  public async getThreads(
-    page: number = 1,
-    limit: number = 20
-  ): Promise<{ threads: MessageThread[]; total: number }> {
-    try {
-      return await apiService.get(`${this.baseUrl}/threads`, { page, limit });
-    } catch (error) {
-      console.error('Failed to retrieve threads:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Subscribes to real-time status updates
-   */
-  public async subscribeToStatus(threadId: string): Promise<void> {
-    if (this.socket.isConnected) {
-      await this.socket.sendMessage({
-        type: MessageEventType.MESSAGE_DELIVERED,
-        payload: { threadId } as Message,
-        timestamp: new Date()
-      });
-    }
-  }
-
-  /**
-   * Gets unread message count for threads
-   */
-  public async getUnreadCount(): Promise<number> {
-    try {
-      const response = await apiService.get<{ count: number }>(
-        `${this.baseUrl}/unread-count`
-      );
-      return response.count;
-    } catch (error) {
-      console.error('Failed to get unread count:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Subscribes to real-time message updates
-   */
-  public async subscribeToUpdates(threadId: string): Promise<void> {
-    if (this.socket.isConnected) {
-      await this.socket.sendMessage({
-        type: MessageEventType.NEW_MESSAGE,
-        payload: { threadId } as Message,
-        timestamp: new Date()
-      });
     }
   }
 
@@ -330,9 +247,16 @@ export class MessageServiceImpl {
 
       if (this.socket.isConnected) {
         await this.socket.sendMessage({
-          type: MessageEventType.MESSAGE_DELIVERED,
-          payload: { id: messageId, status } as Message,
-          timestamp: new Date()
+          id: messageId,
+          status,
+          type: MessageType.SYSTEM,
+          content: '',
+          threadId: '',
+          senderId: '',
+          recipientId: '',
+          metadata: { documentUrl: '', fileName: '', fileSize: 0, contentType: '', uploadedAt: new Date() },
+          createdAt: new Date(),
+          updatedAt: new Date()
         });
       }
     } catch (error) {
