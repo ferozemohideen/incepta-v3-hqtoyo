@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // v6.14.0
-import { ErrorBoundary } from 'react-error-boundary'; // v4.0.11
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary'; // v4.0.11
 import RegisterForm from '../../components/auth/RegisterForm';
 import AuthLayout from '../../layouts/AuthLayout';
 import { useAuth } from '../../hooks/useAuth';
@@ -13,7 +13,7 @@ import { UserRole } from '../../constants/auth.constants';
  */
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { handleRegister, mfaRequired } = useAuth();
+  const { mfaRequired } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   // Track registration performance metrics
@@ -83,14 +83,6 @@ const Register: React.FC = () => {
   }, [navigate, mfaRequired]);
 
   /**
-   * Handles registration validation errors with proper error display
-   */
-  const handleValidationError = useCallback((error: Error) => {
-    console.error('Registration validation failed:', error);
-    // Error will be displayed by the RegisterForm component
-  }, []);
-
-  /**
    * Handles device fingerprinting for enhanced security
    */
   const handleDeviceFingerprint = useCallback((deviceId: string) => {
@@ -101,7 +93,7 @@ const Register: React.FC = () => {
   /**
    * Error boundary fallback component
    */
-  const ErrorFallback = useCallback(({ error, resetErrorBoundary }) => (
+  const ErrorFallback = useCallback(({ error, resetErrorBoundary }: FallbackProps) => (
     <AuthLayout title="Registration Error">
       <div role="alert">
         <h2>Something went wrong</h2>
@@ -125,7 +117,6 @@ const Register: React.FC = () => {
       >
         <RegisterForm
           onSuccess={handleRegistrationSuccess}
-          onValidationError={handleValidationError}
           onDeviceFingerprint={handleDeviceFingerprint}
           isLoading={isLoading}
           allowedRoles={[
