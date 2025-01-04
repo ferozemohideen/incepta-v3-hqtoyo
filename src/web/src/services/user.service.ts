@@ -14,7 +14,7 @@ import { API_ENDPOINTS } from '../constants/api.constants';
 /**
  * Enhanced interface for user service operations with security and accessibility features
  */
-export interface UserService {
+interface IUserService {
   /**
    * Retrieves current user's profile with version information
    * @returns Promise resolving to user data
@@ -58,7 +58,7 @@ export interface UserService {
 /**
  * Enhanced user service implementation with comprehensive security and accessibility features
  */
-class UserServiceImpl implements UserService {
+class UserServiceImpl implements IUserService {
   // Retry configuration for critical operations
   private readonly retryConfig = {
     maxRetries: 3,
@@ -199,7 +199,7 @@ class UserServiceImpl implements UserService {
           // Include audit information
           audit: {
             timestamp: new Date().toISOString(),
-            ipAddress: window.navigator.userAgent, // Use userAgent instead of clientIP
+            ipAddress: window.clientIP, // Set by security middleware
             userAgent: navigator.userAgent
           }
         },
@@ -227,4 +227,4 @@ class UserServiceImpl implements UserService {
 export const userService = new UserServiceImpl();
 
 // Export interface for type usage
-export { UserService };
+export type { IUserService as UserService };
