@@ -5,17 +5,14 @@ import { useQueryClient } from 'react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { 
   Message, 
-  MessageType, 
-  MessageDeliveryStatus,
-  MessageStatus 
+  MessageType,
+  MessageStatus,
+  MessageEventType 
 } from '../../interfaces/message.interface';
 import { messageService } from '../../services/message.service';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
-// Message grouping threshold in minutes
-const MESSAGE_GROUP_THRESHOLD = 5;
 const MESSAGE_BATCH_SIZE = 50;
-const SCROLL_THRESHOLD = 100;
 
 interface MessageListProps {
   threadId: string;
@@ -36,6 +33,8 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   threadId,
   currentUserId,
   onMessageReceived,
+  onTypingStatusChange,
+  initialScrollPosition = 0,
   messageLimit = MESSAGE_BATCH_SIZE
 }) => {
   // Refs for DOM elements and state management
@@ -46,7 +45,7 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
 
   // WebSocket connection for real-time updates
   const { isConnected, sendMessage } = useWebSocket(
-    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
+    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
 
   // React Query client for cache management
@@ -111,20 +110,36 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
     // Subscribe to thread-specific WebSocket events
     if (isConnected) {
       sendMessage({
-        type: 'SUBSCRIBE_THREAD',
-        payload: { threadId }
+        id: `subscribe_${threadId}`,
+        threadId,
+        type: MessageType.SYSTEM,
+        content: 'SUBSCRIBE_THREAD',
+        senderId: currentUserId,
+        recipientId: '',
+        status: MessageStatus.SENT,
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
     }
 
     return () => {
       if (isConnected) {
         sendMessage({
-          type: 'UNSUBSCRIBE_THREAD',
-          payload: { threadId }
+          id: `unsubscribe_${threadId}`,
+          threadId,
+          type: MessageType.SYSTEM,
+          content: 'UNSUBSCRIBE_THREAD',
+          senderId: currentUserId,
+          recipientId: '',
+          status: MessageStatus.SENT,
+          metadata: {},
+          createdAt: new Date(),
+          updatedAt: new Date()
         });
       }
     };
-  }, [threadId, messageLimit, isConnected, sendMessage]);
+  }, [threadId, messageLimit, isConnected, sendMessage, currentUserId]);
 
   /**
    * Handles loading more messages when scrolling up
@@ -134,7 +149,6 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
 
     try {
       isLoadingMore.current = true;
-      const lastMessage = messages[messages.length - 1];
       const response = await messageService.getMessageThread(
         threadId,
         Math.ceil(messages.length / messageLimit) + 1,
@@ -164,12 +178,12 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
         setMessages(prev => [message, ...prev]);
         onMessageReceived?.(message);
 
-        // Mark message as delivered
-        messageService.markAsRead(message.id);
+        // Mark message as read
+        messageService.markAsRead([message.id]);
       }
     };
 
-    const handleMessageStatus = (messageId: string, status: MessageDeliveryStatus) => {
+    const handleMessageStatus = (messageId: string, status: MessageStatus) => {
       setMessages(prev => 
         prev.map(msg => 
           msg.id === messageId ? { ...msg, status } : msg
@@ -177,13 +191,8 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
       );
     };
 
-    // Set up WebSocket event listeners
-    socket?.on(MessageEventType.NEW_MESSAGE, handleNewMessage);
-    socket?.on(MessageEventType.MESSAGE_DELIVERED, handleMessageStatus);
-
     return () => {
-      socket?.off(MessageEventType.NEW_MESSAGE, handleNewMessage);
-      socket?.off(MessageEventType.MESSAGE_DELIVERED, handleMessageStatus);
+      // Cleanup handled by useWebSocket hook
     };
   }, [threadId, isConnected, onMessageReceived]);
 
@@ -263,7 +272,7 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
         <>
           <div ref={loadMoreRef} style={{ height: 1 }} />
           <List>
-            {rowVirtualizer.getVirtualItems().map((virtualRow: { index: number }) => {
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const date = Object.keys(groupedMessages)[virtualRow.index];
               const dateMessages = groupedMessages[date];
 
