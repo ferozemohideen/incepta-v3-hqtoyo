@@ -11,9 +11,9 @@ import {
   Typography,
   Checkbox,
   FormControlLabel
-} from '@mui/material'; // v5.14.0
-import { styled } from '@mui/material/styles'; // v5.14.0
-import zxcvbn from 'zxcvbn'; // v4.4.2
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import zxcvbn from 'zxcvbn';
 
 import { Form } from '../common/Form';
 import { useNotification } from '../../hooks/useNotification';
@@ -51,6 +51,8 @@ const PasswordStrengthMeter = styled(Box)(({ theme }) => ({
 // Props interface
 interface RegisterFormProps {
   onSuccess: (tokens: AuthTokens, deviceId: string) => void;
+  onValidationError: (error: Error) => void;
+  onDeviceFingerprint?: (deviceId: string) => void;
   allowedRoles: UserRole[];
   organizationTypes: string[];
 }
@@ -80,6 +82,8 @@ const strengthColors: Record<number, string> = {
  */
 export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSuccess,
+  onValidationError,
+  onDeviceFingerprint,
   allowedRoles,
   organizationTypes,
 }) => {
@@ -142,6 +146,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
       // Generate device fingerprint for security
       const deviceId = await generateDeviceFingerprint();
+      if (onDeviceFingerprint) {
+        onDeviceFingerprint(deviceId);
+      }
 
       // Submit registration with enhanced security context
       const tokens = await registerUser({
@@ -157,7 +164,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       showSuccess('Registration successful! Setting up MFA...');
       onSuccess(tokens, deviceId);
     } catch (error) {
-      showError(error instanceof Error ? error.message : 'Registration failed');
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      showError(errorMessage);
+      onValidationError(error instanceof Error ? error : new Error(errorMessage));
     } finally {
       setIsSubmitting(false);
     }
