@@ -10,7 +10,7 @@ import {
   Box,
   Typography,
   Checkbox,
-  FormControlLabel,
+  FormControlLabel
 } from '@mui/material'; // v5.14.0
 import { styled } from '@mui/material/styles'; // v5.14.0
 import zxcvbn from 'zxcvbn'; // v4.4.2
@@ -93,7 +93,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     email: {
       required: true,
       pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-      validate: async () => true,
+      validate: async () => {
+        // Add domain validation for organization emails if needed
+        return true;
+      },
     },
     password: {
       required: true,
@@ -133,7 +136,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   }, []);
 
   // Handle form submission
-  const handleSubmit = async (values: Record<string, any>, formActions: any) => {
+  const handleSubmit = async (values: Record<string, any>) => {
     try {
       setIsSubmitting(true);
 
@@ -157,7 +160,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       showError(error instanceof Error ? error.message : 'Registration failed');
     } finally {
       setIsSubmitting(false);
-      formActions.setSubmitting(false);
     }
   };
 
