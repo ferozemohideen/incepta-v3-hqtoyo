@@ -2,7 +2,7 @@ import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { CloudUpload, Error } from '@mui/icons-material';
-import CustomButton from './Button';
+import CustomButton, { CustomButtonProps } from './Button';
 import { StorageService } from '../../services/storage.service';
 
 // Styled component for the upload box with visual feedback
@@ -59,6 +59,8 @@ export interface FileUploadProps {
   maxSize?: number;
   disabled?: boolean;
   maxConcurrent?: number;
+  chunkSize?: number;
+  compressionThreshold?: number;
   retryAttempts?: number;
   onError?: (error: UploadError) => void;
   onProgress?: (progress: number) => void;
@@ -72,6 +74,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   maxSize = 100 * 1024 * 1024, // 100MB default
   disabled = false,
   maxConcurrent = 3,
+  chunkSize = 5 * 1024 * 1024, // 5MB chunks
+  compressionThreshold = 10 * 1024 * 1024, // 10MB
   retryAttempts = 3,
   onError,
   onProgress,
@@ -157,7 +161,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
-  // Upload files with retry logic
+  // Upload files with chunking and retry logic
   const uploadFiles = async (files: File[]) => {
     setIsUploading(true);
     const uploadIds: string[] = [];
@@ -188,7 +192,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             } catch (err) {
               attempts++;
               if (attempts === retryAttempts) {
-                throw err instanceof Error ? err : new Error('Upload failed');
+                throw err instanceof Error ? err : new Error(String(err));
               }
               await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
             }
@@ -202,7 +206,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     } catch (err) {
       const uploadError: UploadError = {
         code: 'UPLOAD_FAILED',
-        message: err instanceof Error ? err.message : 'Upload failed',
+        message: err instanceof Error ? err.message : String(err),
       };
       setError(uploadError);
       onError?.(uploadError);
