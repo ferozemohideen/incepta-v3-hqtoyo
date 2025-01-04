@@ -17,7 +17,7 @@ import {
   AuthTokens, 
   MFACredentials 
 } from '../interfaces/auth.interface';
-import { AUTH_ENDPOINTS, TOKEN_CONFIG, AUTH_STORAGE_KEYS, UserRole } from '../constants/auth.constants';
+import { AUTH_ENDPOINTS, TOKEN_CONFIG, AUTH_STORAGE_KEYS } from '../constants/auth.constants';
 import { 
   setLocalStorageItem, 
   getLocalStorageItem, 
@@ -41,7 +41,6 @@ export interface AuthService {
  */
 class AuthServiceImpl implements AuthService {
   private readonly tokenRefreshInterval: number = TOKEN_CONFIG.ROTATION_WINDOW * 1000;
-  private readonly maxRetryAttempts: number = 3;
   private refreshTimer?: NodeJS.Timeout;
 
   constructor() {
