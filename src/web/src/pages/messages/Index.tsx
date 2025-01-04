@@ -12,6 +12,7 @@ import ChatBox from '../../components/messages/ChatBox';
 import ContactList from '../../components/messages/ContactList';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useAuth } from '../../hooks/useAuth';
+import { User } from '../../interfaces/user.interface';
 
 /**
  * Interface for enhanced message page state
@@ -63,13 +64,8 @@ const MessagesPage: React.FC = () => {
       }));
 
       // Update selected contact based on thread
-      const threadInfo = await messageService.getThreads({
-        threadId,
-        page: '1',
-        limit: '1'
-      });
-      
-      const contactId = threadInfo.threads[0]?.participantIds.find(id => id !== user?.id);
+      const threadInfo = await ThreadList.getThreadInfo(threadId);
+      const contactId = threadInfo.participantIds.find(id => id !== user?.id);
 
       setState(prev => ({
         ...prev,
@@ -90,7 +86,7 @@ const MessagesPage: React.FC = () => {
   /**
    * Handles contact selection and thread creation
    */
-  const handleContactSelect = useCallback(async (contact: { id: string }) => {
+  const handleContactSelect = useCallback(async (contact: User) => {
     try {
       setState(prev => ({
         ...prev,
@@ -100,17 +96,11 @@ const MessagesPage: React.FC = () => {
       }));
 
       // Find or create thread for contact
-      const response = await messageService.getThreads({
-        participantId: contact.id,
-        page: '1',
-        limit: '1'
-      });
+      const thread = await ThreadList.findOrCreateThread(contact.id);
       
-      const thread = response.threads[0];
-
       setState(prev => ({
         ...prev,
-        selectedThreadId: thread?.id || null,
+        selectedThreadId: thread.id,
         isLoading: false
       }));
 
