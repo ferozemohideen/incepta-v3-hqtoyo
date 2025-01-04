@@ -63,11 +63,9 @@ export const fetchUserProfile = createAsyncThunk(
   'user/fetchProfile',
   async (deviceId: string, { rejectWithValue }) => {
     try {
-      const response = await userService.getProfile();
-      
-      // Validate security context with deviceId
+      // First validate security context with device ID
       const securityContext = await userService.validateSecurityContext({
-        deviceId: deviceId,
+        deviceId,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent
       });
@@ -76,6 +74,8 @@ export const fetchUserProfile = createAsyncThunk(
         throw new Error('Invalid security context');
       }
 
+      // Then fetch profile with validated device ID
+      const response = await userService.getProfile(deviceId);
       return response;
     } catch (error) {
       return rejectWithValue((error as Error).message);
