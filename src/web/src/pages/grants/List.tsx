@@ -8,7 +8,7 @@ import GrantList from '../../components/grants/GrantList';
 import { useNotification } from '../../hooks/useNotification';
 import { grantService } from '../../services/grant.service';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
-import { IGrant, IGrantSearchParams } from '../../interfaces/grant.interface';
+import { IGrant, IGrantSearchParams, GrantSortField, SortOrder } from '../../interfaces/grant.interface';
 
 /**
  * Interface for grant search state with URL synchronization
@@ -35,8 +35,8 @@ const GrantListPage: React.FC = () => {
     filters: {
       page: 1,
       limit: 10,
-      sortBy: 'deadline',
-      sortOrder: 'asc'
+      sortBy: GrantSortField.DEADLINE,
+      sortOrder: SortOrder.ASC
     },
     sortBy: 'deadline',
     sortOrder: 'asc',
@@ -45,7 +45,7 @@ const GrantListPage: React.FC = () => {
 
   // Subscribe to real-time grant updates
   useEffect(() => {
-    const subscription = grantService.subscribeToGrantUpdates((update) => {
+    const subscription = grantService.subscribeToGrantUpdates((update: IGrant) => {
       showSuccess(`Grant "${update.title}" has been updated`);
     });
 
