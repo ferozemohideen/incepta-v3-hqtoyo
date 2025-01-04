@@ -199,7 +199,7 @@ class UserServiceImpl implements UserService {
           // Include audit information
           audit: {
             timestamp: new Date().toISOString(),
-            ipAddress: window.clientIP, // Set by security middleware
+            ipAddress: window.navigator.userAgent, // Use userAgent instead of clientIP
             userAgent: navigator.userAgent
           }
         },
@@ -227,4 +227,4 @@ class UserServiceImpl implements UserService {
 export const userService = new UserServiceImpl();
 
 // Export interface for type usage
-export type { UserService };
+export { UserService };
