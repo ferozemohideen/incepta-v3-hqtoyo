@@ -38,11 +38,11 @@ const profileValidationSchema = object().shape({
 
 // User interface
 interface User {
-  name?: string;
-  organization?: string;
-  organizationType?: string;
-  email?: string;
-  role?: string;
+  name: string;
+  organization: string;
+  organizationType: string;
+  email: string;
+  role: string;
   researchInterests?: string[];
   bio?: string;
   phoneNumber?: string;
@@ -99,7 +99,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   };
 
   // Handle form submission with security measures
-  const handleSubmit = async (values: Record<string, any>) => {
+  const handleSubmit = async (values: Record<string, any>, formActions: any) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
