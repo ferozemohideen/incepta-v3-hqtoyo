@@ -139,6 +139,79 @@ export class MessageServiceImpl {
   }
 
   /**
+   * Retrieves message threads with pagination support
+   */
+  public async getThreads(
+    page: number = 1,
+    limit: number = 20
+  ): Promise<{ threads: MessageThread[]; total: number }> {
+    try {
+      const response = await apiService.get<{ threads: MessageThread[]; total: number }>(
+        `${this.baseUrl}/threads`,
+        { page, limit }
+      );
+      return response;
+    } catch (error) {
+      console.error('Failed to retrieve message threads:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Subscribes to real-time message status updates
+   */
+  public subscribeToStatus(
+    messageId: string,
+    callback: (status: MessageStatus) => void
+  ): () => void {
+    const eventHandler = (event: MessageEvent) => {
+      if (event.payload.id === messageId) {
+        callback(event.payload.status);
+      }
+    };
+
+    if (this.socket.isConnected) {
+      this.socket.sendMessage({
+        type: MessageType.SYSTEM,
+        content: 'Subscribe to status',
+        id: messageId,
+        threadId: '',
+        senderId: '',
+        recipientId: '',
+        status: MessageStatus.SENT,
+        metadata: {
+          documentUrl: '',
+          fileName: '',
+          fileSize: 0,
+          contentType: '',
+          uploadedAt: new Date()
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    return () => {
+      // Cleanup subscription
+    };
+  }
+
+  /**
+   * Gets the count of unread messages across all threads
+   */
+  public async getUnreadCount(): Promise<number> {
+    try {
+      const response = await apiService.get<{ count: number }>(
+        `${this.baseUrl}/unread-count`
+      );
+      return response.count;
+    } catch (error) {
+      console.error('Failed to get unread message count:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Sends a new message with encryption and delivery tracking
    */
   public async sendMessage(message: Message): Promise<Message> {
