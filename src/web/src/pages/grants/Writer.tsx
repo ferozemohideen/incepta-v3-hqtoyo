@@ -6,6 +6,7 @@ import { debounce } from 'lodash';
 import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant';
 import { useNotification } from '../../hooks/useNotification';
 import { grantService } from '../../services/grant.service';
+import { IGrant, IGrantApplication } from '../../interfaces/grant.interface';
 
 // Interface for component state management
 interface WriterState {
@@ -81,7 +82,7 @@ const Writer: React.FC = () => {
         setState(prev => ({ ...prev, progress }));
 
         // Save draft
-        await grantService.saveDraft(grantId, applicationData);
+        await grantService.saveGrantDraft(grantId, applicationData);
         
         setState(prev => ({
           ...prev,
@@ -147,7 +148,7 @@ const Writer: React.FC = () => {
     if (!state.grant) return 0;
 
     const sections = state.grant.requirements.sections;
-    const completedSections = sections.filter(section => {
+    const completedSections = sections.filter((section: { id: string }) => {
       const content = applicationData.sections?.[section.id]?.content;
       return content && content.length > 0;
     });
@@ -195,7 +196,7 @@ const Writer: React.FC = () => {
       {state.grant && (
         <GrantWritingAssistant
           grant={state.grant}
-          onSave={handleSaveDraft}
+          onSave={handleSaveDraft as (application: IGrantApplication) => Promise<void>}
           onSubmit={handleSubmitApplication}
           initialData={location.state?.draftData}
         />
