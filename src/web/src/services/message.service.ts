@@ -4,6 +4,7 @@
  * @version 1.0.0
  */
 
+import { io } from 'socket.io-client'; // ^4.7.0
 import CryptoJS from 'crypto-js'; // ^4.1.1
 import { 
   Message, 
@@ -44,11 +45,12 @@ export class MessageServiceImpl {
   private readonly baseUrl: string;
   private readonly encryptionConfig: EncryptionConfig;
   private readonly uploadConfig: UploadOptions;
+  private readonly maxRetryAttempts: number = 3;
   private readonly messageQueue: Message[] = [];
 
   constructor() {
     // Initialize WebSocket connection
-    this.socket = useWebSocket(import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000', {
+    this.socket = useWebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:3000', {
       autoConnect: true,
       reconnectAttempts: 5,
       secure: true,
@@ -57,8 +59,8 @@ export class MessageServiceImpl {
 
     // Configure encryption settings
     this.encryptionConfig = {
-      algorithm: 'AES-256-CBC',
-      secretKey: import.meta.env['VITE_MESSAGE_ENCRYPTION_KEY'],
+      algorithm: 'AES-256-GCM',
+      secretKey: import.meta.env.VITE_MESSAGE_ENCRYPTION_KEY,
       ivSize: 16
     };
 
@@ -78,8 +80,17 @@ export class MessageServiceImpl {
    * Initialize WebSocket event listeners for real-time updates
    */
   private initializeEventListeners(): void {
-    this.handleNewMessage = this.handleNewMessage.bind(this);
-    this.updateMessageStatus = this.updateMessageStatus.bind(this);
+    this.socket.on(MessageEventType.NEW_MESSAGE, (event: MessageEvent) => {
+      this.handleNewMessage(event);
+    });
+
+    this.socket.on(MessageEventType.MESSAGE_DELIVERED, (event: MessageEvent) => {
+      this.updateMessageStatus(event.payload.id, MessageStatus.DELIVERED);
+    });
+
+    this.socket.on(MessageEventType.MESSAGE_READ, (event: MessageEvent) => {
+      this.updateMessageStatus(event.payload.id, MessageStatus.READ);
+    });
   }
 
   /**
@@ -92,7 +103,7 @@ export class MessageServiceImpl {
       this.encryptionConfig.secretKey,
       {
         iv: iv,
-        mode: CryptoJS.mode.CBC
+        mode: CryptoJS.mode.GCM
       }
     );
     return iv.concat(encrypted.ciphertext).toString(CryptoJS.enc.Base64);
@@ -112,9 +123,9 @@ export class MessageServiceImpl {
     encrypted.sigBytes -= this.encryptionConfig.ivSize;
 
     const decrypted = CryptoJS.AES.decrypt(
-      encrypted.toString(CryptoJS.enc.Base64),
+      { ciphertext: encrypted },
       this.encryptionConfig.secretKey,
-      { iv: iv, mode: CryptoJS.mode.CBC }
+      { iv: iv, mode: CryptoJS.mode.GCM }
     );
     
     return decrypted.toString(CryptoJS.enc.Utf8);
@@ -128,10 +139,10 @@ export class MessageServiceImpl {
     limit: number = 20
   ): Promise<{ threads: MessageThread[]; total: number }> {
     try {
-      const response = await apiService.get<{ threads: MessageThread[]; total: number }>(
-        `${this.baseUrl}/threads`,
-        { page, limit }
-      );
+      const response = await apiService.get(`${this.baseUrl}/threads`, {
+        page,
+        limit
+      });
       return response;
     } catch (error) {
       console.error('Failed to retrieve message threads:', error);
@@ -148,10 +159,10 @@ export class MessageServiceImpl {
     limit: number = 50
   ): Promise<{ messages: Message[]; total: number }> {
     try {
-      const response = await apiService.get<{ messages: Message[]; total: number }>(
-        `${this.baseUrl}/thread/${threadId}/messages`,
-        { page, limit }
-      );
+      const response = await apiService.get(`${this.baseUrl}/thread/${threadId}/messages`, {
+        page,
+        limit
+      });
 
       // Decrypt message contents
       response.messages = response.messages.map(message => ({
@@ -200,20 +211,17 @@ export class MessageServiceImpl {
   }
 
   /**
-   * Marks messages as read and updates status
+   * Marks messages as read and notifies other participants
    */
   public async markAsRead(messageIds: string[]): Promise<void> {
     try {
-      await apiService.put(`${this.baseUrl}/status/read`, {
-        messageIds,
-        status: MessageStatus.READ
+      await apiService.put(`${this.baseUrl}/mark-read`, {
+        messageIds
       });
 
-      // Update status via WebSocket if connected
-      if (this.socket.isConnected) {
-        for (const messageId of messageIds) {
-          await this.updateMessageStatus(messageId, MessageStatus.READ);
-        }
+      // Update message status and notify via WebSocket
+      for (const messageId of messageIds) {
+        await this.updateMessageStatus(messageId, MessageStatus.READ);
       }
     } catch (error) {
       console.error('Failed to mark messages as read:', error);
@@ -281,13 +289,13 @@ export class MessageServiceImpl {
     limit: number = 50
   ): Promise<{ messages: Message[]; thread: MessageThread }> {
     try {
-      const response = await apiService.get<{ messages: Message[]; thread: MessageThread }>(
-        `${this.baseUrl}/thread/${threadId}`,
-        { page, limit }
-      );
+      const response = await apiService.get(`${this.baseUrl}/thread/${threadId}`, {
+        page,
+        limit
+      });
 
       // Decrypt message contents
-      response.messages = response.messages.map((message: Message) => ({
+      response.messages = response.messages.map(message => ({
         ...message,
         content: message.type !== MessageType.SYSTEM 
           ? this.decryptContent(message.content)
@@ -314,18 +322,19 @@ export class MessageServiceImpl {
       });
 
       if (this.socket.isConnected) {
-        await this.socket.sendMessage({
+        const statusMessage: Message = {
           id: messageId,
-          status,
           type: MessageType.SYSTEM,
-          content: '',
+          content: `Message ${status.toLowerCase()}`,
+          status: status,
           threadId: '',
           senderId: '',
           recipientId: '',
-          metadata: { documentUrl: '', fileName: '', fileSize: 0, contentType: '', uploadedAt: new Date() },
+          metadata: null,
           createdAt: new Date(),
           updatedAt: new Date()
-        });
+        };
+        await this.socket.sendMessage(statusMessage);
       }
     } catch (error) {
       console.error('Failed to update message status:', error);
