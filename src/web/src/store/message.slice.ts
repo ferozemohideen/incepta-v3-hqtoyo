@@ -10,8 +10,6 @@ import {
   MessageThread,
   MessageType,
   MessageStatus,
-  MessageEvent,
-  MessageEventType,
   DocumentMetadata
 } from '../interfaces/message.interface';
 import { messageService } from '../services/message.service';
@@ -54,7 +52,7 @@ export const fetchThreads = createAsyncThunk(
   async ({ page, limit, forceRefresh = false }: { 
     page: number; 
     limit: number; 
-    forceRefresh?: boolean;
+    forceRefresh?: boolean; // Used for cache invalidation
   }) => {
     try {
       const response = await messageService.getThreads(page, limit);
@@ -215,7 +213,7 @@ const messageSlice = createSlice({
         state.loading = false;
         state.threads = action.payload;
         state.unreadCount = action.payload.reduce(
-          (count, thread) => count + thread.unreadCount, 
+          (count: number, thread: MessageThread) => count + thread.unreadCount, 
           0
         );
       })

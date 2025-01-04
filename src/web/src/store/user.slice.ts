@@ -52,11 +52,6 @@ const SECURITY_AUDIT_LEVELS = {
 } as const;
 
 /**
- * Maximum retry attempts for operations
- */
-const MAX_RETRY_ATTEMPTS = 3;
-
-/**
  * Async thunk for fetching user profile with enhanced security validation
  */
 export const fetchUserProfile = createAsyncThunk(

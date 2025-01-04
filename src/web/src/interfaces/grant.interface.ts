@@ -12,7 +12,7 @@ export interface IGrant {
   type: GrantType;
   agency: string;
   amount: number;
-  deadline: Date;
+  deadline: string;
   requirements: IGrantRequirements;
   eligibilityCriteria: string[];
   fundingAreas: string[];
@@ -29,6 +29,18 @@ export interface IGrantRequirements {
   businessPlan: IDocumentRequirement;
   budget: IDocumentRequirement;
   additionalDocuments: IDocumentRequirement[];
+  sections: IGrantSection[];
+}
+
+/**
+ * Interface for grant application sections
+ * @interface IGrantSection
+ */
+export interface IGrantSection {
+  id: UUID;
+  title: string;
+  description: string;
+  required: boolean;
 }
 
 /**
@@ -52,6 +64,7 @@ export interface IGrantApplication {
   userId: UUID;
   status: GrantStatus;
   documents: IApplicationDocument[];
+  sections: IGrantSection[];
   progress: number;
   feedback: IApplicationFeedback[];
   submittedAt: Date;

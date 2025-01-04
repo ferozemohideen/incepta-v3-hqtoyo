@@ -16,7 +16,7 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs'; // ^3.4.0
 
 import { useAuth } from '../../hooks/useAuth';
 import { useForm } from '../../hooks/useForm';
-import { LoginCredentials } from '../../interfaces/auth.interface';
+import { LoginCredentials, AuthTokens, AuthError } from '../../interfaces/auth.interface';
 
 // Initialize fingerprint generator
 const fpPromise = FingerprintJS.load();
@@ -45,7 +45,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     initialValues: {
       email: '',
       password: '',
-      deviceId: ''
+      deviceInfo: {
+        userAgent: '',
+        platform: '',
+        version: '',
+        fingerprint: ''
+      },
+      ipAddress: ''
     },
     validationSchema: {
       email: {
@@ -65,7 +71,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     },
     onSubmit: async (formValues) => {
       if (attempts >= maxAttempts) {
-        onError({ message: 'Maximum login attempts exceeded. Please try again later.' });
+        onError({ 
+          message: 'Maximum login attempts exceeded. Please try again later.',
+          code: 'MAX_ATTEMPTS_EXCEEDED',
+          status: 429,
+          timestamp: new Date()
+        });
         return;
       }
 
@@ -82,7 +93,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
         if (mfaRequired) {
           onMFARequired();
-        } else {
+        } else if (response) {
           onSuccess(response);
         }
       } catch (err) {
@@ -140,7 +151,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           aria-live="polite"
           sx={{ mb: 2 }}
         >
-          {error}
+          {error.message}
         </Alert>
       )}
 
@@ -153,7 +164,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         onChange={handleChange}
         error={!!errors.email}
         helperText={errors.email}
-        disabled={loading || attempts >= maxAttempts}
+        disabled={loading}
         required
         fullWidth
         autoComplete="email"
@@ -173,7 +184,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         onChange={handleChange}
         error={!!errors.password}
         helperText={errors.password}
-        disabled={loading || attempts >= maxAttempts}
+        disabled={loading}
         required
         fullWidth
         autoComplete="current-password"
@@ -205,7 +216,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         type="submit"
         variant="contained"
         color="primary"
-        disabled={loading || attempts >= maxAttempts}
+        disabled={loading}
         fullWidth
         sx={{ mt: 2 }}
       >

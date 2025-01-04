@@ -62,7 +62,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   // WebSocket connection
   const { isConnected, sendMessage: sendWebSocketMessage } = useWebSocket(
-    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
+    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
 
   /**
@@ -103,9 +103,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
       setIsSubmitting(true);
       setError(null);
 
-      // Validate message content
-      await messageService.validateMessage(messageText);
-
       // Create message object
       const message: Message = {
         id: crypto.randomUUID(),
@@ -115,7 +112,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
         type: MessageType.TEXT,
         content: messageText,
         status: MessageStatus.SENT,
-        metadata: {},
+        metadata: {
+          documentUrl: '',
+          fileName: '',
+          fileSize: 0,
+          contentType: '',
+          uploadedAt: new Date()
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -167,13 +170,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
       setError(null);
       setUploadProgress(0);
 
-      // Upload document with progress tracking
+      // Upload document
       const uploadedMessage = await messageService.uploadDocument(
         file,
-        threadId,
-        {
-          onProgress: (progress: number) => setUploadProgress(progress)
-        }
+        threadId
       );
 
       // Send message through WebSocket

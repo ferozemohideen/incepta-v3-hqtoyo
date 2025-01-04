@@ -86,7 +86,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [error, setError] = useState<UploadError | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadQueue = useRef<File[]>([]);
-  const storageService = useRef(new StorageService());
+  const storageService = useRef<StorageService>(new StorageService());
 
   // Handle drag events
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -191,7 +191,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               break;
             } catch (error) {
               attempts++;
-              if (attempts === retryAttempts) throw error;
+              if (attempts === retryAttempts) {
+                throw error instanceof Error ? error : new Error(String(error));
+              }
               await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
             }
           }

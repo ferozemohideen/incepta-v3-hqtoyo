@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -8,16 +8,13 @@ import {
   Switch,
   Dialog,
   CircularProgress,
-  LinearProgress,
   Tabs,
   Tab,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  IconButton,
   Alert,
-  Divider,
   TextField,
 } from '@mui/material'; // v5.14.0
 import { styled } from '@mui/material/styles';
@@ -44,7 +41,6 @@ const TabPanel = styled(Box)(({ theme }) => ({
 interface SecuritySettingsProps {
   userSecurity: UserSecurity;
   onUpdate: (security: Partial<UserSecurity>) => Promise<void>;
-  theme: Theme;
 }
 
 interface UserSecurity {
@@ -98,7 +94,6 @@ const passwordSchema = yup.object().shape({
 export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
   userSecurity,
   onUpdate,
-  theme,
 }) => {
   // State management
   const [activeTab, setActiveTab] = useState(0);
@@ -108,7 +103,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
   const { showSuccess, showError } = useNotification();
 
   // Handle password change
-  const handlePasswordChange = async (values: PasswordFormValues) => {
+  const handlePasswordChange = useCallback(async (values: Record<string, any>, formActions: any) => {
     setIsLoading(true);
     try {
       await authService.validatePassword(values.currentPassword);
@@ -119,7 +114,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onUpdate, showSuccess, showError]);
 
   // Handle MFA toggle
   const handleMFAToggle = async (enabled: boolean) => {
@@ -130,7 +125,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
         setMfaSetupData(setupData);
         setMfaDialogOpen(true);
       } else {
-        await authService.verifyMFA({ token: '', method: 'disable' });
+        await authService.verifyMFA({ token: '', tempToken: '', method: 'disable', verificationId: '' });
         await onUpdate({ mfaEnabled: false });
         showSuccess('MFA disabled successfully');
       }
@@ -144,7 +139,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
   // Handle MFA verification
   const handleMFAVerify = async (token: string) => {
     try {
-      await authService.verifyMFA({ token, method: 'setup' });
+      await authService.verifyMFA({ token, tempToken: '', method: 'setup', verificationId: '' });
       await onUpdate({ mfaEnabled: true });
       setMfaDialogOpen(false);
       showSuccess('MFA enabled successfully');
@@ -327,7 +322,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
               </Alert>
               <Box mt={1}>
                 {mfaSetupData.backupCodes.map((code, index) => (
-                  <Typography key={index} variant="mono">
+                  <Typography key={index} variant="body2">
                     {code}
                   </Typography>
                 ))}

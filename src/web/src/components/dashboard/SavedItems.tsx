@@ -39,13 +39,13 @@ interface SavedItemsProps {
 /**
  * Formats a deadline date with localization support
  */
-const formatDeadline = (date: Date, locale: string = 'en-US'): string => {
+const formatDeadline = (date: string | Date, locale: string = 'en-US'): string => {
   try {
     return new Intl.DateTimeFormat(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-    }).format(new Date(date));
+    }).format(typeof date === 'string' ? new Date(date) : date);
   } catch (error) {
     console.error('Error formatting date:', error);
     return 'Invalid date';

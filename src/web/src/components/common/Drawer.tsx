@@ -22,17 +22,7 @@ interface DrawerProps {
 /**
  * Styled drawer component with responsive width and enhanced transitions
  */
-const StyledDrawer = styled(Drawer, {
-  shouldComponentUpdate: (nextProps) => nextProps.open !== nextProps.open,
-})(({ theme, width = 400 }) => ({
-  width: {
-    xs: '100%',
-    sm: width,
-    md: width,
-  },
-  flexShrink: 0,
-  whiteSpace: 'nowrap',
-  boxSizing: 'border-box',
+const StyledDrawer = styled(Drawer)(({ theme, width = 400 }) => ({
   '& .MuiDrawer-paper': {
     width: {
       xs: '100%',
@@ -47,6 +37,9 @@ const StyledDrawer = styled(Drawer, {
       duration: theme.transitions.duration.enteringScreen,
     }),
   },
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
+  boxSizing: 'border-box',
 }));
 
 /**
@@ -99,7 +92,6 @@ const CustomDrawer: React.FC<DrawerProps> = ({
       ModalProps={{
         keepMounted: true,
         disableScrollLock: persistent,
-        disableBackdropTransition,
       }}
       PaperProps={{
         elevation: persistent ? 0 : 1,

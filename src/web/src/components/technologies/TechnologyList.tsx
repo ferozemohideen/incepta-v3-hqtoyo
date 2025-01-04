@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Grid, Box, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { debounce } from 'lodash';
@@ -42,8 +42,8 @@ export interface TechnologyListProps {
   totalCount: number;
   onPageChange: (page: number) => void;
   onViewModeChange?: (mode: 'grid' | 'list') => void;
-  onSaveTechnology?: (id: string) => void;
-  onShareTechnology?: (id: string) => void;
+  onSaveTechnology?: (id: string) => Promise<void>;
+  onShareTechnology?: (id: string) => Promise<void>;
   onViewTechnology?: (id: string) => void;
   initialViewMode?: 'grid' | 'list';
   showMatchScores?: boolean;
@@ -126,7 +126,7 @@ export const TechnologyList: React.FC<TechnologyListProps> = ({
       onShare: onShareTechnology,
       onView: onViewTechnology,
       showActions: true,
-      matchScore: showMatchScores ? technology.metadata?.matchScore : undefined,
+      matchScore: showMatchScores ? technology.metadata?.aiMatchScore : undefined,
     };
 
     return (
@@ -220,32 +220,3 @@ export const TechnologyList: React.FC<TechnologyListProps> = ({
 };
 
 export default TechnologyList;
-```
-
-This implementation provides a robust, accessible, and performant technology list component with the following features:
-
-1. Grid/List view modes with smooth transitions
-2. Virtualized rendering for performance optimization
-3. Keyboard navigation support
-4. WCAG 2.1 Level AA compliance with proper ARIA attributes
-5. Error boundary integration
-6. Loading states with visual feedback
-7. Debounced handlers for performance
-8. Responsive grid layout
-9. Comprehensive accessibility features
-10. Material Design 3.0 principles
-
-The component handles all the requirements specified in the technical specification and integrates properly with the existing components and interfaces.
-
-Usage example:
-```typescript
-<TechnologyList
-  technologies={technologies}
-  totalCount={100}
-  onPageChange={(page) => handlePageChange(page)}
-  onViewModeChange={(mode) => handleViewModeChange(mode)}
-  onSaveTechnology={(id) => handleSave(id)}
-  onShareTechnology={(id) => handleShare(id)}
-  onViewTechnology={(id) => handleView(id)}
-  showMatchScores={true}
-/>

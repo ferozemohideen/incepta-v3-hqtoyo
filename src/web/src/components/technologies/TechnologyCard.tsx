@@ -20,6 +20,7 @@ export interface TechnologyCardProps {
   onView?: (id: string) => void;
   matchScore?: number;
   showActions?: boolean;
+  onKeyDown?: (event: React.KeyboardEvent) => void;
 }
 
 /**
@@ -83,6 +84,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = ({
   onView,
   matchScore,
   showActions = true,
+  onKeyDown,
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -118,6 +120,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = ({
       onClick={onView ? () => onView(technology.id.toString()) : undefined}
       aria-label={`Technology: ${technology.title}`}
       fullHeight
+      onKeyDown={onKeyDown}
     >
       <StyledContent>
         {/* Title */}

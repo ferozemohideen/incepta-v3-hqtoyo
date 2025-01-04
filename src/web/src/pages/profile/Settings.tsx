@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
   Container,
-  Grid,
   Typography,
   Tabs,
   Tab,
@@ -15,6 +14,7 @@ import { useNavigate } from 'react-router-dom'; // v6.14.0
 import SecuritySettings from '../../components/profile/SecuritySettings';
 import PreferencesForm from '../../components/profile/PreferencesForm';
 import { useAuth } from '../../hooks/useAuth';
+import { UserPreferences, UserSecurity } from '../../interfaces/user.interface';
 
 /**
  * Interface for accessible tab panel props
@@ -61,8 +61,7 @@ const TabPanel: React.FC<TabPanelProps> = ({
  */
 const Settings: React.FC = () => {
   // Initialize hooks
-  const navigate = useNavigate();
-  const { user, securityContext } = useAuth();
+  const { user } = useAuth();
   
   // State management
   const [activeTab, setActiveTab] = useState(0);
@@ -73,7 +72,7 @@ const Settings: React.FC = () => {
   /**
    * Handle tab changes with accessibility focus management
    */
-  const handleTabChange = useCallback((event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
     // Reset status messages on tab change
     setUpdateError(null);
@@ -90,17 +89,15 @@ const Settings: React.FC = () => {
 
     try {
       // Create security audit log entry
-      const auditLog: SecurityAuditLog = {
+      const auditLog = {
         timestamp: new Date(),
         userId: user?.id,
         action: 'security_update',
         changes: security,
-        ipAddress: securityContext.ipAddress,
-        userAgent: navigator.userAgent,
       };
 
       // Update security settings with audit log
-      await onUpdate({ ...security, auditLog });
+      await user?.security.update({ ...security, auditLog });
       setUpdateSuccess('Security settings updated successfully');
     } catch (error) {
       setUpdateError('Failed to update security settings. Please try again.');
@@ -108,7 +105,7 @@ const Settings: React.FC = () => {
     } finally {
       setIsUpdating(false);
     }
-  }, [user, securityContext, onUpdate]);
+  }, [user]);
 
   /**
    * Handle preferences updates with validation
@@ -119,7 +116,7 @@ const Settings: React.FC = () => {
     setUpdateSuccess(null);
 
     try {
-      await onUpdate({ preferences });
+      await user?.preferences.update({ preferences });
       setUpdateSuccess('Preferences updated successfully');
     } catch (error) {
       setUpdateError('Failed to update preferences. Please try again.');
@@ -127,7 +124,7 @@ const Settings: React.FC = () => {
     } finally {
       setIsUpdating(false);
     }
-  }, [onUpdate]);
+  }, [user]);
 
   // Render loading state if user data is not available
   if (!user) {

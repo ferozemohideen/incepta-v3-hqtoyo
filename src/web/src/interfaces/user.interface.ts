@@ -160,6 +160,19 @@ export interface UserSecurity {
 }
 
 /**
+ * Interface for security context information
+ */
+export interface SecurityContext {
+  sessionId: string;
+  lastActivity: Date;
+  currentDevice: DeviceInfo;
+  currentIp: string;
+  mfaVerified: boolean;
+  permissionLevel: UserRole;
+  securityFlags: string[];
+}
+
+/**
  * Main user interface with enhanced security and tracking features
  */
 export interface User {

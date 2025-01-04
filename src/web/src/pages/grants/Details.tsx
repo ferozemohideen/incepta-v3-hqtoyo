@@ -4,7 +4,6 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Box,
-  CircularProgress,
   Alert,
   Skeleton,
   useTheme

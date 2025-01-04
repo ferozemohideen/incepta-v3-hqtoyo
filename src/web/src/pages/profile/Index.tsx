@@ -25,8 +25,8 @@ const ProfilePage: React.FC = () => {
     const deviceId = window.navigator.userAgent;
     dispatch(fetchUserProfile(deviceId))
       .unwrap()
-      .catch((error) => {
-        showError('Failed to load profile: ' + error);
+      .catch((error: Error) => {
+        showError('Failed to load profile: ' + error.message);
       });
   }, [dispatch, showError]);
 
@@ -43,6 +43,7 @@ const ProfilePage: React.FC = () => {
       phoneNumber: currentUser.profile.phone || '',
       website: currentUser.socialProfiles?.linkedin || '',
       orcidId: currentUser.socialProfiles?.orcid || '',
+      researchInterests: currentUser.profile.interests || []
     };
   }, [currentUser]);
 
@@ -60,6 +61,7 @@ const ProfilePage: React.FC = () => {
           title: sanitize(formData.organizationType),
           bio: sanitize(formData.bio),
           phone: sanitize(formData.phoneNumber),
+          interests: formData.researchInterests,
           version: currentUser.profile.version + 1,
         },
         socialProfiles: {
@@ -70,7 +72,7 @@ const ProfilePage: React.FC = () => {
 
       // Dispatch update action
       await dispatch(updateUserProfile({
-        profileData: sanitizedData,
+        profileData: sanitizedData.profile,
         version: currentUser.profile.version,
       })).unwrap();
 
@@ -136,6 +138,7 @@ const ProfilePage: React.FC = () => {
                 user={profileData}
                 onSubmit={handleProfileUpdate}
                 onError={(error) => showError(error.message)}
+                isLoading={isProfileUpdating}
               />
             </Paper>
           </Grid>

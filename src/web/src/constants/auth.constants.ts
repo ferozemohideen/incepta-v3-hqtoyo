@@ -107,4 +107,17 @@ export type TokenPayload = {
   mfa: boolean;
   exp: number;
   iat: number;
+  security: {
+    mfaEnabled: boolean;
+    lastPasswordChange?: string;
+    loginAttempts?: number;
+  };
+  preferences: {
+    language?: string;
+    theme?: string;
+    notifications?: {
+      email: boolean;
+      push: boolean;
+    };
+  };
 };

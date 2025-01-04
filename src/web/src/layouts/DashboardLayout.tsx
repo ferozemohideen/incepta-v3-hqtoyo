@@ -21,28 +21,22 @@ interface DashboardLayoutProps {
 }
 
 // Styled component for main content area with responsive behavior
-const DashboardContent = styled(Box)(({ theme }) => ({
-  flexGrow: 1,
-  padding: theme.spacing(3),
-  minHeight: '100vh',
-  display: 'flex',
-  flexDirection: 'column',
-  transition: theme.transitions.create('margin', {
+const DashboardContent = styled(Box)`
+  flex-grow: 1;
+  padding: ${({ theme }) => theme.spacing(3)};
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: ${({ theme }) => theme.transitions.create('margin', {
     easing: theme.transitions.easing.sharp,
     duration: ANIMATION.DURATION_MEDIUM,
-  }),
-  marginLeft: {
-    xs: 0,
-    sm: `${LAYOUT.SIDEBAR_WIDTH}px`,
-  },
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: `${LAYOUT.SIDEBAR_WIDTH}px`,
-  },
-  [theme.breakpoints.down('sm')]: {
-    marginLeft: 0,
-    padding: theme.spacing(2),
-  },
-}));
+  })};
+  margin-left: ${({ theme }) => theme.breakpoints.up('sm') ? `${LAYOUT.SIDEBAR_WIDTH}px` : 0};
+  ${({ theme }) => theme.breakpoints.down('sm')} {
+    margin-left: 0;
+    padding: ${({ theme }) => theme.spacing(2)};
+  }
+`;
 
 /**
  * Enhanced dashboard layout component with authentication protection and responsive optimization
@@ -50,7 +44,7 @@ const DashboardContent = styled(Box)(({ theme }) => ({
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, className }) => {
   const theme = useTheme();
   const location = useLocation();
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // State for sidebar visibility
@@ -67,7 +61,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, className }
   }, [isMobile]);
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (loading) {
     return (
       <Box 
         sx={{ 

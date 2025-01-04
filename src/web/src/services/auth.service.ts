@@ -15,9 +15,10 @@ import {
   LoginCredentials, 
   RegisterCredentials, 
   AuthTokens, 
-  MFACredentials 
+  MFACredentials,
+  ResetPasswordCredentials
 } from '../interfaces/auth.interface';
-import { AUTH_ENDPOINTS, TOKEN_CONFIG, AUTH_STORAGE_KEYS, UserRole } from '../constants/auth.constants';
+import { AUTH_ENDPOINTS, TOKEN_CONFIG, AUTH_STORAGE_KEYS, PASSWORD_POLICY, UserRole } from '../constants/auth.constants';
 import { 
   setLocalStorageItem, 
   getLocalStorageItem, 
@@ -34,6 +35,10 @@ export interface AuthService {
   logout(): Promise<void>;
   refreshToken(): Promise<AuthTokens>;
   verifyMFA(credentials: MFACredentials): Promise<AuthTokens>;
+  validatePassword(password: string): boolean;
+  setupMFA(): Promise<{ secret: string; qrCode: string }>;
+  verifyResetToken(token: string): Promise<boolean>;
+  resetPassword(credentials: ResetPasswordCredentials): Promise<void>;
 }
 
 /**
@@ -174,6 +179,76 @@ class AuthServiceImpl implements AuthService {
       setLocalStorageItem(AUTH_STORAGE_KEYS.MFA_ENABLED, true);
 
       return response;
+    } catch (error) {
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Validates password against security policy
+   * @param password - Password to validate
+   * @returns Boolean indicating if password meets requirements
+   */
+  validatePassword(password: string): boolean {
+    if (!password || password.length < PASSWORD_POLICY.MIN_LENGTH) return false;
+    
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return (
+      (!PASSWORD_POLICY.REQUIRE_UPPERCASE || hasUpperCase) &&
+      (!PASSWORD_POLICY.REQUIRE_NUMBERS || hasNumber) &&
+      (!PASSWORD_POLICY.REQUIRE_SPECIAL || hasSpecial)
+    );
+  }
+
+  /**
+   * Sets up MFA for user account
+   * @returns Promise resolving to MFA setup data
+   */
+  async setupMFA(): Promise<{ secret: string; qrCode: string }> {
+    try {
+      const response = await apiService.post<{ secret: string; qrCode: string }>(
+        AUTH_ENDPOINTS.SETUP_MFA,
+        {},
+        { priority: 1 }
+      );
+      return response;
+    } catch (error) {
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Verifies password reset token validity
+   * @param token - Reset token to verify
+   * @returns Promise resolving to token validity
+   */
+  async verifyResetToken(token: string): Promise<boolean> {
+    try {
+      const response = await apiService.post<{ valid: boolean }>(
+        AUTH_ENDPOINTS.RESET_PASSWORD,
+        { token, verify: true },
+        { priority: 1 }
+      );
+      return response.valid;
+    } catch (error) {
+      throw this.handleAuthError(error);
+    }
+  }
+
+  /**
+   * Resets user password with verification
+   * @param credentials - Password reset credentials
+   */
+  async resetPassword(credentials: ResetPasswordCredentials): Promise<void> {
+    try {
+      await apiService.post(
+        AUTH_ENDPOINTS.RESET_PASSWORD,
+        credentials,
+        { priority: 1 }
+      );
     } catch (error) {
       throw this.handleAuthError(error);
     }

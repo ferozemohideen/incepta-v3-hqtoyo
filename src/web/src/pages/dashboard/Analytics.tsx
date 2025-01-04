@@ -145,7 +145,6 @@ const Analytics: React.FC = () => {
                   description={metricsConfig.userMetrics.description}
                   data={analyticsData?.userMetrics || []}
                   loading={loading}
-                  refreshInterval={metricsConfig.userMetrics.refreshInterval}
                   onError={handleError}
                 />
               </Grid>
@@ -158,7 +157,6 @@ const Analytics: React.FC = () => {
                 description={metricsConfig.technologyMetrics.description}
                 data={analyticsData?.technologyMetrics || []}
                 loading={loading}
-                refreshInterval={metricsConfig.technologyMetrics.refreshInterval}
                 onError={handleError}
               />
             </Grid>
@@ -170,7 +168,6 @@ const Analytics: React.FC = () => {
                 description={metricsConfig.grantMetrics.description}
                 data={analyticsData?.grantMetrics || []}
                 loading={loading}
-                refreshInterval={metricsConfig.grantMetrics.refreshInterval}
                 onError={handleError}
               />
             </Grid>
@@ -182,7 +179,6 @@ const Analytics: React.FC = () => {
                 description={metricsConfig.matchingMetrics.description}
                 data={analyticsData?.matchingMetrics || []}
                 loading={loading}
-                refreshInterval={metricsConfig.matchingMetrics.refreshInterval}
                 onError={handleError}
               />
             </Grid>

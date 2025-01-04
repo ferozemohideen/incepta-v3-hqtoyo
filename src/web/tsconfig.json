@@ -1,56 +1,49 @@
 {
   "compilerOptions": {
-    // Language and Environment
-    "target": "ESNext",                          // Latest ECMAScript features
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],    // Required libraries for web development
-    "jsx": "react-jsx",                          // React 17+ JSX transform
-    "useDefineForClassFields": true,             // Use define semantics for class fields
+    "target": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "react-jsx",
+    "useDefineForClassFields": true,
     
-    // Modules
-    "module": "ESNext",                          // Modern module system
-    "moduleResolution": "Node",                  // Node.js-style module resolution
-    "baseUrl": ".",                             // Base directory for path aliases
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],                         // Root alias
-      "@components/*": ["src/components/*"],     // Component imports
-      "@pages/*": ["src/pages/*"],              // Page components
-      "@services/*": ["src/services/*"],         // API and service layers
-      "@store/*": ["src/store/*"],              // State management
-      "@utils/*": ["src/utils/*"],              // Utility functions
-      "@hooks/*": ["src/hooks/*"],              // Custom React hooks
-      "@interfaces/*": ["src/interfaces/*"],     // TypeScript interfaces
-      "@constants/*": ["src/constants/*"],       // Constants and enums
-      "@assets/*": ["src/assets/*"],            // Static assets
-      "@styles/*": ["src/styles/*"],            // Styling files
-      "@config/*": ["src/config/*"]             // Configuration files
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@pages/*": ["src/pages/*"],
+      "@services/*": ["src/services/*"],
+      "@store/*": ["src/store/*"],
+      "@utils/*": ["src/utils/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@interfaces/*": ["src/interfaces/*"],
+      "@constants/*": ["src/constants/*"],
+      "@assets/*": ["src/assets/*"],
+      "@styles/*": ["src/styles/*"],
+      "@config/*": ["src/config/*"]
     },
     
-    // JavaScript Support
-    "allowJs": false,                           // Disable JavaScript files
-    "resolveJsonModule": true,                  // Enable JSON imports
+    "allowJs": false,
+    "resolveJsonModule": true,
     
-    // Interop Constraints
-    "isolatedModules": true,                    // Ensure code is compatible with transpilation
-    "esModuleInterop": true,                    // Enable CommonJS/ES module interop
-    "allowSyntheticDefaultImports": true,       // Allow default imports from modules
-    "forceConsistentCasingInFileNames": true,   // Ensure consistent file casing
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
     
-    // Type Checking
-    "strict": true,                             // Enable all strict type checking options
-    "skipLibCheck": true,                       // Skip type checking of declaration files
-    "noEmit": true,                            // Don't emit files (Vite handles this)
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
     
-    // Additional Checks
-    "noUnusedLocals": true,                    // Report errors on unused locals
-    "noUnusedParameters": true,                // Report errors on unused parameters
-    "noImplicitReturns": true,                // Report error when not all code paths return
-    "noFallthroughCasesInSwitch": true,       // Report errors for fallthrough cases in switch
-    "noImplicitOverride": true,               // Ensure overrides are explicit
-    "noPropertyAccessFromIndexSignature": true // Require explicit index signatures
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true
   },
   
-  // Project Configuration
-  "include": ["src"],                         // Only include source files
+  "include": ["src"],
   "exclude": [
     "node_modules",
     "dist",
@@ -58,10 +51,9 @@
     "coverage"
   ],
   
-  // Project References
   "references": [
     {
-      "path": "./tsconfig.node.json"          // Reference to Node-specific config
+      "path": "./tsconfig.node.json"
     }
   ]
 }

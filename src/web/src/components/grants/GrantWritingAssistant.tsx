@@ -1,10 +1,9 @@
 import React, { useEffect, useCallback, useMemo, useState } from 'react';
-import { TextField, Button, CircularProgress, Snackbar, Alert, Box, Paper, Typography, Grid, Divider } from '@mui/material';
+import { Button, CircularProgress, Alert, Box, Paper, Typography, Grid, Divider } from '@mui/material';
 import { Editor } from '@monaco-editor/react'; // v4.5.0
 import { debounce } from 'lodash'; // v4.17.21
 import { useForm } from '../../hooks/useForm';
 import { useNotification } from '../../hooks/useNotification';
-import { ANIMATION } from '../../constants/ui.constants';
 
 // Types and Interfaces
 interface IGrant {
@@ -267,7 +266,10 @@ export const GrantWritingAssistant: React.FC<GrantWritingAssistantProps> = ({
         </Button>
         <Button
           variant="contained"
-          onClick={handleSubmit}
+          onClick={(e) => {
+            e.preventDefault();
+            handleSubmit(e as any);
+          }}
           disabled={Object.keys(errors).length > 0}
         >
           Submit Application

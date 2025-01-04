@@ -28,7 +28,7 @@ interface IGrantSearchState {
 const GrantListPage: React.FC = () => {
   const navigate = useNavigate();
   const { showError, showSuccess } = useNotification();
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   // Initialize search state
   const [searchState, setSearchState] = useState<IGrantSearchState>({
@@ -116,7 +116,7 @@ const GrantListPage: React.FC = () => {
           </Typography>
 
           {/* Loading State */}
-          {isLoading ? (
+          {loading ? (
             <Box sx={{ width: '100%' }}>
               {[...Array(3)].map((_, index) => (
                 <Skeleton

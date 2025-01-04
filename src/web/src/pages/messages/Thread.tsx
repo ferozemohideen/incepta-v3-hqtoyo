@@ -5,16 +5,13 @@
  */
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { 
   Box, 
-  Paper, 
   Typography, 
-  CircularProgress, 
   Snackbar, 
   Alert 
 } from '@mui/material';
-import { useVirtualizer } from '@tanstack/react-virtual';
 
 import ChatBox from '../../components/messages/ChatBox';
 import DocumentShare from '../../components/messages/DocumentShare';
@@ -47,8 +44,6 @@ interface ThreadState {
 const Thread: React.FC = () => {
   // Router hooks
   const { threadId } = useParams<{ threadId: string }>();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   // State management
   const [state, setState] = useState<ThreadState>({
@@ -71,10 +66,9 @@ const Thread: React.FC = () => {
   // WebSocket connection for real-time updates
   const { 
     isConnected, 
-    connectionState, 
     sendMessage: sendWebSocketMessage 
   } = useWebSocket(
-    import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
+    import.meta.env['VITE_WS_URL'] || 'ws://localhost:3000'
   );
 
   /**
@@ -163,6 +157,7 @@ const Thread: React.FC = () => {
   useEffect(() => {
     if (isConnected) {
       processOfflineQueue();
+      return;
     } else {
       // Set reconnection timeout
       reconnectTimeoutRef.current = setTimeout(() => {
@@ -179,25 +174,6 @@ const Thread: React.FC = () => {
       }
     };
   }, [isConnected, processOfflineQueue]);
-
-  /**
-   * Handles scroll-based message loading
-   */
-  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    
-    if (
-      scrollTop + clientHeight >= scrollHeight - 100 && 
-      !state.loading && 
-      state.hasMore
-    ) {
-      setState(prev => ({
-        ...prev,
-        loading: true,
-        page: prev.page + 1
-      }));
-    }
-  }, [state.loading, state.hasMore]);
 
   return (
     <Box

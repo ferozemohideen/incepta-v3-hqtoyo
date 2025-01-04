@@ -6,6 +6,7 @@ import { debounce } from 'lodash';
 import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant';
 import { useNotification } from '../../hooks/useNotification';
 import { grantService } from '../../services/grant.service';
+import { IGrant, IGrantApplication } from '../../interfaces/grant.interface';
 
 // Interface for component state management
 interface WriterState {
@@ -72,7 +73,7 @@ const Writer: React.FC = () => {
    * Handle draft saving with debounce
    */
   const handleSaveDraft = useCallback(
-    debounce(async (applicationData: Partial<IGrantApplication>) => {
+    debounce(async (applicationData: IGrantApplication) => {
       try {
         if (!grantId) return;
 
@@ -101,7 +102,7 @@ const Writer: React.FC = () => {
   /**
    * Handle application submission
    */
-  const handleSubmitApplication = useCallback(async (applicationData: Partial<IGrantApplication>) => {
+  const handleSubmitApplication = useCallback(async (applicationData: IGrantApplication) => {
     try {
       if (!grantId) return;
 
@@ -143,13 +144,13 @@ const Writer: React.FC = () => {
   /**
    * Calculate application progress
    */
-  const calculateProgress = (applicationData: Partial<IGrantApplication>): number => {
+  const calculateProgress = (applicationData: IGrantApplication): number => {
     if (!state.grant) return 0;
 
     const sections = state.grant.requirements.sections;
     const completedSections = sections.filter(section => {
-      const content = applicationData.sections?.[section.id]?.content;
-      return content && content.length > 0;
+      const sectionContent = applicationData.sections[section.id];
+      return sectionContent && sectionContent.content && sectionContent.content.length > 0;
     });
 
     return Math.round((completedSections.length / sections.length) * 100);

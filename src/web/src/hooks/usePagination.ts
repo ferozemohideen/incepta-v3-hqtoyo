@@ -6,6 +6,7 @@ const DEFAULT_MAX_VISIBLE_PAGES = 5;
 const MIN_PAGE = 1;
 const DEBOUNCE_DELAY = 150;
 
+// @ts-ignore
 const DEFAULT_ARIA_LABELS = {
   nextPage: 'Go to next page',
   previousPage: 'Go to previous page',

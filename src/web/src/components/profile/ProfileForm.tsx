@@ -1,9 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { TextField, Grid, Button, CircularProgress, Alert } from '@mui/material'; // v5.14.0
-import { object, string, array, mixed } from 'yup'; // v1.2.0
+import React, { useState } from 'react';
+import { TextField, Grid, Button, CircularProgress, Alert } from '@mui/material';
+import { object, string, array } from 'yup';
 import { Form } from '../common/Form';
 import { useTheme } from '../../hooks/useTheme';
 import ErrorBoundary from '../common/ErrorBoundary';
+
+// User interface definition
+interface User {
+  name: string;
+  organization: string;
+  organizationType: string;
+  email: string;
+  role: string;
+  researchInterests?: string[];
+  bio?: string;
+  phoneNumber?: string;
+  website?: string;
+  orcidId?: string;
+}
 
 // Profile form validation schema
 const profileValidationSchema = object().shape({
@@ -68,7 +82,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { mode: themeMode } = useTheme();
+  const { isDarkMode } = useTheme();
 
   // Initialize form with user data
   const initialValues: UserProfile = {
@@ -85,7 +99,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   };
 
   // Handle form submission with security measures
-  const handleSubmit = async (values: UserProfile) => {
+  const handleSubmit = async (values: Record<string, any>, formActions: any) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -94,7 +108,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       await profileValidationSchema.validate(values, { abortEarly: false });
 
       // Submit form data
-      await onSubmit(values);
+      await onSubmit(values as UserProfile);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setSubmitError(errorMessage);

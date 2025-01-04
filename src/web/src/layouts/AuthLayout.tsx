@@ -143,4 +143,5 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   );
 };
 
+export { AuthLayout };
 export default AuthLayout;

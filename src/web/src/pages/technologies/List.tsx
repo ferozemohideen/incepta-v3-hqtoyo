@@ -6,21 +6,18 @@ import {
   Typography, 
   Skeleton, 
   Alert,
-  Grid,
-  useTheme,
-  useMediaQuery
+  Grid
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Internal imports
-import TechnologyGrid, { TechnologyGridProps } from '../../components/technologies/TechnologyGrid';
+import TechnologyGrid from '../../components/technologies/TechnologyGrid';
 import TechnologyFilters from '../../components/technologies/TechnologyFilters';
 import { technologyService } from '../../services/technology.service';
 import { 
   Technology,
   TechnologySearchParams,
-  PatentStatus,
-  DevelopmentStage
+  PatentStatus
 } from '../../interfaces/technology.interface';
 
 // Default search parameters
@@ -43,10 +40,8 @@ const DEFAULT_SEARCH_PARAMS: TechnologySearchParams = {
  * Implements Material Design 3.0 principles with WCAG 2.1 Level AA compliance
  */
 const TechnologyList: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   // Component state
   const [technologies, setTechnologies] = useState<Technology[]>([]);
@@ -58,10 +53,10 @@ const TechnologyList: React.FC = () => {
     const urlParams = Object.fromEntries(searchParams.entries());
     return {
       ...DEFAULT_SEARCH_PARAMS,
-      query: urlParams.query || '',
-      patentStatus: urlParams.patentStatus ? 
-        (urlParams.patentStatus as string).split(',') as PatentStatus[] : [],
-      page: parseInt(urlParams.page || '1', 10)
+      query: urlParams['query'] || '',
+      patentStatus: urlParams['patentStatus'] ? 
+        (urlParams['patentStatus'] as string).split(',') as PatentStatus[] : [],
+      page: parseInt(urlParams['page'] || '1', 10)
     };
   });
 

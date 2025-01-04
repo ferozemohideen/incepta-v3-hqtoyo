@@ -14,6 +14,13 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'; // ^1.4.0
+// Add temporary type declaration for opossum
+declare module 'opossum' {
+  export default class CircuitBreaker {
+    constructor(fn: Function, options?: any);
+    fire(args?: any): Promise<any>;
+  }
+}
 import CircuitBreaker from 'opossum'; // ^7.1.0
 import cacheManager from 'cache-manager'; // ^5.2.0
 
@@ -268,5 +275,12 @@ class ApiServiceImpl implements ApiService {
   }
 }
 
-// Export singleton instance
-export const apiService = new ApiServiceImpl();
+// Create singleton instance
+const apiServiceInstance = new ApiServiceImpl();
+
+// Export singleton instance and individual methods for destructured imports
+export const apiService = apiServiceInstance;
+export const get = apiServiceInstance.get.bind(apiServiceInstance);
+export const post = apiServiceInstance.post.bind(apiServiceInstance);
+export const put = apiServiceInstance.put.bind(apiServiceInstance);
+export const delete_ = apiServiceInstance.delete.bind(apiServiceInstance);

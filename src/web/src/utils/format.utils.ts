@@ -4,28 +4,7 @@
  * @license MIT
  */
 
-import { format as dateFormat } from 'date-fns'; // v2.30.0
 import numeral from 'numeral'; // v2.0.6
-import { IGrant } from '../interfaces/grant.interface';
-
-/**
- * Memoization decorator for caching function results
- */
-function memoize(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-  const originalMethod = descriptor.value;
-  const cache = new Map();
-
-  descriptor.value = function(...args: any[]) {
-    const key = JSON.stringify(args);
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    const result = originalMethod.apply(this, args);
-    cache.set(key, result);
-    return result;
-  };
-  return descriptor;
-}
 
 /**
  * Interface for currency formatting options
@@ -34,8 +13,6 @@ interface CurrencyFormatOptions {
   locale?: string;
   symbol?: string;
   decimals?: number;
-  groupSeparator?: string;
-  decimalSeparator?: string;
 }
 
 /**
@@ -45,7 +22,6 @@ interface CurrencyFormatOptions {
  * @returns Formatted currency string with ARIA attributes
  * @throws {Error} If amount is not a finite number
  */
-@memoize
 export function formatCurrency(
   amount: number,
   options: CurrencyFormatOptions = {}
@@ -57,9 +33,7 @@ export function formatCurrency(
   const {
     locale = 'en-US',
     symbol = '$',
-    decimals = 2,
-    groupSeparator = ',',
-    decimalSeparator = '.'
+    decimals = 2
   } = options;
 
   numeral.locale(locale);
@@ -84,7 +58,6 @@ interface PercentageFormatOptions {
  * @returns Locale-aware formatted percentage string
  * @throws {Error} If value is not a finite number
  */
-@memoize
 export function formatPercentage(
   value: number,
   options: PercentageFormatOptions = {}
@@ -118,7 +91,6 @@ interface NumberFormatOptions {
  * @returns Locale-formatted number string
  * @throws {Error} If value is not a finite number
  */
-@memoize
 export function formatNumber(
   value: number,
   options: NumberFormatOptions = {}
@@ -182,7 +154,6 @@ export function truncateText(
  * Interface for file size formatting options
  */
 interface FileSizeOptions {
-  locale?: string;
   binary?: boolean;
 }
 
@@ -193,7 +164,6 @@ interface FileSizeOptions {
  * @returns Localized file size string
  * @throws {Error} If bytes is not a positive number
  */
-@memoize
 export function formatFileSize(
   bytes: number,
   options: FileSizeOptions = {}
@@ -202,7 +172,7 @@ export function formatFileSize(
     throw new Error('Invalid file size provided');
   }
 
-  const { locale = 'en-US', binary = true } = options;
+  const { binary = true } = options;
   const base = binary ? 1024 : 1000;
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   

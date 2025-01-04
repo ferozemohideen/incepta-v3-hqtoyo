@@ -17,6 +17,7 @@ import GrantWritingAssistant from '../../components/grants/GrantWritingAssistant
 import { grantService } from '../../services/grant.service';
 import { useNotification } from '../../hooks/useNotification';
 import { ANIMATION } from '../../constants/ui.constants';
+import { IGrant } from '../../interfaces/grant.interface';
 
 // Types
 interface ValidationError {
@@ -170,7 +171,7 @@ const Application: React.FC = () => {
 
       <Box mb={4}>
         <Stepper activeStep={state.activeStep} alternativeLabel>
-          {state.grant.requirements.sections.map((section, index) => (
+          {state.grant.requirements.sections.map((section) => (
             <Step key={section.id}>
               <StepLabel>{section.title}</StepLabel>
             </Step>
@@ -184,7 +185,7 @@ const Application: React.FC = () => {
             grantId={grantId!}
             onSuccess={handleApplicationSubmit}
             onError={(error) => showError(error.message)}
-            onAutoSave={handleDraftSave}
+            onSave={handleDraftSave}
           />
         </Box>
 

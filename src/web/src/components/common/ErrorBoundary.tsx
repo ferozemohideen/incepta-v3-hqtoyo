@@ -1,7 +1,7 @@
 import React, { Component, ErrorInfo } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { ErrorOutline, RefreshRounded } from '@mui/icons-material';
-import { showNotification, clearNotifications } from './Notification';
+import { useNotification } from '../../hooks/useNotification';
 import { ANIMATION } from '../../constants/ui.constants';
 
 // Props interface with comprehensive error handling options
@@ -71,10 +71,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   /**
    * Lifecycle method for handling caught errors
    */
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Clear any existing notifications
-    clearNotifications();
-
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log error details for debugging
     console.error('ErrorBoundary caught an error:', {
       error,
@@ -99,12 +96,8 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
     // Show notification if enabled
     if (this.props.showNotification) {
-      showNotification({
-        message: 'An unexpected error occurred. We\'re working to fix it.',
-        type: 'error',
-        duration: ANIMATION.DURATION_LONG,
-        ariaLive: 'assertive',
-      });
+      const { showError } = useNotification();
+      showError('An unexpected error occurred. We\'re working to fix it.');
     }
 
     // Attempt auto-recovery if enabled
@@ -116,7 +109,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   /**
    * Cleanup on component unmount
    */
-  componentWillUnmount(): void {
+  override componentWillUnmount(): void {
     if (this.recoveryTimeout) {
       clearTimeout(this.recoveryTimeout);
     }
@@ -138,9 +131,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       retryCount: prevState.retryCount + 1,
     }));
 
-    // Clear notifications before retry
-    clearNotifications();
-
     // Attempt recovery after a delay
     this.recoveryTimeout = setTimeout(() => {
       this.setState({
@@ -153,9 +143,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     }, ANIMATION.DURATION_MEDIUM);
   };
 
-  render(): React.ReactNode {
-    const { children, fallbackComponent } = this.props;
-    const { hasError, isRecovering, showFallback, retryCount, maxRetryAttempts } = this.state;
+  /**
+   * Render method
+   */
+  override render(): React.ReactNode {
+    const { children, fallbackComponent, maxRetryAttempts = 3 } = this.props;
+    const { hasError, isRecovering, showFallback, retryCount } = this.state;
 
     if (!hasError) {
       return children;
@@ -229,7 +222,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             color="primary"
             startIcon={<RefreshRounded />}
             onClick={this.handleReset}
-            disabled={retryCount >= (maxRetryAttempts || 3)}
+            disabled={retryCount >= maxRetryAttempts}
             aria-label="Try again"
             sx={{ mt: 2 }}
           >
@@ -249,27 +242,3 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 export default ErrorBoundary;
-```
-
-This implementation provides a robust error boundary component with the following features:
-
-1. Full Material Design 3.0 compliance with proper styling and animations
-2. WCAG 2.1 Level AA accessibility support with proper ARIA attributes
-3. Automatic retry mechanism with configurable attempts
-4. Integration with notification system
-5. Error tracking and metrics support
-6. Custom fallback component support
-7. Loading states during recovery
-8. Proper cleanup on unmount
-9. Comprehensive error information logging
-10. Responsive design with proper spacing and typography
-
-Usage example:
-```typescript
-<ErrorBoundary
-  onError={(error, errorInfo) => logErrorToService(error, errorInfo)}
-  onErrorMetrics={(errorId, error) => trackErrorMetrics(errorId, error)}
-  maxRetryAttempts={3}
->
-  <YourComponent />
-</ErrorBoundary>

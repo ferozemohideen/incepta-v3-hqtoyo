@@ -10,8 +10,8 @@
  * - Session monitoring and auto-refresh
  */
 
-import { useCallback, useEffect, useRef } from 'react'; // ^18.0.0
-import { useDispatch, useSelector } from 'react-redux'; // ^8.0.0
+import { useCallback, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   login,
   register,
@@ -23,26 +23,42 @@ import {
 import {
   LoginCredentials,
   RegisterCredentials,
-  AuthTokens,
   MFACredentials,
   AuthError,
-  SecurityContext
+  ResetPasswordCredentials
 } from '../interfaces/auth.interface';
+import { TOKEN_CONFIG } from '../constants/auth.constants';
 
 /**
  * Interface defining the return value of useAuth hook
  */
 interface UseAuthReturn {
-  user: JWTPayload | null;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    permissions: string[];
+    lastLogin: Date;
+  } | null;
   loading: Record<string, boolean>;
   error: AuthError | null;
   mfaRequired: boolean;
-  securityContext: SecurityContext;
+  securityContext: {
+    lastActivity: number;
+    sessionExpiry: Date | null;
+    mfaVerified: boolean;
+    securityFlags: {
+      passwordChangeRequired: boolean;
+      accountLocked: boolean;
+    };
+  };
   handleLogin: (credentials: LoginCredentials) => Promise<void>;
   handleRegister: (userData: RegisterCredentials) => Promise<void>;
   handleMFAVerification: (mfaData: MFACredentials) => Promise<void>;
   handleLogout: () => Promise<void>;
   handleTokenRefresh: () => Promise<void>;
+  validateResetToken: (token: string) => Promise<boolean>;
 }
 
 /**
@@ -58,7 +74,7 @@ export const useAuth = (): UseAuthReturn => {
   /**
    * Initialize security context for session monitoring
    */
-  const securityContext: SecurityContext = {
+  const securityContext = {
     lastActivity: Date.now(),
     sessionExpiry: authState.sessionExpiry,
     mfaVerified: authState.mfaVerified,
@@ -204,6 +220,19 @@ export const useAuth = (): UseAuthReturn => {
     }
   }, [dispatch]);
 
+  /**
+   * Validate password reset token
+   */
+  const validateResetToken = useCallback(async (token: string): Promise<boolean> => {
+    try {
+      const response = await authService.verifyResetToken(token);
+      return response;
+    } catch (error) {
+      console.error('Reset token validation failed:', error);
+      return false;
+    }
+  }, []);
+
   return {
     user: authState.user,
     loading: authState.loading,
@@ -214,7 +243,8 @@ export const useAuth = (): UseAuthReturn => {
     handleRegister,
     handleMFAVerification,
     handleLogout,
-    handleTokenRefresh
+    handleTokenRefresh,
+    validateResetToken
   };
 };
 

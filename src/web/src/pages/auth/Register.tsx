@@ -14,7 +14,6 @@ import { UserRole } from '../../constants/auth.constants';
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { handleRegister, mfaRequired } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
 
   // Track registration performance metrics
   useEffect(() => {
@@ -35,8 +34,6 @@ const Register: React.FC = () => {
     deviceId: string
   ) => {
     try {
-      setIsLoading(true);
-
       // Store registration completion status
       localStorage.setItem('registration_complete', 'true');
 
@@ -77,8 +74,6 @@ const Register: React.FC = () => {
           retry: true
         }
       });
-    } finally {
-      setIsLoading(false);
     }
   }, [navigate, mfaRequired]);
 
@@ -88,14 +83,6 @@ const Register: React.FC = () => {
   const handleValidationError = useCallback((error: Error) => {
     console.error('Registration validation failed:', error);
     // Error will be displayed by the RegisterForm component
-  }, []);
-
-  /**
-   * Handles device fingerprinting for enhanced security
-   */
-  const handleDeviceFingerprint = useCallback((deviceId: string) => {
-    // Log device fingerprint for security monitoring
-    console.debug('Device fingerprint generated:', deviceId);
   }, []);
 
   /**
@@ -115,8 +102,7 @@ const Register: React.FC = () => {
     <ErrorBoundary
       FallbackComponent={ErrorFallback}
       onReset={() => {
-        // Reset any state that might have caused the error
-        setIsLoading(false);
+        // Reset form state if needed
       }}
     >
       <AuthLayout 
@@ -126,7 +112,6 @@ const Register: React.FC = () => {
         <RegisterForm
           onSuccess={handleRegistrationSuccess}
           onValidationError={handleValidationError}
-          onDeviceFingerprint={handleDeviceFingerprint}
           allowedRoles={[
             UserRole.ENTREPRENEUR,
             UserRole.RESEARCHER,

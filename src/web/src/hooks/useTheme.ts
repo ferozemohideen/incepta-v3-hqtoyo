@@ -1,8 +1,8 @@
 // @mui/material v5.14.0
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useMediaQuery, useTheme as useMuiTheme } from '@mui/material';
-import { COLORS } from 'config/theme.config';
-import { getLocalStorageItem, setLocalStorageItem, StorageError } from 'utils/storage.utils';
+import { COLORS } from '../config/theme.config';
+import { getLocalStorageItem, setLocalStorageItem, StorageError } from '../utils/storage.utils';
 
 // Theme mode enumeration for type safety
 export enum ThemeMode {
@@ -36,9 +36,6 @@ export const useTheme = () => {
   // Refs for performance optimization
   const retryCount = useRef(0);
   const debounceTimer = useRef<number>();
-  
-  // MUI theme context
-  const muiTheme = useMuiTheme();
   
   // System preference detection
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)', {
@@ -157,25 +154,3 @@ export const useTheme = () => {
     error
   };
 };
-```
-
-This implementation provides:
-
-1. Type-safe theme mode management with TypeScript enums
-2. Robust error handling with structured error reporting
-3. Performance optimizations:
-   - Debounced theme switching
-   - RAF for system preference sync
-   - Memoized callbacks
-4. System preference detection and synchronization
-5. Persistent storage with retry mechanism
-6. Clean integration with MUI v5 theme system
-7. Proper cleanup of timers and listeners
-8. Loading state for initial theme detection
-9. CSS variable updates for performance
-10. Comprehensive JSDoc documentation
-
-The hook can be used in components like:
-
-```typescript
-const { mode, toggleTheme, isDarkMode, isLoading, error } = useTheme();

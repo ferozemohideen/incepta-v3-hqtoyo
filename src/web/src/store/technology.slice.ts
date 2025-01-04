@@ -71,10 +71,20 @@ const initialState: TechnologyState = {
     query: '',
     universities: [],
     patentStatus: [],
-    page: 1,
-    pageSize: 20,
+    trlRange: {
+      min: 1,
+      max: 9
+    },
+    domains: [],
+    stage: [],
+    dateRange: {
+      start: null,
+      end: null
+    },
     sortBy: 'title',
-    sortDirection: 'asc'
+    sortOrder: 'asc',
+    page: 1,
+    limit: 20
   },
   selectedTechnologyId: null,
   loading: {

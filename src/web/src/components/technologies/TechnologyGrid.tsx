@@ -1,12 +1,12 @@
 // @mui/material v5.14.0
 import { Grid, Box, Pagination, Skeleton } from '@mui/material';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ErrorBoundary } from 'react-error-boundary';
 import { memo, useCallback, useRef, useEffect } from 'react';
 
 // Internal imports
-import TechnologyCard, { TechnologyCardProps } from './TechnologyCard';
+import TechnologyCard from './TechnologyCard';
 import { Technology } from '../../interfaces/technology.interface';
 import { usePagination, PaginationConfig } from '../../hooks/usePagination';
 
@@ -84,10 +84,8 @@ const TechnologyGrid = memo(({
   onPageChange,
   onTechnologySelect,
   loading = false,
-  error = null,
   'aria-label': ariaLabel = 'Technology listings grid',
 }: TechnologyGridProps) => {
-  const theme = useTheme();
   const parentRef = useRef<HTMLDivElement>(null);
 
   // Configure pagination
@@ -113,14 +111,6 @@ const TechnologyGrid = memo(({
     estimateSize: () => 350, // Estimated card height
     overscan: 5,
   });
-
-  // Handle keyboard navigation
-  const handleKeyDown = useCallback((event: React.KeyboardEvent, technology: Technology) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onTechnologySelect(technology);
-    }
-  }, [onTechnologySelect]);
 
   // Update ARIA live region for screen readers
   useEffect(() => {
@@ -185,8 +175,6 @@ const TechnologyGrid = memo(({
                   <TechnologyCard
                     technology={technology}
                     onView={() => onTechnologySelect(technology)}
-                    onKeyDown={(e) => handleKeyDown(e, technology)}
-                    tabIndex={0}
                     showActions
                   />
                 </Grid>
@@ -196,7 +184,7 @@ const TechnologyGrid = memo(({
         </Box>
 
         {/* Pagination controls */}
-        {totalCount > paginationConfig.initialPageSize && (
+        {totalCount > (paginationConfig.initialPageSize || 12) && (
           <Box
             sx={{
               display: 'flex',
@@ -213,7 +201,8 @@ const TechnologyGrid = memo(({
               showLastButton={paginationConfig.showFirstLast}
               disabled={loading}
               aria-label="Technology pagination"
-              getItemAriaLabel={(type, page) => paginationConfig.ariaLabels[type] || `Go to page ${page}`}
+              getItemAriaLabel={(type, page) => 
+                (paginationConfig.ariaLabels?.[type] || `Go to page ${page}`)}
             />
           </Box>
         )}

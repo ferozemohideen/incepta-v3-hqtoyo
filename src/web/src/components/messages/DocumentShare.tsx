@@ -1,16 +1,15 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { 
   Box, 
   Card, 
   Typography, 
   IconButton, 
   LinearProgress, 
-  CircularProgress, 
   Snackbar, 
   Alert 
 } from '@mui/material';
-import { Delete, Download, CloudUpload, Error } from '@mui/icons-material';
-import FileUpload, { FileUploadProps } from '../common/FileUpload';
+import { Delete, Download, Error } from '@mui/icons-material';
+import FileUpload from '../common/FileUpload';
 import { Message, MessageType, MessageMetadata } from '../../interfaces/message.interface';
 import { StorageService } from '../../services/storage.service';
 
@@ -65,7 +64,6 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
 
   // Service and refs
   const storageService = useRef(new StorageService());
-  const uploadQueue = useRef<File[]>([]);
 
   // Handle file upload with security checks and progress tracking
   const handleFileUpload = useCallback(async (files: File[]) => {
@@ -90,6 +88,7 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
             originalName: file.name,
             size: file.size.toString(),
             type: file.type,
+            virusScan: enableVirusScan ? 'enabled' : 'disabled'
           },
           cacheControl: 'private, max-age=3600',
         });
@@ -122,13 +121,14 @@ export const DocumentShare: React.FC<DocumentShareProps> = ({
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload document');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload document';
+      setError(errorMessage);
       setIsSnackbarOpen(true);
       setUploadProgress(prev => 
         prev ? { ...prev, status: 'error' } : null
       );
     }
-  }, [threadId, enableEncryption, onDocumentShare]);
+  }, [threadId, enableEncryption, enableVirusScan, onDocumentShare]);
 
   // Handle document deletion
   const handleDocumentDelete = useCallback(async (metadata: MessageMetadata) => {

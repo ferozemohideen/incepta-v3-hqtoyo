@@ -54,10 +54,10 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
   // Calculate responsive padding based on viewport
   const getPadding = useCallback(() => {
     return {
-      xs: SPACING.SCALE.md,
-      sm: SPACING.SCALE.lg,
-      md: SPACING.SCALE.xl,
-    }[theme.breakpoints.keys[0]] || SPACING.SCALE.xl;
+      xs: SPACING.SCALE.sm,
+      sm: SPACING.SCALE.md,
+      md: SPACING.SCALE.md,
+    }[theme.breakpoints.keys[0]] || SPACING.SCALE.md;
   }, [theme.breakpoints]);
 
   // Handle keyboard navigation for accessibility

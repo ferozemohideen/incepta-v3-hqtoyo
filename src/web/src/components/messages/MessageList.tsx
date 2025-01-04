@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import { Box, List, ListItem, CircularProgress, Typography } from '@mui/material';
-import { useInView } from 'react-intersection-observer';
-import { useQueryClient } from 'react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { 
   Message, 
@@ -20,8 +18,6 @@ interface MessageListProps {
   threadId: string;
   currentUserId: string;
   onMessageReceived?: (message: Message) => void;
-  onTypingStatusChange?: (isTyping: boolean) => void;
-  initialScrollPosition?: number;
   messageLimit?: number;
 }
 
@@ -35,8 +31,6 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   threadId,
   currentUserId,
   onMessageReceived,
-  onTypingStatusChange,
-  initialScrollPosition = 0,
   messageLimit = MESSAGE_BATCH_SIZE
 }) => {
   // Refs for DOM elements and state management
@@ -44,20 +38,12 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
   const lastMessageRef = useRef<string | null>(null);
   const isLoadingMore = useRef(false);
   const hasMoreMessages = useRef(true);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // WebSocket connection for real-time updates
   const { isConnected, sendMessage } = useWebSocket(
     import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
   );
-
-  // React Query client for cache management
-  const queryClient = useQueryClient();
-
-  // Intersection observer for infinite scroll
-  const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0.5,
-    rootMargin: '100px',
-  });
 
   // State for messages with memoization
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -190,10 +176,21 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
    * Handles intersection observer for infinite scroll
    */
   useEffect(() => {
-    if (inView && !isLoading && hasMoreMessages.current) {
-      loadMoreMessages();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoading && hasMoreMessages.current) {
+          loadMoreMessages();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
     }
-  }, [inView, isLoading, loadMoreMessages]);
+
+    return () => observer.disconnect();
+  }, [isLoading, loadMoreMessages]);
 
   /**
    * Renders a message item with accessibility support
@@ -219,7 +216,7 @@ const MessageList: React.FC<MessageListProps> = React.memo(({
             borderRadius: 2,
           }}
         >
-          {message.type === MessageType.DOCUMENT ? (
+          {message.type === MessageType.DOCUMENT && message.metadata ? (
             <Box component="a" href={message.metadata.documentUrl} target="_blank">
               <Typography variant="body2">
                 📎 {message.metadata.fileName} ({Math.round(message.metadata.fileSize / 1024)}KB)

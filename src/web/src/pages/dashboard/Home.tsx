@@ -176,10 +176,10 @@ const Home: React.FC = () => {
       };
 
       // Subscribe to activity updates
-      sendMessage('subscribe', { channel: 'activities' });
+      sendMessage({ type: 'subscribe', channel: 'activities' });
 
       return () => {
-        sendMessage('unsubscribe', { channel: 'activities' });
+        sendMessage({ type: 'unsubscribe', channel: 'activities' });
       };
     }
   }, [isConnected, sendMessage]);
@@ -228,8 +228,12 @@ const Home: React.FC = () => {
                 savedGrants={state.savedGrants}
                 onRemoveTechnology={handleRemoveTechnology}
                 onRemoveGrant={handleRemoveGrant}
-                onViewTechnology={(id) => {/* Navigate to technology */}}
-                onViewGrant={(id) => {/* Navigate to grant */}}
+                onViewTechnology={async (id: string) => {
+                  // Navigate to technology
+                }}
+                onViewGrant={async (id: string) => {
+                  // Navigate to grant
+                }}
                 isLoading={state.loading.saved}
               />
             </ErrorBoundary>

@@ -5,7 +5,6 @@ import {
   Slider,
   Typography,
   Paper,
-  FormGroup,
   useTheme,
   Tooltip,
   Chip,
@@ -157,11 +156,11 @@ export const TechnologyFilters: React.FC<TechnologyFiltersProps> = ({
 
   // Handle preset selection
   const handlePresetSelect = useCallback((presetId: string) => {
-    const preset = presets.find(p => p.id === presetId);
-    if (preset) {
+    const selectedPreset = presets.find(p => p.id === presetId);
+    if (selectedPreset) {
       setFilters(prev => ({
         ...prev,
-        ...preset.filters,
+        ...selectedPreset.filters,
       }));
     }
   }, [presets]);

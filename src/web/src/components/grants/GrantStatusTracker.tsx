@@ -6,8 +6,7 @@ import {
   StepLabel, 
   Typography, 
   CircularProgress,
-  Box,
-  useTheme
+  Box
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
@@ -92,7 +91,6 @@ export const GrantStatusTracker: React.FC<GrantStatusTrackerProps> = ({
   refreshInterval = 30000, // 30 seconds default refresh
   showHistory = false,
 }) => {
-  const theme = useTheme();
   const [application, setApplication] = useState<IGrantApplication | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +125,7 @@ export const GrantStatusTracker: React.FC<GrantStatusTrackerProps> = ({
       const intervalId = setInterval(fetchStatus, refreshInterval);
       return () => clearInterval(intervalId);
     }
+    return undefined;
   }, [fetchStatus, refreshInterval]);
 
   /**

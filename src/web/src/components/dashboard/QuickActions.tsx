@@ -5,7 +5,6 @@ import {
   Search as SearchIcon,
   Edit as EditIcon,
   Description as DescriptionIcon,
-  Person as PersonIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
   Science as ScienceIcon,
   BusinessCenter as BusinessCenterIcon,
